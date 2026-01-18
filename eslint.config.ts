@@ -19,13 +19,6 @@ export default defineConfig(
         settings: {
             react: {
                 version: "detect"
-            },
-            "import/resolver": {
-                typescript: true,
-                // TODO: IS THIS CAUSING NODE AMBIENT TYPES TO BE INCLUDED???
-                node: {
-                    extensions: [".js", ".jsx", ".ts", ".tsx"]
-                }
             }
         },
         languageOptions: {
