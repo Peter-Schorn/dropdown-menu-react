@@ -60,6 +60,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
 
     logger.debug("DropdownMenu: render");
 
+    const debugConfig = useDebugConfig();
+
     const {
         children
     } = props;
@@ -1049,7 +1051,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         event: KeyboardEvent
     ): void => {
 
-        if (import.meta.env.VITE_DEBUG_DISABLE_MENU_KEY_EVENTS === "true") {
+        if (debugConfig.disableMenuKeyEvents) {
             return;
         }
 
@@ -1231,7 +1233,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         closeSubmenu,
         openMenuIDsPath,
         focusSubmenuDropdownItem,
-        focusFirstSubmenuItem
+        focusFirstSubmenuItem,
+        debugConfig.disableMenuKeyEvents
     ]);
 
     // MARK: useEffect: Click outside
@@ -1510,41 +1513,42 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
     // MARK: useEffect: Debug expose dropdown menu API on window object
     useEffect(() => {
 
-        if (isOpen) {
-            window.openSubmenu = openSubmenu;
-            window.closeSubmenu = closeSubmenu;
-            window.getOpenMenuIDs = (): string[] => openMenuIDsPath;
-            window.getMenuItemTree = (): MenuItemNode => menuItemTreeRef.current;
-            window.buildMenuItemTree = buildMenuItemTree;
-            window.positionDropdownMenu = positionDropdownMenu;
-            window.getSubmenusPortalContainer = (): HTMLDivElement | null =>
-                submenusPortalContainer;
-            window.setSubmenusPortalContainer =
-                setSubmenusPortalContainer;
-
-        }
-
-        return (): void => {
-            const error = Error("no dropdown menu is open");
-
-            const names = [
-                "openSubmenu",
-                "closeSubmenu",
-                "getOpenMenuIDs",
-                "getMenuItemTree",
-                "buildMenuItemTree",
-                "positionDropdownMenu",
-                "getSubmenusPortalContainer",
-                "setSubmenusPortalContainer"
-            ] as const;
-
-            for (const name of names) {
-                window[name] = (): never => {
-                    throw error;
-                };
+        if (debugConfig.exposeDebugUtilitiesOnWindow) {
+            if (isOpen) {
+                window.openSubmenu = openSubmenu;
+                window.closeSubmenu = closeSubmenu;
+                window.getOpenMenuIDs = (): string[] => openMenuIDsPath;
+                window.getMenuItemTree = (): MenuItemNode => menuItemTreeRef.current;
+                window.buildMenuItemTree = buildMenuItemTree;
+                window.positionDropdownMenu = positionDropdownMenu;
             }
+            else {
+                const error = Error("no dropdown menu is open");
 
-        };
+                const names = [
+                    "openSubmenu",
+                    "closeSubmenu",
+                    "getOpenMenuIDs",
+                    "getMenuItemTree",
+                    "buildMenuItemTree",
+                    "positionDropdownMenu"
+                ] as const;
+
+                for (const name of names) {
+                    window[name] = (): never => {
+                        throw error;
+                    };
+                }
+            }
+        }
+        else {
+            delete window.openSubmenu;
+            delete window.closeSubmenu;
+            delete window.getOpenMenuIDs;
+            delete window.getMenuItemTree;
+            delete window.buildMenuItemTree;
+            delete window.positionDropdownMenu;
+        }
 
     }, [
         isOpen,
@@ -1553,7 +1557,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         openMenuIDsPath,
         buildMenuItemTree,
         positionDropdownMenu,
-        submenusPortalContainer
+        debugConfig.exposeDebugUtilitiesOnWindow
     ]);
 
     // MARK: useEffect: Disable mouse hover events in debug mode
@@ -1562,7 +1566,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         if (isOpen) {
 
             if (
-                import.meta.env.VITE_DEBUG_DISABLE_MENU_MOUSE_HOVER_EVENTS === "true"
+                debugConfig.disableMenuMouseHoverEvents
             ) {
                 logger.debug(
                     "useEffect: disabling mouse hover events"
@@ -1579,7 +1583,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
 
     }, [
         isOpen,
-        buildMenuItemTree
+        buildMenuItemTree,
+        debugConfig.disableMenuMouseHoverEvents
     ]);
 
     // MARK: useEffect: Cleanup on unmount
@@ -1658,14 +1663,14 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                     ref={dropdownToggleRef}
                     className="bd-dropdown-toggle"
                     title={
-                        import.meta.env.VITE_DEBUG_SHOW_MENU_IDS
+                        debugConfig.showMenuIds
                             ? menuID
                             : undefined
                     }
                 >
                     <i className="fa fa-ellipsis-v px-2"></i>
                 </button>
-                {import.meta.env.VITE_DEBUG_SHOW_MENU_IDS && (
+                {debugConfig.showMenuIds && (
                     <span
                         className="bd-dropdown-main-debug-id"
                     >

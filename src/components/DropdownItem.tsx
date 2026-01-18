@@ -14,10 +14,8 @@ import React, {
 
 import { createPortal } from "react-dom";
 
-import Stack from "react-bootstrap/Stack";
-
-import { DropdownMenuContext } from "./DropdownMenuContext";
-import { DropdownSubmenuContext } from "./DropdownSubmenuContext";
+import { DropdownMenuContext } from "../model/DropdownMenuContext";
+import { DropdownSubmenuContext } from "../model/DropdownSubmenuContext";
 
 import {
     type DropdownMenuCoreHandle,
@@ -46,6 +44,8 @@ import {
     DROPDOWN_IDEAL_MIN_WIDTH
 } from "../utils/constants";
 
+import { useDebugConfig } from "../hooks/useDebugConfig";
+
 import {
     type HorizontalEdge,
     isWebkit,
@@ -56,19 +56,13 @@ import {
 
 import { dropdownItemLogger as logger } from "../utils/loggers";
 
-type DropdownItem2Props = PropsWithChildren & {
-    text: string;
-    icon?: string;
-    keyboardShortcutString?: string;
+type DropdownItemProps = PropsWithChildren & {
     onClick?: (event: MouseEvent) => void;
-    additionalClasses?: string;
 };
 
-export const DropdownItem2 = memo(function DropdownItem2(
-    props: DropdownItem2Props
+export const DropdownItem = memo(function DropdownItem(
+    props: DropdownItemProps
 ): JSX.Element {
-
-
 
     type ToggleSubmenuOptions = {
         updateContext?: boolean;
@@ -76,6 +70,8 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
     const POINTER_ENTER_EXIT_DELAY_MS = 200;
     // const POINTER_ENTER_EXIT_DELAY_MS = 1_000;
+
+    const debugConfig = useDebugConfig();
 
     const {
         onClick
@@ -334,7 +330,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
                 logger.debug(
                     "eventWithinDropdownItemContainerComponentTree: " +
                     `event is within submenu '${submenu}' of dropdown item ` +
-                    `'${props.text}'; returning true`
+                    `with submenu ${submenuID}; returning true`
                 );
                 return true;
             }
@@ -343,16 +339,15 @@ export const DropdownItem2 = memo(function DropdownItem2(
     }, [
         eventWithinDropdownItemContainerRect,
         openMenuIDsPath,
-        submenuID,
-        props.text
+        submenuID
     ]);
 
     function handleDropdownMenuClick(
         event: React.MouseEvent<HTMLDivElement, MouseEvent>
     ): void {
         logger.debug(
-            "handleDropdownMenuClick: for submenu of dropdown item " +
-            `'${props.text}' with submenu ID ${submenuID}`
+            "handleDropdownMenuClick: for submenu of dropdown item with " +
+            `submenu ID ${submenuID}`
         );
 
         if (ignoreClicksUntilNextPointerDownRef.current) {
@@ -370,10 +365,11 @@ export const DropdownItem2 = memo(function DropdownItem2(
     }
 
     const handleDropdownItemContainerPointerDown = useCallback((
-        // event: React.PointerEvent<HTMLElement>
+        // event: React.PointerEvent<HTMLButtonElement>
     ): void => {
         logger.debug(
-            `handleDropdownItemPointerDown: for dropdown item '${props.text}':`
+            "handleDropdownItemPointerDown: for dropdown item with submenu " +
+            `ID ${submenuID}`
             /* , event */
         );
 
@@ -381,7 +377,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
     }, [
         ignoreClicksUntilNextPointerDownRef,
-        props.text
+        submenuID
     ]);
 
     const getPreferredEdge = useCallback((): HorizontalEdge => {
@@ -407,14 +403,13 @@ export const DropdownItem2 = memo(function DropdownItem2(
             // and have a preferred edge set if this menu is open
             logger.error(
                 "getPreferredEdge: no preferred edge set for parent with ID " +
-                `${parent.id} of ${submenuID}; returning default ` +
-                "edge: right"
+                `${parent.id} of ${submenuID}; returning default edge: right`
             );
             return "right";
         }
 
         logger.debug(
-            `getPreferredEdge: for dropdown item '${props.text}' with ID ` +
+            "getPreferredEdge: for dropdown item with submenu ID " +
             `${submenuID}; preferredEdge: ${preferredEdge}`
         );
         return preferredEdge;
@@ -422,8 +417,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
     }, [
         menuItemTreeRef,
         menuItemsAlignmentRef,
-        submenuID,
-        props.text
+        submenuID
     ]);
 
     const setAlignment = useCallback((
@@ -436,21 +430,19 @@ export const DropdownItem2 = memo(function DropdownItem2(
         );
 
         logger.debug(
-            `setAlignment: set alignment of submenu '${props.text}' with ID ` +
-            `${submenuID} to ${alignment}`
+            `setAlignment: set alignment of submenu with ID ${submenuID} ` +
+            `to ${alignment}`
         );
 
     }, [
         menuItemsAlignmentRef,
-        props.text,
         submenuID
     ]);
 
     const positionSubmenu = useCallback((): void => {
 
         const performanceMarkDetail = {
-            submenuID: submenuID,
-            text: props.text
+            submenuID: submenuID
         };
 
         performance.mark("position-submenu-start", {
@@ -459,7 +451,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
         logger.debug(
             "------ positionSubmenu: begin ------ " +
-            `for dropdown item '${props.text}' with ID ${submenuID}`
+            `for dropdown item with submenu ID ${submenuID}`
         );
 
         /**
@@ -531,8 +523,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
         if (!parentMenuMeasuringContainer) {
             logger.error(
                 "positionSubmenu: could not find parent menu measuring " +
-                `container for dropdown item '${props.text}' with ID ` +
-                `${submenuID}`
+                `container for dropdown item with submenu ID ${submenuID}`
             );
             return;
         }
@@ -544,7 +535,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
         if (!(parentMenu instanceof HTMLElement)) {
             logger.error(
                 "positionSubmenu: could not find parent menu for " +
-                `dropdown item '${props.text}' with ID ${submenuID}`
+                `dropdown item with submenu ID ${submenuID}`
             );
             return;
         }
@@ -1013,7 +1004,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
             // MARK: Position on the side with more space
             logger.debug(
                 "positionSubmenu: both edges overflow the viewport for " +
-                `dropdown item '${props.text}' with ID ${submenuID}; ` +
+                `dropdown item with submenu ID ${submenuID}; ` +
                 "positioning on side with more space"
             );
 
@@ -1105,8 +1096,8 @@ export const DropdownItem2 = memo(function DropdownItem2(
             // MARK: Unreachable; default to preferred edge
             logger.error(
                 "positionSubmenu: (UNREACHABLE) could not determine " +
-                `horizontal positioning for dropdown item '${props.text}' ` +
-                `with ID ${submenuID}; defaulting to preferred edge`
+                "horizontal positioning for dropdown item with submenu ID " +
+                `${submenuID}; defaulting to preferred edge`
             );
             alignment = preferredEdge;
         }
@@ -1232,7 +1223,6 @@ export const DropdownItem2 = memo(function DropdownItem2(
     }, [
         parentDropdownMenuMeasuringContainerRef,
         getPreferredEdge,
-        props.text,
         setAlignment,
         submenuID
     ]);
@@ -1254,15 +1244,14 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
         if (!submenuIsOpen) {
             logger.debug(
-                `closeSubmenu: submenu for dropdown item '${props.text}' ` +
-                `with ID ${submenuID} is already closed`
+                "closeSubmenu: submenu for dropdown item with submenu ID " +
+                `${submenuID} is already closed`
             );
             return;
         }
 
         logger.debug(
-            `closeSubmenu: for dropdown item '${props.text}' with ID ` +
-            `${submenuID}`
+            `closeSubmenu: for dropdown item with submenu ID ${submenuID}`
         );
 
         const dropdownMenuMeasuringContainer =
@@ -1306,7 +1295,6 @@ export const DropdownItem2 = memo(function DropdownItem2(
         contextCloseSubmenu,
         menuItemsAlignmentRef,
         isSubmenu,
-        props.text,
         setDropdownItemSecondaryFocus,
         submenuID,
         submenuIsOpen
@@ -1322,8 +1310,8 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
         if (submenuIsOpen) {
             logger.debug(
-                `openSubmenu: submenu for dropdown item '${props.text}' ` +
-                `with ID ${submenuID} is already open`
+                "openSubmenu: submenu for dropdown item with submenu ID " +
+                `${submenuID} is already open`
             );
             return;
         }
@@ -1351,7 +1339,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
         if (!(parentMenuMeasuringContainer instanceof HTMLElement)) {
             logger.error(
                 "openSubmenu: could not find parent menu measuring container " +
-                `for dropdown item '${props.text}' with ID ${submenuID}`
+                `for dropdown item with submenu ID ${submenuID}`
             );
             return;
         }
@@ -1363,7 +1351,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
         if (!(parentMenu instanceof HTMLElement)) {
             logger.error(
                 "positionSubmenu: could not find parent menu for " +
-                `dropdown item '${props.text}' with ID ${submenuID}`
+                `dropdown item with submenu ID ${submenuID}`
             );
             return;
         }
@@ -1371,8 +1359,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
         setSubmenuIsOpen(true);
 
         logger.debug(
-            `openSubmenu: for dropdown item '${props.text}' with ID ` +
-            `${submenuID}`
+            `openSubmenu: for dropdown item with submenu ID ${submenuID}`
         );
 
         clearTimeout(pointerLeaveTimeoutRef.current);
@@ -1395,8 +1382,8 @@ export const DropdownItem2 = memo(function DropdownItem2(
             const zIndex = 10 + depth * 2;
             setZIndex(zIndex);
             logger.debug(
-                `openSubmenu: submenu '${props.text}' has depth ${depth}; ` +
-                `setting z-index to ${zIndex}`
+                `openSubmenu: submenu with ID ${submenuID} has depth ` +
+                `${depth}; setting z-index to ${zIndex}`
             );
         }
         else {
@@ -1453,7 +1440,6 @@ export const DropdownItem2 = memo(function DropdownItem2(
         positionSubmenu,
         submenuIsOpen,
         setDropdownItemSecondaryFocus,
-        props.text,
         submenuID
     ]);
 
@@ -1481,8 +1467,8 @@ export const DropdownItem2 = memo(function DropdownItem2(
         event: MouseEvent
     ): void => {
         logger.debug(
-            "handleDropdownItemClick START: for dropdown item " +
-            `'${props.text}'; ignoreClicksUntilNextPointerDownRef.current: ` +
+            "handleDropdownItemClick START: for dropdown item with submenu " +
+            `ID ${submenuID}; ignoreClicksUntilNextPointerDownRef.current: ` +
             `${ignoreClicksUntilNextPointerDownRef.current}`
         );
 
@@ -1508,7 +1494,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
             event.stopImmediatePropagation();
             logger.debug(
                 "handleDropdownItemClick submenu: stopping propagation for " +
-                `'${props.text}'`
+                `dropdown item with submenu ID ${submenuID}`
             );
             // toggle the submenu visibility
             toggleSubmenu();
@@ -1519,7 +1505,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
             // handling the click
             logger.debug(
                 "handleDropdownItemClick regular: allowing propagation for " +
-                `'${props.text}'`
+                `dropdown item with submenu ID ${submenuID}`
             );
         }
 
@@ -1528,8 +1514,8 @@ export const DropdownItem2 = memo(function DropdownItem2(
         isSubmenu,
         toggleSubmenu,
         onClick,
-        props.text,
-        ignoreClicksUntilNextPointerDownRef
+        ignoreClicksUntilNextPointerDownRef,
+        submenuID
     ]);
 
     /**
@@ -1548,12 +1534,11 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
         logger.debug(
             "handleDropdownItemContainerPointerEnterDOM: for dropdown item " +
-            `'${props.text}'`
+            `with submenu ID ${submenuID}`
         );
 
         setHoveredMenuItem(submenuID);
     }, [
-        props.text,
         setHoveredMenuItem,
         submenuID
     ]);
@@ -1569,7 +1554,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
         logger.debug(
             "handleDropdownItemContainerPointerLeaveDOM: for dropdown item " +
-            `'${props.text}'`
+            `with submenu ID ${submenuID}`
         );
 
         // if event is undefined, then we were called by
@@ -1598,9 +1583,9 @@ export const DropdownItem2 = memo(function DropdownItem2(
         }
     }, [
         eventWithinDropdownItemContainerRect,
-        props.text,
         unsetHoveredMenuItem,
-        scrollbarHitbox
+        scrollbarHitbox,
+        submenuID
     ]);
 
     /**
@@ -1626,7 +1611,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
         logger.debug(
             "handleDropdownItemContainerPointerEnter: " +
-            `for dropdown item '${props.text}'; ` +
+            `for dropdown item with submenu ID ${submenuID}; ` +
             `submenuIsOpen: ${submenuIsOpen}; ` +
             "pointerIsOverDropdownItemContainerComponentTree: " +
             `${pointerIsOverDropdownItemContainerComponentTreeRef.current}`
@@ -1650,7 +1635,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
         logger.debug(
             "handleDropdownItemContainerPointerEnter: " +
-            `for dropdown item '${props.text}'; ` +
+            `for dropdown item with submenu ID ${submenuID}; ` +
             "scheduling submenu open after delay"
         );
 
@@ -1660,7 +1645,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
             if (pointerIsOverDropdownItemContainerComponentTreeRef.current) {
                 logger.debug(
                     "handleDropdownItemContainerPointerEnter: will open " +
-                    `submenu for dropdown item '${props.text}'`
+                    `submenu for dropdown item with submenu ID ${submenuID}`
                 );
                 openSubmenu();
             }
@@ -1668,7 +1653,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
                 logger.debug(
                     "handleDropdownItemContainerPointerEnter: pointer left " +
                     "dropdown item container component tree; not opening " +
-                    `submenu for dropdown item '${props.text}'`
+                    `submenu for dropdown item with submenu ID ${submenuID}`
                 );
             }
         }, POINTER_ENTER_EXIT_DELAY_MS);
@@ -1678,7 +1663,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
         isSubmenu,
         submenuIsOpen,
         openSubmenu,
-        props.text,
+        submenuID
     ]);
 
     /**
@@ -1699,7 +1684,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
         logger.debug(
             "handleDropdownItemContainerPointerLeave: " +
-            `for dropdown item '${props.text}'; ` +
+            `for dropdown item with submenu ID ${submenuID}; ` +
             `submenuIsOpen: ${submenuIsOpen}; ` +
             "pointerIsOverDropdownItemContainerComponentTree: " +
             `${pointerIsOverDropdownItemContainerComponentTreeRef.current}`
@@ -1755,7 +1740,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
         logger.debug(
             "handleDropdownItemContainerPointerLeave: " +
-            `for dropdown item '${props.text}'; ` +
+            `for dropdown item with submenu ID ${submenuID}; ` +
             "scheduling submenu close after delay"
         );
 
@@ -1766,13 +1751,14 @@ export const DropdownItem2 = memo(function DropdownItem2(
                 logger.debug(
                     "handleDropdownItemContainerPointerLeave: pointer " +
                     "re-entered dropdown item container component tree; not " +
-                    `closing submenu for dropdown item '${props.text}'`
+                    "closing submenu for dropdown item with submenu ID " +
+                    `${submenuID}`
                 );
             }
             else {
                 logger.debug(
                     "handleDropdownItemContainerPointerLeave: will close " +
-                    `submenu for dropdown item '${props.text}'`
+                    `submenu for dropdown item with submenu ID ${submenuID}`
                 );
                 closeSubmenu();
             }
@@ -1784,7 +1770,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
         isSubmenu,
         submenuIsOpen,
         eventWithinDropdownItemContainerComponentTreeRects,
-        props.text,
+        submenuID,
         parentScrollbarHitbox
     ]);
 
@@ -1810,8 +1796,8 @@ export const DropdownItem2 = memo(function DropdownItem2(
             // container, call the pointer enter handler
             logger.debug(
                 `handleScrollbarHitboxPointerChange: ${event.type} pointer ` +
-                "is within bounds of dropdown item container DOM for " +
-                `'${props.text}'`
+                "is within bounds of DOM of dropdown item container with" +
+                `submenu ID ${submenuID}`
             );
             eventWithinDropdownItemContainerDOM = true;
             handleDropdownItemContainerPointerEnterDOM(event);
@@ -1839,8 +1825,9 @@ export const DropdownItem2 = memo(function DropdownItem2(
             // including portaled child submenus
             logger.debug(
                 `handleScrollbarHitboxPointerChange: ${event.type}: pointer ` +
-                "is within bounds of dropdown item container component tree " +
-                `for '${props.text}'; calling pointer enter handler`
+                "is within bounds of component tree of dropdown item " +
+                `container with submenu ID ${submenuID}; calling pointer ` +
+                "enter handler"
             );
             handleDropdownItemContainerPointerEnter(event);
         }
@@ -1849,8 +1836,9 @@ export const DropdownItem2 = memo(function DropdownItem2(
             // including portaled child submenus
             logger.debug(
                 `handleScrollbarHitboxPointerChange: ${event.type}: pointer ` +
-                "has left bounds of dropdown item container component tree " +
-                `for '${props.text}'; calling pointer leave handler`
+                "has left bounds of component tree of dropdown item " +
+                `container with submenu ID ${submenuID}; calling pointer ` +
+                "leave handler"
             );
             handleDropdownItemContainerPointerLeave();
         }
@@ -1862,8 +1850,8 @@ export const DropdownItem2 = memo(function DropdownItem2(
         handleDropdownItemContainerPointerLeave,
         handleDropdownItemContainerPointerEnterDOM,
         handleDropdownItemContainerPointerLeaveDOM,
-        props.text,
-        isSubmenu
+        isSubmenu,
+        submenuID
     ]);
 
     // MARK: useEffect: parent menu events
@@ -1871,7 +1859,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
         logger.debug(
             `useEffect: parentMenuIsOpen changed to ${parentMenuIsOpen} ` +
-            `for dropdown item '${props.text}'`
+            `for dropdown item with submenu ID ${submenuID}`
             // "changes:", changes,
             // "handleDropdownItemClick changes:",
             // // @ts-expect-error
@@ -1973,7 +1961,7 @@ export const DropdownItem2 = memo(function DropdownItem2(
     },
         [
             parentMenuIsOpen,
-            props.text,
+            submenuID,
             parentScrollbarHitbox,
             unsetHoveredMenuItem,
             handleScrollbarHitboxPointerChange,
@@ -2057,8 +2045,8 @@ export const DropdownItem2 = memo(function DropdownItem2(
                 }
                 else {
                     logger.debug(
-                        "useEffect: ResizeObserver: dropdown menu DID change; " +
-                        "repositioning dropdown menu"
+                        "useEffect: ResizeObserver: dropdown menu DID " +
+                        "change; repositioning dropdown menu"
                     );
 
                     scheduleDropdownMenuReposition();
@@ -2094,7 +2082,6 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
     }, [
         scheduleDropdownMenuReposition,
-        props.text,
         submenuIsOpen
     ]);
 
@@ -2108,15 +2095,15 @@ export const DropdownItem2 = memo(function DropdownItem2(
                 if (openMenuIDsPath.includes(submenuID)) {
                     logger.debug(
                         "handleRepositionSubmenu: repositioning submenu for " +
-                        `dropdown item '${props.text}' with ID ${submenuID}`
+                        `dropdown item with submenu ID ${submenuID}`
                     );
                     positionSubmenu();
                 }
                 else {
                     logger.debug(
                         "handleRepositionSubmenu: submenu is not open for " +
-                        `dropdown item '${props.text}' with ID ${submenuID}; ` +
-                        "not repositioning"
+                        `dropdown item with submenu ID ${submenuID}; not` +
+                        "repositioning"
                     );
                 }
             }
@@ -2139,7 +2126,6 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
     }, [
         positionSubmenu,
-        props.text,
         mainDropdownMenuEventEmitter,
         openMenuIDsPath,
         submenuID
@@ -2175,8 +2161,8 @@ export const DropdownItem2 = memo(function DropdownItem2(
 
             logger.debug(
                 "useEffect: context provider requested close submenu for " +
-                `item '${props.text}' with ID ${submenuID} because ` +
-                "context no longer includes it in openMenuIDsPath"
+                `item with submenu ID ${submenuID} because context no longer ` +
+                "includes it in openMenuIDsPath"
             );
             // cascading render is unavoidable: each submenu owns its own
             // cleanup logic (timers, styles, refs) that the parent does not
@@ -2200,9 +2186,9 @@ export const DropdownItem2 = memo(function DropdownItem2(
             // this is unnecessary and may cause an infinite loop.
 
             logger.debug(
-                "useEffect: context provider requested open submenu for " +
-                `item '${props.text}' with ID ${submenuID} because ` +
-                "context includes it in openMenuIDsPath"
+                "useEffect: context provider requested open submenu for item " +
+                `with submenu ID ${submenuID} because context includes it in ` +
+                "openMenuIDsPath"
             );
 
             // cascading render is unavoidable: each submenu owns its own
@@ -2219,7 +2205,6 @@ export const DropdownItem2 = memo(function DropdownItem2(
         openMenuIDsPath,
         openSubmenu,
         submenuIsOpen,
-        props.text,
         isSubmenu,
         submenuID
     ]);
@@ -2296,38 +2281,8 @@ export const DropdownItem2 = memo(function DropdownItem2(
                 data-hover={hoveredMenuItem === submenuID}
                 data-secondary-focus={dropdownItemSecondaryFocus}
             >
-                {/* <span className="bd-dropdown-item-text">
-                    {props.text}
-                </span> */}
-                <Stack direction="horizontal" gap={3}>
-                    <i
-                        className={props.icon}
-                        style={{
-                            width: "20px",
-                            height: "16px",
-                        }}
-                    />
-                    <span className="bd-dropdown-item-text">
-                        {props.text}
-                    </span>
-                    {props.keyboardShortcutString && (
-                        <span className="border-" style={{
-                            color: "gray",
-                        }}>
-                            {props.keyboardShortcutString}
-                        </span>
-                    )}
-                    {isSubmenu && (
-                        <span
-                            style={{
-                                color: submenuIsOpen ? "black" : "gray"
-                            }}
-                        >
-                            <i className="fa-solid fa-caret-right"></i>
-                        </span>
-                    )}
-                </Stack>
-                {import.meta.env.VITE_DEBUG_SHOW_MENU_IDS === "true" &&
+                {props.children}
+                {debugConfig.showMenuIds &&
                     isSubmenu && (
                         <div className="bd-dropdown-debug-id">
                             {submenuID}

@@ -38,7 +38,8 @@
         "skipLibCheck": true,
     },
     "include": [
-        "src"
+        "src",
+        "src-gen"
     ],
     "exclude": [
         "node_modules",

@@ -9,7 +9,7 @@ import {
     useEffect
 } from "react";
 
-import { DropdownMenuContext } from "./DropdownMenuContext";
+import { DropdownMenuContext } from "../model/DropdownMenuContext";
 import type { DropdownMenuBeginContinuousScrolling } from "./DropdownMenuCore";
 
 import {

@@ -37,6 +37,12 @@ export type DebugConfig = {
      */
     disableExpandedHitbox: boolean;
 
+    /**
+     * If set to true, attaches debug utilities to the global window object
+     * for easy access from the browser console.
+     */
+    exposeDebugUtilitiesOnWindow: boolean;
+
 };
 
 /**
@@ -50,6 +56,7 @@ let debugConfig: Readonly<DebugConfig> = {
     showScrollScrollbarHitboxes: false,
     mouseExpandedHitbox: false,
     disableExpandedHitbox: false,
+    exposeDebugUtilitiesOnWindow: false
 };
 
 const debugConfigChangeListeners = new Set<() => void>();

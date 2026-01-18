@@ -5,7 +5,7 @@ import {
 
 import {
     type CustomScrollbarHandle
-} from "./CustomScrollbar";
+} from "../components/CustomScrollbar";
 
 export type DropdownSubmenuContextType = {
     readonly parentMenuIsOpen: boolean;

@@ -1,3 +1,3 @@
 export { DropdownMenu } from "./components/DropdownMenu";
-export { DropdownItem2 } from "./components/DropdownItem2";
+export { DropdownItem } from "./components/DropdownItem";
 export { setDebugConfig } from "./utils/debugConfig";

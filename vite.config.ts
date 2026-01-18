@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import dts from "vite-plugin-dts";
+import typedCssModules from "vite-plugin-typed-css-modules";
 
 export default defineConfig({
     build: {
@@ -17,7 +18,13 @@ export default defineConfig({
 
     plugins: [
         react(),
-
+        typedCssModules({
+            include: [
+                "**/*.module.css"
+            ],
+            rootDir: "src-gen",
+            srcDir: "src"
+        }),
         dts({
             insertTypesEntry: true
         })

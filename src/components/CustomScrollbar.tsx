@@ -20,6 +20,8 @@ import {
     HitboxTestableEvent
 } from "../model/HitboxTestableEvent";
 
+import { useDebugConfig } from "../hooks/useDebugConfig";
+
 import {
     clamp,
     isWebkit,
@@ -114,6 +116,8 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
     // const TOUCH_DOWN_PADDING = 80;
     // const TOUCH_DOWN_PADDING = 0;
 
+    const debugConfig = useDebugConfig();
+
     const {
         scrollContainerIsVisible,
         ref,
@@ -185,13 +189,16 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
      */
     const expandedScrollbarHitboxEnabled = useMemo((): boolean => {
         return (
-            import.meta.env.VITE_DEBUG_DISABLE_EXPANDED_HITBOX !== "true" &&
+            !debugConfig.disableExpandedHitbox &&
             (
                 isPrimarilyTouchDevice ||
-                import.meta.env.VITE_DEBUG_MOUSE_EXPANDED_HITBOX === "true"
+                debugConfig.mouseExpandedHitbox
             )
         );
-    }, []);
+    }, [
+        debugConfig.disableExpandedHitbox,
+        debugConfig.mouseExpandedHitbox
+    ]);
 
     const getExpandedHitbox = useCallback((
         rect: DOMRect,
@@ -922,7 +929,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
         }
 
         if (
-            import.meta.env.VITE_DEBUG_SHOW_SCROLL_SCROLLBAR_HITBOXES === "true"
+            debugConfig.showScrollScrollbarHitboxes
         ) {
             // the element itself is still only conditionally rendered based on
             // `isVisible`, but if debug hitboxes are enabled, show the hitbox
@@ -950,7 +957,8 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
         scrollContainerRef,
         scheduleGeometryUpdate,
         isVisible,
-        scrollbarHitbox
+        scrollbarHitbox,
+        debugConfig.showScrollScrollbarHitboxes
     ]);
 
     // MARK: useEffect: Setup window pointer, click, touch event handlers when
@@ -1079,7 +1087,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
                     className={styles.scrollbarThumb}
                     ref={scrollbarThumbRef}
                 >
-                    {import.meta.env.VITE_DEBUG_SHOW_SCROLL_SCROLLBAR_HITBOXES === "true" && (
+                    {debugConfig.showScrollScrollbarHitboxes && (
                         // debug show middle of thumb
                         <div style={{
                             backgroundColor: "red",
