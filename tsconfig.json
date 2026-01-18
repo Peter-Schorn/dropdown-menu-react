@@ -1,7 +1,10 @@
 {
     "compilerOptions": {
         // output
-        "rootDir": "./src",
+        "rootDirs": [
+            "src",
+            "src-gen"
+        ],
         "outDir": "./dist",
         "declaration": true,
         "declarationMap": true,
@@ -39,7 +42,6 @@
     },
     "include": [
         "src",
-        "src-gen"
     ],
     "exclude": [
         "node_modules",
