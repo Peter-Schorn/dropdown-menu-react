@@ -8,11 +8,32 @@
     "license": "ISC",
     "author": "Peter Schorn",
     "type": "module",
-    "main": "index.js",
-    "repository": {
-        
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
     },
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "build": "vite build",
+        "dev": "vite build --watch"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Peter-Schorn/dropdown-menu-react.git"
+    },
+    "peerDependencies": {
+        "react": ">=18",
+        "react-dom": ">=18"
+    },
+    "devDependencies": {
+        "@types/react": "^19.2.8",
+        "@vitejs/plugin-react": "^5.1.2",
+        "react": "^19.2.3",
+        "typescript": "^5.9.3",
+        "vite": "^7.3.1",
+        "vite-plugin-dts": "^4.5.4"
     }
 }
