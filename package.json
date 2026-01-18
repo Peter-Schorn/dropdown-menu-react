@@ -1,0 +1,18 @@
+{
+    "name": "dropdown-menu",
+    "version": "1.0.0",
+    "description": "Components for creating a nested dropdown menu in react.",
+    "keywords": [
+        "react"
+    ],
+    "license": "ISC",
+    "author": "Peter Schorn",
+    "type": "module",
+    "main": "index.js",
+    "repository": {
+        
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    }
+}
