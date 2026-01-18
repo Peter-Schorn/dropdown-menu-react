@@ -1,0 +1,291 @@
+:root {
+    --bd-dropdown-menu-active-background-color: #dddddd;
+}
+
+.bd-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.bd-dropdown-toggle {
+    background-color: rgb(157, 157, 157);
+    color: white;
+    padding: 5px;
+    width: 40px;
+    height: 38px;
+    font-size: 16px;
+    border: 1px solid black;
+    border-radius: 6px;
+    cursor: pointer;
+
+    /* disables double-tap to zoom, which removes the need for the browser to
+    delay the generation of click events when the user taps the screen */
+    touch-action: manipulation;
+}
+
+.bd-dropdown-menu-measuring-container {
+    --selected-background-color: #f1f1f1;
+    --scroll-arrow-container-height: 35px;
+    --border-radius: 6px;
+
+    display: none;
+    position: absolute;
+    background-color: white;
+    /* opacity: 0.5; */
+    /* width: max-content; */
+
+    max-height: none;
+    box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    border: 1px solid #d2d2d2;
+    /* border: 10px solid #D2D2D2; */
+    border-radius: var(--border-radius);
+
+    overflow: clip;
+
+    /* background-color: lightblue; */
+}
+
+.bd-dropdown-menu-measuring-container-show {
+    display: flex;
+}
+
+.bd-dropdown-menu {
+    flex-grow: 1;
+
+    /* this is exactly what I want (but limited availability): set the width to
+    max(max-content, 160px) and then constrain max width in javascript to fit
+    within the visual viewport, thereby allowing max-width to override the
+    min-width when max-width < min-width, which is the opposite of how the CSS
+    algorithm works (min- overrides max-) */
+    /* MARK: IF RE-ENABLING: remove min-width setting in javascript */
+    /* width: calc-size(max-content, max(size, 160px)); */
+
+    width: max-content;
+
+    /* scroll behavior */
+    overflow-y: auto;
+    overflow-x: clip;
+    /* position: relative; */
+
+    /* hide the native scrollbar; instead, the custom scroll bar component will
+    be shown */
+    scrollbar-width: none;
+
+    overscroll-behavior-y: contain;
+    scroll-padding-top: var(--scroll-arrow-container-height);
+    scroll-padding-bottom: var(--scroll-arrow-container-height);
+
+    /* background-color: lightcoral; */
+}
+
+/* .bd-dropdown-submenu {
+
+} */
+
+.bd-dropdown-menu-content {
+    padding: 5px 0px;
+    overflow: clip;
+    /* background-color: lightgreen; */
+    /* border: 1px solid green; */
+}
+
+.bd-dropdown-item-container {
+
+    /* remove all button styles */
+    all: unset;
+
+    box-sizing: border-box;
+
+    position: relative;
+    padding: 0px 5px;
+    display: block;
+    width: 100%;
+    /* border: 2px solid green; */
+
+    /* disables double-tap to zoom, which removes the need for the browser to
+    delay the generation of click events when the user taps the screen */
+    touch-action: manipulation;
+    cursor: pointer;
+}
+
+
+.bd-dropdown-item {
+    --secondary-selected-background-color: #f8f8f8;
+    /* --secondary-selected-background-color: rgb(220, 166, 166); */
+
+    position: relative;
+    color: black;
+    padding: 10px;
+    text-decoration: none;
+    display: block;
+    border-radius: var(--border-radius);
+    /* add some padding between focus ring and other dropdown items */
+    outline-offset: -1px;
+    /* background-color: red; */
+
+    /* disables double-tap to zoom, which removes the need for the browser to
+    delay the generation of click events when the user taps the screen */
+    touch-action: manipulation;
+}
+
+/* MARK: The order of the 4 selectors below is very specific to ensure proper
+  background color */
+
+.bd-dropdown-item[data-secondary-focus="true"] {
+    background-color: var(--secondary-selected-background-color);
+}
+
+.bd-dropdown-item[data-hover="true"] {
+    background-color: var(--selected-background-color);
+}
+
+.bd-dropdown-item-container:focus-visible .bd-dropdown-item {
+    /* ensure focus ring is rendered above all other dropdown items */
+    z-index: 3;
+    /* on Safari, the focus ring is not always displayed during keyboard
+    navigation */
+    outline: var(--barcode-drop-focus-ring-style);
+
+    background-color: var(--selected-background-color);
+}
+
+.bd-dropdown-item-container:active .bd-dropdown-item {
+    background-color: var(--bd-dropdown-menu-active-background-color);
+}
+
+/* --- end ordered selectors --- */
+
+.bd-dropdown-item-text {
+    /* white-space: nowrap; */
+    flex-grow: 1;
+}
+
+.bd-dropdown-main-debug-id {
+    display: inline-block;
+    position: absolute;
+    white-space: nowrap;
+    font-size: 0.6em;
+    padding: 2px;
+    color: black;
+    background-color: rgb(from lightgray r g b / 0.8);
+}
+
+.bd-dropdown-debug-id {
+    white-space: nowrap;
+    color: gray;
+    font-size: 0.6em;
+}
+
+.bd-dropdown-divider {
+    margin: 5px;
+}
+
+/* adding a sticky container with a height of zero ensures the element
+   does not take up any space in the scroll port */
+.bd-dropdown-scroll-arrow-sticky-container {
+    position: sticky;
+    z-index: 5;
+    left: 0;
+    right: 0;
+    height: 0;
+
+    /* prevent arrows from jiggling up and down due to sub-pixel rounding
+    errors */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+.bd-dropdown-scroll-arrow-sticky-container[data-position="top"] {
+    top: 0;
+}
+
+.bd-dropdown-scroll-arrow-sticky-container[data-position="bottom"] {
+    bottom: 0;
+}
+
+.bd-dropdown-scroll-arrow-container {
+    position: absolute;
+
+    display: none;
+    /* display: flex; */
+
+    /* safari does weird things with the width of the dropdown menu depending on
+    whether the scroll arrows are present or not */
+    /* visibility: hidden; */
+
+    justify-content: center;
+    /* expand to fill all available space on cross axis (y) */
+    align-items: stretch;
+    height: var(--scroll-arrow-container-height);
+    padding: 5px 5px;
+    left: 0;
+    right: 0;
+    /* border: 2px solid green; */
+
+    /* prevent arrows from jiggling up and down due to sub-pixel rounding
+    errors */
+    transform: translateY(0);
+    backface-visibility: hidden;
+}
+
+.bd-dropdown-scroll-arrow-container-show {
+    display: flex;
+
+    /* visibility: visible; */
+}
+
+.bd-dropdown-scroll-arrow-sticky-container[data-position="top"]
+    .bd-dropdown-scroll-arrow-container {
+    top: 0;
+
+    /* hide subpixel seam at the outer edge */
+    box-shadow: 0 -2px 0 0 white;
+
+    /* background-color: white; */
+    background: linear-gradient(to top, transparent 0%, white 20%);
+}
+
+.bd-dropdown-scroll-arrow-sticky-container[data-position="bottom"]
+    .bd-dropdown-scroll-arrow-container {
+    bottom: 0;
+
+    /* hide subpixel seam at the outer edge */
+    box-shadow: 0 2px 0 0 white;
+
+    /* background-color: white; */
+    background: linear-gradient(to bottom, transparent 0%, white 20%);
+}
+
+.bd-dropdown-scroll-arrow-container,
+.bd-dropdown-scroll-arrow-container * {
+    user-select: none;
+    /* Safari */
+    -webkit-user-select: none;
+    /* Firefox */
+    -moz-user-select: none;
+    /* IE10+/Edge */
+    -ms-user-select: none;
+}
+
+.bd-dropdown-scroll-arrow {
+    display: flex;
+    /* expand to fill all available space on main axis (y) */
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--border-radius);
+    /* border: 2px solid blue; */
+}
+
+.bd-dropdown-scroll-arrow:hover {
+    background-color: var(--selected-background-color);
+}
+
+.bd-dropdown-scroll-arrow:active {
+    background-color: var(--bd-dropdown-menu-active-background-color);
+}
+
+.bd-dropdown-toggle:hover {
+    background-color: rgb(130, 130, 130);
+}

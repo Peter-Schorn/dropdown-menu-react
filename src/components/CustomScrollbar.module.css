@@ -1,0 +1,74 @@
+.scrollbarTrack {
+    --width: 11px;
+
+    display: none;
+
+    /* prevent weirdness where it gets clipped by the scroll arrows */
+    z-index: 11;
+
+    /* prevent width changes in flex layouts */
+    flex: 0 0 var(--width);
+    width: var(--width);
+    min-width: var(--width);
+    max-width: var(--width);
+
+    background-color: rgba(107, 107, 107, 0.1);
+    border-left: 1px solid rgba(0, 0, 0, 0.175);
+
+    /* border: 5px solid black; */
+
+    /* prevent the user from selecting content */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+
+    /* prevent touch events on mobile */
+    touch-action: none;
+}
+
+@media (pointer: coarse) {
+    .scrollbarTrack {
+        /* touch devices used with fingers need a wider scrollbar */
+        --width: 15px;
+        /* --width: 100px; */
+    }
+}
+
+.scrollbarTrackShow {
+    display: block;
+}
+
+.scrollbarThumb {
+    --hover-color: #7d7d7d;
+
+    background-color: #c2c2c2;
+    /* make as large as possible to create capsule shape */
+    border-radius: 1000px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    display: flex;
+    flex-direction: column;
+
+    &:hover {
+        background-color: var(--hover-color);
+    }
+}
+
+.scrollbarHitbox {
+    display: block;
+    position: fixed;
+
+    /* prevent touch events on mobile */
+    touch-action: none;
+
+    z-index: 1000;
+}
+
+.debugScrollbarHitboxShow {
+    background-color: rgba(255, 0, 0, 0.1);
+    outline: 1px solid rgba(255, 0, 0, 0.5);
+}
