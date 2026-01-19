@@ -23,8 +23,14 @@ import {
     DropdownMenuCore
 } from "./DropdownMenuCore";
 
-import { DropdownMenuContext } from "../model/DropdownMenuContext";
-import { DropdownSubmenuContext } from "../model/DropdownSubmenuContext";
+import {
+    type DropdownMenuContextType,
+    DropdownMenuContext
+} from "../model/DropdownMenuContext";
+import {
+    type DropdownSubmenuContextType,
+    DropdownSubmenuContext
+} from "../model/DropdownSubmenuContext";
 import { MenuItemNode } from "../model/MenuItemNode";
 import {
     DropdownMenuEventEmitter,
@@ -73,48 +79,6 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         setSubmenusPortalContainer
     ] = useState<HTMLDivElement | null>(null);
 
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const dropdownToggleRef = useRef<HTMLButtonElement>(null);
-    const dropdownMenuMeasuringContainerRef = useRef<HTMLDivElement>(null);
-    const dropdownMenuRef = useRef<HTMLDivElement>(null);
-    const dropdownMenuContentRef = useRef<HTMLDivElement>(null);
-    const dropdownMenuCoreRef = useRef<DropdownMenuCoreHandle | null>(null);
-    const customScrollbarRef = useRef<CustomScrollbarHandle | null>(null);
-
-    const ignoreClicksUntilNextPointerDownRef = useRef<boolean>(false);
-
-    const menuID = useMemo(
-        () => crypto.randomUUID(),
-        []
-    );
-
-    const mainDropdownMenuEventEmitter = useMemo(
-        () => new DropdownMenuEventEmitter(),
-        []
-    );
-
-    const menuItemTreeRef = useRef(new MenuItemNode({ id: menuID }));
-
-    const menuItemsAlignmentRef = useRef<Map<string, HorizontalEdge>>(
-        new Map<string, HorizontalEdge>([
-            [menuID, "right"]
-        ])
-    );
-
-    const repositionMenusRafIdRef = useRef<number | null>(null);
-    const buildMenuItemTreeRafIdRef = useRef<number | null>(null);
-
-    const dropdownMenuSizeRef = useRef<DOMRect | null>(null);
-
-    /**
-     * Used to ignore the initial callback from the ResizeObserver, which
-     * occurs when the observer is first created. The useEffect that creates
-     * the ResizeObserver will rerun when certain dependencies change, which
-     * will recreate the ResizeObserver and trigger the initial callback even
-     * if the size has not changed.
-     */
-    const ignoreInitialResizeObserverCallbackRef = useRef<boolean>(false);
-
     const [openMenuIDsPath, setOpenMenuIDsPath] = useState<string[]>([]);
 
     const [
@@ -131,6 +95,56 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         disableMouseHoverEvents,
         setDisableMouseHoverEvents
     ] = useState<boolean>(true);
+
+    const menuID = useMemo(
+        () => crypto.randomUUID(),
+        []
+    );
+
+    const mainDropdownMenuEventEmitter = useMemo(
+        () => new DropdownMenuEventEmitter(),
+        []
+    );
+
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const dropdownToggleRef = useRef<HTMLButtonElement>(null);
+    const dropdownMenuMeasuringContainerRef = useRef<HTMLDivElement>(null);
+    const dropdownMenuRef = useRef<HTMLDivElement>(null);
+    const dropdownMenuContentRef = useRef<HTMLDivElement>(null);
+    const dropdownMenuCoreRef = useRef<DropdownMenuCoreHandle | null>(null);
+    const customScrollbarRef = useRef<CustomScrollbarHandle | null>(null);
+
+    const ignoreClicksUntilNextPointerDownRef = useRef<boolean>(false);
+
+    const menuItemTreeRef = useRef(new MenuItemNode({ id: menuID }));
+
+    const menuItemsAlignmentRef = useRef<Map<string, HorizontalEdge>>(
+        new Map<string, HorizontalEdge>([
+            [menuID, "right"]
+        ])
+    );
+
+    const repositionMenusRafIdRef = useRef<number | null>(null);
+    const buildMenuItemTreeRafIdRef = useRef<number | null>(null);
+
+    /**
+     * The size of the dropdown menu measuring container.
+     */
+    const dropdownMenuMeasuringContainerSizeRef = useRef<DOMRect | null>(null);
+
+    /**
+     * The size of the dropdown menu content.
+     */
+    const dropdownMenuContentSizeRef = useRef<DOMRect | null>(null);
+
+    /**
+     * Used to ignore the initial callback from the ResizeObserver, which
+     * occurs when the observer is first created. The useEffect that creates
+     * the ResizeObserver will rerun when certain dependencies change, which
+     * will recreate the ResizeObserver and trigger the initial callback even
+     * if the size has not changed.
+     */
+    const ignoreInitialResizeObserverCallbackRef = useRef<boolean>(false);
 
     const getSubmenuItemTree = useCallback((
         submenuID: string
@@ -659,8 +673,18 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
 
         // ensure the resize observer does not trigger another invocation of
         // this method
-        const newSize = dropdownMenuMeasuringContainer.getBoundingClientRect();
-        dropdownMenuSizeRef.current = newSize;
+        const measuringContainerNewSize =
+            dropdownMenuMeasuringContainer.getBoundingClientRect();
+        dropdownMenuMeasuringContainerSizeRef.current =
+            measuringContainerNewSize;
+
+        const contentNewSize =
+            dropdownMenuContent.getBoundingClientRect();
+        dropdownMenuContentSizeRef.current = contentNewSize;
+
+        logger.debug(
+            "------ positionDropdownMenu: end ------ "
+        );
 
         performance.mark("position-dropdown-menu-end", {
             detail: performanceMarkDetail
@@ -755,7 +779,10 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             cancelAnimationFrame(buildMenuItemTreeRafIdRef.current);
             buildMenuItemTreeRafIdRef.current = null;
         }
-        dropdownMenuSizeRef.current = null;
+        ignoreInitialResizeObserverCallbackRef.current = false;
+
+        dropdownMenuMeasuringContainerSizeRef.current = null;
+        dropdownMenuContentSizeRef.current = null;
 
     }, [
         menuID,
@@ -1379,15 +1406,22 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             scheduleBuildMenuItemTree();
         });
 
-        const resizeObserver = new ResizeObserver((entries): void => {
+        const resizeObserver = new ResizeObserver((/* entries */): void => {
 
             const dropdownMenuMeasuringContainer =
                 dropdownMenuMeasuringContainerRef.current;
 
-            if (!dropdownMenuMeasuringContainer) {
+            const dropdownMenuContent =
+                dropdownMenuContentRef.current;
+
+            if (
+                !dropdownMenuMeasuringContainer ||
+                !dropdownMenuContent
+            ) {
                 logger.warn(
                     "useEffect: ResizeObserver: " +
-                    "dropdownMenuMeasuringContainer is null; returning"
+                    "dropdownMenuMeasuringContainer or dropdownMenuContent " +
+                    "is null; returning"
                 );
                 return;
             }
@@ -1397,57 +1431,55 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                 return;
             }
 
-            if (
-                entries.length === 1 &&
-                entries[0]!.target === dropdownMenuContentRef.current
-            ) {
+            const measuringContainerOldSize =
+                dropdownMenuMeasuringContainerSizeRef.current;
+            const measuringContainerNewSize = dropdownMenuMeasuringContainer
+                .getBoundingClientRect();
+
+            dropdownMenuMeasuringContainerSizeRef.current =
+                measuringContainerNewSize;
+
+            const measuringContainerSizesEqual = domRectsAreEqual(
+                measuringContainerOldSize,
+                measuringContainerNewSize
+            );
+
+            const contentOldSize = dropdownMenuContentSizeRef.current;
+            const contentNewSize = dropdownMenuContent.getBoundingClientRect();
+
+            dropdownMenuContentSizeRef.current = contentNewSize;
+
+            const contentSizesEqual = domRectsAreEqual(
+                contentOldSize,
+                contentNewSize
+            );
+
+            const sizesEqual =
+                measuringContainerSizesEqual && contentSizesEqual;
+
+            logger.debug(
+                "useEffect: ResizeObserver: " +
+                "sizesEqual:", sizesEqual,
+                "measuringContainerSizesEqual:", measuringContainerSizesEqual,
+                "contentSizesEqual:", contentSizesEqual,
+                "\nmeasuringContainerOldSize:", measuringContainerOldSize,
+                "\nmeasuringContainerNewSize:", measuringContainerNewSize
+            );
+
+
+            if (sizesEqual) {
                 logger.debug(
-                    "useEffect: ResizeObserver: only dropdownMenuContent " +
-                    "changed size; updating scroll bar but not repositioning " +
-                    "dropdown menu"
+                    "useEffect: ResizeObserver: dropdown menu size did " +
+                    "not change; not repositioning dropdown menu"
                 );
-                customScrollbarRef.current?.scheduleGeometryUpdate({
-                    batchToAnimationFrame: true
-                });
             }
             else {
-
-                // logger.debug(
-                //     "useEffect: ResizeObserver: " +
-                //     "dropdownMenuMeasuringContainer.offsetWidth: " +
-                //     `${dropdownMenuMeasuringContainer.offsetWidth}`
-                // );
-
-                const oldSize = dropdownMenuSizeRef.current;
-                const newSize = dropdownMenuMeasuringContainer
-                    .getBoundingClientRect();
-
-                dropdownMenuSizeRef.current = newSize;
-
-                const sizesEqual = domRectsAreEqual(oldSize, newSize);
-
                 logger.debug(
-                    "useEffect: ResizeObserver: " +
-                    "sizesEqual:", sizesEqual,
-                    "\noldSize:", oldSize,
-                    "\nnewSize:", newSize
+                    "useEffect: ResizeObserver: dropdown menu resized; " +
+                    "repositioning dropdown menu"
                 );
 
-                if (sizesEqual) {
-                    logger.debug(
-                        "useEffect: ResizeObserver: dropdown menu size did " +
-                        "not change; not repositioning dropdown menu"
-                    );
-                }
-                else {
-                    logger.debug(
-                        "useEffect: ResizeObserver: dropdown menu resized; " +
-                        "repositioning dropdown menu"
-                    );
-
-                    scheduleDropdownMenuReposition();
-                }
-
+                scheduleDropdownMenuReposition();
             }
 
         });
@@ -1478,14 +1510,15 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                 resizeObserver.observe(
                     dropdownMenuMeasuringContainerRef.current
                 );
-                // MARK: Only send changes to custom scroll bar, not to
-                //  reposition the menu
                 // We must also observe changes to the dropdown menu content,
                 // because changes to its size may not always affect the size of
-                // the measuring container: For example, if the content size is
-                // already larger than the scroll port of the measuring
-                // container and additional content is added, then we need to
-                // notify the custom scroll bar to change its geometry
+                // the measuring container: For example, if the content size
+                // increases (e.g., by adding dropdown items), but the measuring
+                // container already has a set max height, then its size will
+                // not change. Also, if the content size is already larger than
+                // the scroll port of the measuring container and additional
+                // content is added, then we need to notify the custom scroll
+                // bar to change its geometry
                 resizeObserver.observe(
                     dropdownMenuContentRef.current
                 );
@@ -1606,7 +1639,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
     //     openDropdownMenu();
     // }, [openDropdownMenu]);
 
-    const dropdownMenuContextValue = useMemo(
+    const dropdownMenuContextValue = useMemo<DropdownMenuContextType>(
         () => ({
             isOpen,
             submenusPortalContainer,
@@ -1636,7 +1669,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         ]
     );
 
-    const dropdownSubmenuContextValue = useMemo(
+    const dropdownSubmenuContextValue = useMemo<DropdownSubmenuContextType>(
         () => ({
             parentMenuIsOpen: isOpen,
             parentDropdownMenuMeasuringContainerRef:

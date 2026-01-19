@@ -9,13 +9,21 @@ import React, {
     useCallback,
     useState,
     useMemo,
-    memo
+    memo,
+    type ReactNode
 } from "react";
 
 import { createPortal } from "react-dom";
 
 import { DropdownMenuContext } from "../model/DropdownMenuContext";
-import { DropdownSubmenuContext } from "../model/DropdownSubmenuContext";
+import {
+    type DropdownSubmenuContextType,
+    DropdownSubmenuContext
+} from "../model/DropdownSubmenuContext";
+import {
+    type DropdownItemSlotsContextType,
+    DropdownItemSlotsContext
+} from "../model/DropdownItemSlotsContext";
 
 import {
     type DropdownMenuCoreHandle,
@@ -74,7 +82,8 @@ export const DropdownItem = memo(function DropdownItem(
     const debugConfig = useDebugConfig();
 
     const {
-        onClick
+        onClick,
+        children
     } = props;
 
     // need to use individual properties of the context in dependency arrays
@@ -100,6 +109,27 @@ export const DropdownItem = memo(function DropdownItem(
         scrollbarHitbox: parentScrollbarHitbox,
         parentDropdownMenuMeasuringContainerRef
     } = useContext(DropdownSubmenuContext);
+
+    const [label, setLabel] = useState<ReactNode | null>(null);
+    const [submenu, setSubmenu] = useState<ReactNode | null>(null);
+
+    const [submenuIsOpen, setSubmenuIsOpen] = useState(false);
+    const [zIndex, setZIndex] = useState(10);
+
+    const [
+        scrollbarHitbox,
+        setScrollbarHitbox
+    ] = useState<HTMLDivElement | null>(null);
+
+    const [
+        dropdownItemSecondaryFocus,
+        setDropdownItemSecondaryFocus
+    ] = useState(false);
+
+    const isSubmenu = useMemo((): boolean => {
+        // return props.children !== undefined;
+        return submenu !== null && submenu !== undefined;
+    }, [submenu]);
 
     const dropdownMenuMeasuringContainerRef = useRef<HTMLDivElement>(null);
     const dropdownMenuRef = useRef<HTMLDivElement>(null);
@@ -139,7 +169,6 @@ export const DropdownItem = memo(function DropdownItem(
      */
     const parentMenuScrollTopAtOpenRef = useRef<number>(0);
 
-
     /** A unique identifier for this submenu */
     const submenuID = useMemo(
         () => crypto.randomUUID(),
@@ -157,7 +186,16 @@ export const DropdownItem = memo(function DropdownItem(
      */
     const ignoreInitialResizeObserverCallbackRef = useRef<boolean>(false);
 
-    const dropdownMenuSizeRef = useRef<DOMRect | null>(null);
+    /**
+     * The size of the dropdown menu measuring container.
+     */
+    const dropdownMenuMeasuringContainerSizeRef = useRef<DOMRect | null>(null);
+
+    /**
+     * The size of the dropdown menu content.
+     */
+    const dropdownMenuContentSizeRef = useRef<DOMRect | null>(null);
+
 
     /**
      * Whether or not the pointer is currently inside the dropdown item
@@ -167,23 +205,6 @@ export const DropdownItem = memo(function DropdownItem(
     const pointerIsOverDropdownItemContainerComponentTreeRef = useRef<boolean>(
         false
     );
-
-    const [submenuIsOpen, setSubmenuIsOpen] = useState(false);
-    const [zIndex, setZIndex] = useState(10);
-
-    const [
-        scrollbarHitbox,
-        setScrollbarHitbox
-    ] = useState<HTMLDivElement | null>(null);
-
-    const [
-        dropdownItemSecondaryFocus,
-        setDropdownItemSecondaryFocus
-    ] = useState(false);
-
-    const isSubmenu = useMemo((): boolean => {
-        return props.children !== undefined;
-    }, [props.children]);
 
     /**
      * Clears the hovered menu item if and only if this item is currently
@@ -1207,8 +1228,19 @@ export const DropdownItem = memo(function DropdownItem(
 
         // ensure the resize observer does not trigger another invocation of
         // this method
-        const newSize = dropdownMenuMeasuringContainer.getBoundingClientRect();
-        dropdownMenuSizeRef.current = newSize;
+        const measuringContainerNewSize =
+            dropdownMenuMeasuringContainer.getBoundingClientRect();
+        dropdownMenuMeasuringContainerSizeRef.current =
+            measuringContainerNewSize;
+
+        const contentNewSize =
+            dropdownMenuContent.getBoundingClientRect();
+        dropdownMenuContentSizeRef.current = contentNewSize;
+
+        logger.debug(
+            "------ positionSubmenu: end ------ " +
+            `for dropdown item with submenu ID ${submenuID}`
+        );
 
         performance.mark("position-submenu-end", {
             detail: performanceMarkDetail
@@ -1289,7 +1321,9 @@ export const DropdownItem = memo(function DropdownItem(
         );
 
         ignoreInitialResizeObserverCallbackRef.current = false;
-        dropdownMenuSizeRef.current = null;
+
+        dropdownMenuMeasuringContainerSizeRef.current = null;
+        dropdownMenuContentSizeRef.current = null;
 
     }, [
         contextCloseSubmenu,
@@ -1988,15 +2022,23 @@ export const DropdownItem = memo(function DropdownItem(
 
         logger.debug("useEffect: ResizeObserver begin");
 
-        const resizeObserver = new ResizeObserver((entries): void => {
+        const resizeObserver = new ResizeObserver((/* entries */): void => {
 
             const dropdownMenuMeasuringContainer =
                 dropdownMenuMeasuringContainerRef.current;
 
-            if (!dropdownMenuMeasuringContainer) {
+            const dropdownMenuContent =
+                dropdownMenuContentRef.current;
+
+
+            if (
+                !dropdownMenuMeasuringContainer ||
+                !dropdownMenuContent
+            ) {
                 logger.warn(
                     "useEffect: ResizeObserver: " +
-                    "dropdownMenuMeasuringContainer is null; returning"
+                    "dropdownMenuMeasuringContainer or dropdownMenuContent " +
+                    "is null; returning"
                 );
                 return;
             }
@@ -2006,53 +2048,57 @@ export const DropdownItem = memo(function DropdownItem(
                 return;
             }
 
-            if (
-                entries.length === 1 &&
-                entries[0]!.target === dropdownMenuContentRef.current
-            ) {
+
+            const measuringContainerOldSize =
+                dropdownMenuMeasuringContainerSizeRef.current;
+            const measuringContainerNewSize = dropdownMenuMeasuringContainer
+                .getBoundingClientRect();
+
+            dropdownMenuMeasuringContainerSizeRef.current =
+                measuringContainerNewSize;
+
+            const measuringContainerSizesEqual = domRectsAreEqual(
+                measuringContainerOldSize,
+                measuringContainerNewSize
+            );
+
+            const contentOldSize = dropdownMenuContentSizeRef.current;
+            const contentNewSize = dropdownMenuContent.getBoundingClientRect();
+
+            dropdownMenuContentSizeRef.current = contentNewSize;
+
+            const contentSizesEqual = domRectsAreEqual(
+                contentOldSize,
+                contentNewSize
+            );
+
+            const sizesEqual =
+                measuringContainerSizesEqual && contentSizesEqual;
+
+            logger.debug(
+                "useEffect: ResizeObserver: " +
+                "sizesEqual:", sizesEqual,
+                "measuringContainerSizesEqual:", measuringContainerSizesEqual,
+                "contentSizesEqual:", contentSizesEqual,
+                "\nmeasuringContainerOldSize:", measuringContainerOldSize,
+                "\nmeasuringContainerNewSize:", measuringContainerNewSize
+            );
+
+            if (sizesEqual) {
                 logger.debug(
-                    "useEffect: ResizeObserver: only dropdownMenuContent " +
-                    "changed size; updating scroll bar but not repositioning " +
-                    "dropdown menu"
+                    "useEffect: ResizeObserver: dropdown menu size did " +
+                    "NOT change; not repositioning dropdown menu"
                 );
-                customScrollbarRef.current?.scheduleGeometryUpdate({
-                    batchToAnimationFrame: true
-                });
             }
             else {
-
-
-                const oldSize = dropdownMenuSizeRef.current;
-                const newSize = dropdownMenuMeasuringContainer
-                    .getBoundingClientRect();
-
-                dropdownMenuSizeRef.current = newSize;
-
-                const sizesEqual = domRectsAreEqual(oldSize, newSize);
-
                 logger.debug(
-                    "useEffect: ResizeObserver: " +
-                    "sizesEqual:", sizesEqual,
-                    "\noldSize:", oldSize,
-                    "\nnewSize:", newSize
+                    "useEffect: ResizeObserver: dropdown menu DID " +
+                    "change; repositioning dropdown menu"
                 );
 
-                if (sizesEqual) {
-                    logger.debug(
-                        "useEffect: ResizeObserver: dropdown menu size did " +
-                        "NOT change; not repositioning dropdown menu"
-                    );
-                }
-                else {
-                    logger.debug(
-                        "useEffect: ResizeObserver: dropdown menu DID " +
-                        "change; repositioning dropdown menu"
-                    );
-
-                    scheduleDropdownMenuReposition();
-                }
-
+                scheduleDropdownMenuReposition();
             }
+
         });
 
         if (submenuIsOpen) {
@@ -2248,7 +2294,7 @@ export const DropdownItem = memo(function DropdownItem(
     //     }
     // }, [openSubmenu, props.text, submenuIsOpen]);
 
-    const dropdownSubmenuContextValue = useMemo(
+    const dropdownSubmenuContextValue = useMemo<DropdownSubmenuContextType>(
         () => ({
             parentMenuIsOpen: submenuIsOpen,
             parentDropdownMenuMeasuringContainerRef:
@@ -2262,87 +2308,100 @@ export const DropdownItem = memo(function DropdownItem(
         ]
     );
 
+    const dropdownItemSlotsContextValue = useMemo<DropdownItemSlotsContextType>(
+        () => ({
+            setLabel,
+            setSubmenu
+        }),
+        []
+    );
+
     return (
-        <button
-            className="bd-dropdown-item-container"
-            data-submenu-id={isSubmenu ? submenuID : undefined}
-            ref={dropdownItemContainerRef}
-            onPointerEnter={handleDropdownItemContainerPointerEnter}
-            onPointerLeave={handleDropdownItemContainerPointerLeave}
-            aria-haspopup={isSubmenu ? "menu" : undefined}
-            aria-expanded={isSubmenu ? submenuIsOpen : undefined}
-            aria-controls={isSubmenu ? submenuID : undefined}
-            aria-owns={isSubmenu ? submenuID : undefined}
+        <DropdownItemSlotsContext.Provider
+            value={dropdownItemSlotsContextValue}
         >
-            <div
-                className="bd-dropdown-item"
-                ref={dropdownItemRef}
+            {children}
+            <button
+                className="bd-dropdown-item-container"
                 data-submenu-id={isSubmenu ? submenuID : undefined}
-                data-hover={hoveredMenuItem === submenuID}
-                data-secondary-focus={dropdownItemSecondaryFocus}
+                ref={dropdownItemContainerRef}
+                onPointerEnter={handleDropdownItemContainerPointerEnter}
+                onPointerLeave={handleDropdownItemContainerPointerLeave}
+                aria-haspopup={isSubmenu ? "menu" : undefined}
+                aria-expanded={isSubmenu ? submenuIsOpen : undefined}
+                aria-controls={isSubmenu ? submenuID : undefined}
+                aria-owns={isSubmenu ? submenuID : undefined}
             >
-                {props.children}
-                {debugConfig.showMenuIds &&
-                    isSubmenu && (
-                        <div className="bd-dropdown-debug-id">
-                            {submenuID}
-                        </div>
-                    )
-                }
-            </div>
-            {/* WebKit (Safari) clips the submenu to the parent element when the
-                parent is scrollable. Also, even on non-WebKit browsers, the
-                submenu does not move up and down with the page when it is
-                rubber band scrolling if it is inside the
-                dropdownItemContainer. */}
-            {isSubmenu && createPortal((
-                // the measuring container is necessary so that the width of the
-                // scroll bar can be measured
                 <div
-                    className="bd-dropdown-menu-measuring-container"
-                    ref={dropdownMenuMeasuringContainerRef}
-                    role="menu"
-                    id={submenuID}
-                    data-submenu-id={submenuID}
-                    style={{
-                        zIndex
-                    }}
+                    className="bd-dropdown-item"
+                    ref={dropdownItemRef}
+                    data-submenu-id={isSubmenu ? submenuID : undefined}
+                    data-hover={hoveredMenuItem === submenuID}
+                    data-secondary-focus={dropdownItemSecondaryFocus}
                 >
-                    <div
-                        className="bd-dropdown-menu bd-dropdown-submenu"
-                        ref={dropdownMenuRef}
-                        onClick={handleDropdownMenuClick}
-                        data-submenu-id={submenuID}
-                    >
-                        <DropdownMenuCore
-                            isOpen={submenuIsOpen}
-                            ref={dropdownMenuCoreRef}
-                            dropdownMenuRef={dropdownMenuRef}
-                            dropdownMenuContentRef={dropdownMenuContentRef}
-                        >
-                            <DropdownSubmenuContext.Provider
-                                value={dropdownSubmenuContextValue}
-                            >
-                                {props.children}
-                            </DropdownSubmenuContext.Provider>
-                        </DropdownMenuCore>
-                    </div>
-                    <CustomScrollbar
-                        scrollContainerIsVisible={submenuIsOpen}
-                        ref={customScrollbarRef}
-                        scrollContainerWrapperRef={
-                            dropdownMenuMeasuringContainerRef
-                        }
-                        scrollContainerRef={dropdownMenuRef}
-                        scrollbarHitbox={scrollbarHitbox}
-                        setScrollbarHitbox={setScrollbarHitbox}
-                        zIndex={zIndex}
-                    />
+                    {label}
+                    {debugConfig.showMenuIds &&
+                        isSubmenu && (
+                            <div className="bd-dropdown-debug-id">
+                                {submenuID}
+                            </div>
+                        )
+                    }
                 </div>
-            ),
-                submenusPortalContainer
-                ?? document.body
-            )}
-        </button>
+                {/* WebKit (Safari) clips the submenu to the parent element when the
+                    parent is scrollable. Also, even on non-WebKit browsers, the
+                    submenu does not move up and down with the page when it is
+                    rubber band scrolling if it is inside the
+                    dropdownItemContainer. */}
+                {isSubmenu && createPortal((
+                    // the measuring container is necessary so that the width of the
+                    // scroll bar can be measured
+                    <div
+                        className="bd-dropdown-menu-measuring-container"
+                        ref={dropdownMenuMeasuringContainerRef}
+                        role="menu"
+                        id={submenuID}
+                        data-submenu-id={submenuID}
+                        style={{
+                            zIndex
+                        }}
+                    >
+                        <div
+                            className="bd-dropdown-menu bd-dropdown-submenu"
+                            ref={dropdownMenuRef}
+                            onClick={handleDropdownMenuClick}
+                            data-submenu-id={submenuID}
+                        >
+                            <DropdownMenuCore
+                                isOpen={submenuIsOpen}
+                                ref={dropdownMenuCoreRef}
+                                dropdownMenuRef={dropdownMenuRef}
+                                dropdownMenuContentRef={dropdownMenuContentRef}
+                            >
+                                <DropdownSubmenuContext.Provider
+                                    value={dropdownSubmenuContextValue}
+                                >
+                                    {submenu}
+                                </DropdownSubmenuContext.Provider>
+                            </DropdownMenuCore>
+                        </div>
+                        <CustomScrollbar
+                            scrollContainerIsVisible={submenuIsOpen}
+                            ref={customScrollbarRef}
+                            scrollContainerWrapperRef={
+                                dropdownMenuMeasuringContainerRef
+                            }
+                            scrollContainerRef={dropdownMenuRef}
+                            scrollbarHitbox={scrollbarHitbox}
+                            setScrollbarHitbox={setScrollbarHitbox}
+                            zIndex={zIndex}
+                        />
+                    </div>
+                ),
+                    submenusPortalContainer
+                    ?? document.body
+                )}
+            </button>
+        </DropdownItemSlotsContext.Provider>
     );
 });

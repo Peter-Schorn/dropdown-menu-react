@@ -17,23 +17,24 @@
         ".": {
             "import": "./dist/index.js",
             "types": "./dist/index.d.ts"
-        }
+        },
+        "./index.css": "./dist/index.css",
+        "./loglevel": "./dist/logLevelModuleIntegration.js"
     },
     "scripts": {
-        "build": "vite build",
+        "build": "tsc -b && vite build",
         "dev": "vite build --watch",
-        "lint": "eslint ."
+        "lint": "eslint .",
+        "clean-build": "rm -rf dist && npm run build"
     },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Peter-Schorn/dropdown-menu-react.git"
     },
-    "dependencies": {
-        "loglevel": "^1.9.2"
-    },
     "peerDependencies": {
         "react": ">=18",
-        "react-dom": ">=18"
+        "react-dom": ">=18",
+        "loglevel": "^1.9.2"
     },
     "devDependencies": {
         "@eslint/js": "^9.39.2",

@@ -1,7 +1,3 @@
-:root {
-    --bd-dropdown-menu-active-background-color: #dddddd;
-}
-
 .bd-dropdown {
     position: relative;
     display: inline-block;
@@ -26,6 +22,10 @@
 .bd-dropdown-menu-measuring-container {
     --selected-background-color: #f1f1f1;
     --scroll-arrow-container-height: 35px;
+    --bd-dropdown-menu-active-background-color: #dddddd;
+    --dropdown-menu-focus-ring-color: rgba(236, 112, 2, 0.65);
+    --dropdown-menu-focus-ring-style: 2px solid
+        var(--dropdown-menu-focus-ring-color);
     --border-radius: 6px;
 
     display: none;
@@ -91,7 +91,6 @@
 }
 
 .bd-dropdown-item-container {
-
     /* remove all button styles */
     all: unset;
 
@@ -108,7 +107,6 @@
     touch-action: manipulation;
     cursor: pointer;
 }
-
 
 .bd-dropdown-item {
     --secondary-selected-background-color: #f8f8f8;
@@ -145,7 +143,7 @@
     z-index: 3;
     /* on Safari, the focus ring is not always displayed during keyboard
     navigation */
-    outline: var(--barcode-drop-focus-ring-style);
+    outline: var(--dropdown-menu-focus-ring-style);
 
     background-color: var(--selected-background-color);
 }
@@ -181,111 +179,3 @@
     margin: 5px;
 }
 
-/* adding a sticky container with a height of zero ensures the element
-   does not take up any space in the scroll port */
-.bd-dropdown-scroll-arrow-sticky-container {
-    position: sticky;
-    z-index: 5;
-    left: 0;
-    right: 0;
-    height: 0;
-
-    /* prevent arrows from jiggling up and down due to sub-pixel rounding
-    errors */
-    transform: translateZ(0);
-    will-change: transform;
-}
-
-.bd-dropdown-scroll-arrow-sticky-container[data-position="top"] {
-    top: 0;
-}
-
-.bd-dropdown-scroll-arrow-sticky-container[data-position="bottom"] {
-    bottom: 0;
-}
-
-.bd-dropdown-scroll-arrow-container {
-    position: absolute;
-
-    display: none;
-    /* display: flex; */
-
-    /* safari does weird things with the width of the dropdown menu depending on
-    whether the scroll arrows are present or not */
-    /* visibility: hidden; */
-
-    justify-content: center;
-    /* expand to fill all available space on cross axis (y) */
-    align-items: stretch;
-    height: var(--scroll-arrow-container-height);
-    padding: 5px 5px;
-    left: 0;
-    right: 0;
-    /* border: 2px solid green; */
-
-    /* prevent arrows from jiggling up and down due to sub-pixel rounding
-    errors */
-    transform: translateY(0);
-    backface-visibility: hidden;
-}
-
-.bd-dropdown-scroll-arrow-container-show {
-    display: flex;
-
-    /* visibility: visible; */
-}
-
-.bd-dropdown-scroll-arrow-sticky-container[data-position="top"]
-    .bd-dropdown-scroll-arrow-container {
-    top: 0;
-
-    /* hide subpixel seam at the outer edge */
-    box-shadow: 0 -2px 0 0 white;
-
-    /* background-color: white; */
-    background: linear-gradient(to top, transparent 0%, white 20%);
-}
-
-.bd-dropdown-scroll-arrow-sticky-container[data-position="bottom"]
-    .bd-dropdown-scroll-arrow-container {
-    bottom: 0;
-
-    /* hide subpixel seam at the outer edge */
-    box-shadow: 0 2px 0 0 white;
-
-    /* background-color: white; */
-    background: linear-gradient(to bottom, transparent 0%, white 20%);
-}
-
-.bd-dropdown-scroll-arrow-container,
-.bd-dropdown-scroll-arrow-container * {
-    user-select: none;
-    /* Safari */
-    -webkit-user-select: none;
-    /* Firefox */
-    -moz-user-select: none;
-    /* IE10+/Edge */
-    -ms-user-select: none;
-}
-
-.bd-dropdown-scroll-arrow {
-    display: flex;
-    /* expand to fill all available space on main axis (y) */
-    flex: 1;
-    justify-content: center;
-    align-items: center;
-    border-radius: var(--border-radius);
-    /* border: 2px solid blue; */
-}
-
-.bd-dropdown-scroll-arrow:hover {
-    background-color: var(--selected-background-color);
-}
-
-.bd-dropdown-scroll-arrow:active {
-    background-color: var(--bd-dropdown-menu-active-background-color);
-}
-
-.bd-dropdown-toggle:hover {
-    background-color: rgb(130, 130, 130);
-}
