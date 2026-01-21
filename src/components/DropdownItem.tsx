@@ -893,99 +893,75 @@ export const DropdownItem = memo(function DropdownItem(
 
         // MARK: Check if submenu would overflow right side of *VISUAL* viewport
         let overflowsVisualViewportRight: boolean;
+
+        let visibleRightEdge: number;
+
         if (isWebkit) {
             // is Safari
-            const visibleRightEdge = visibleWidth;
-
-            /**
-             * The right edge of this submenu if it were ideally positioned to
-             * the right of the parent menu.
-             */
-            const dropdownMenuIdealRightEdge = dropdownItemRect.right
-                + dropdownMenuRect.width;
-
-            if (dropdownMenuIdealRightEdge + horizontalPadding > visibleRightEdge) {
-                overflowsVisualViewportRight = true;
-            }
-            else {
-                overflowsVisualViewportRight = false;
-            }
-
+            visibleRightEdge = visibleWidth;
         }
         else {
             // is Chrome
-            const visibleRightEdge = visibleWidth + vOffsetLeft;
-
-            /**
-             * The right edge of this submenu if it were ideally positioned to
-             * the right of the parent menu.
-             */
-            const dropdownMenuIdealRightEdge = dropdownItemRect.right
-                + dropdownMenuRect.width;
-
-            if (dropdownMenuIdealRightEdge + horizontalPadding > visibleRightEdge) {
-                overflowsVisualViewportRight = true;
-            }
-            else {
-                overflowsVisualViewportRight = false;
-            }
-
-            logger.debug(
-                "positionSubmenu: dropdownMenuRect:", dropdownMenuRect,
-                `\nidealRightEdge: ${dropdownMenuIdealRightEdge}; ` +
-                `visibleRightEdge: ${visibleRightEdge}; ` +
-                `overflowsVisualViewportRight: ${overflowsVisualViewportRight}`
-            );
+            visibleRightEdge = visibleWidth + vOffsetLeft;
         }
+
+
+        /**
+         * The right edge of this submenu if it were ideally positioned to
+         * the right of the parent menu.
+         */
+        const dropdownMenuIdealRightEdge = dropdownItemRect.right
+            + dropdownMenuRect.width;
+
+        if (dropdownMenuIdealRightEdge + horizontalPadding > visibleRightEdge) {
+            overflowsVisualViewportRight = true;
+        }
+        else {
+            overflowsVisualViewportRight = false;
+        }
+
+        logger.debug(
+            "positionSubmenu: dropdownMenuRect:", dropdownMenuRect,
+            `\nidealRightEdge: ${dropdownMenuIdealRightEdge}; ` +
+            `visibleRightEdge: ${visibleRightEdge}; ` +
+            `overflowsVisualViewportRight: ${overflowsVisualViewportRight}`
+        );
+
 
         // MARK: Check if submenu would overflow left side of *VISUAL* viewport
         let overflowsVisualViewportLeft: boolean;
+
+        let visibleLeftEdge: number;
+
         if (isWebkit) {
             // is Safari
-
-            /**
-             * The left edge of this submenu if it were ideally positioned to
-             * the left of the parent menu.
-             */
-            const dropdownMenuIdealLeftEdge = dropdownItemRect.left
-                - dropdownMenuRect.width;
-
-            const visibleLeftEdge = horizontalPadding;
-
-            if (visibleLeftEdge > dropdownMenuIdealLeftEdge) {
-                overflowsVisualViewportLeft = true;
-            }
-            else {
-                overflowsVisualViewportLeft = false;
-            }
-
+            visibleLeftEdge = horizontalPadding;
         }
         else {
             // is Chrome
-
-            /**
-             * The left edge of this submenu if it were ideally positioned to
-             * the left of the parent menu.
-             */
-            const dropdownMenuIdealLeftEdge = dropdownItemRect.left
-                - dropdownMenuRect.width;
-
-            const visibleLeftEdge = vOffsetLeft + horizontalPadding;
-
-            if (visibleLeftEdge > dropdownMenuIdealLeftEdge) {
-                overflowsVisualViewportLeft = true;
-            }
-            else {
-                overflowsVisualViewportLeft = false;
-            }
-
-            // logger.debug(
-            //     `positionSubmenu: idealLeftOffset: ${idealLeftOffset}; ` +
-            //     `visibleLeftEdge: ${visibleLeftEdge}; ` +
-            //     `overflowsVisualViewportLeft: ${overflowsVisualViewportLeft}`
-            // );
-
+            visibleLeftEdge = vOffsetLeft + horizontalPadding;
         }
+
+        /**
+         * The left edge of this submenu if it were ideally positioned to
+         * the left of the parent menu.
+         */
+        const dropdownMenuIdealLeftEdge = dropdownItemRect.left
+            - dropdownMenuRect.width;
+
+        if (visibleLeftEdge > dropdownMenuIdealLeftEdge) {
+            overflowsVisualViewportLeft = true;
+        }
+        else {
+            overflowsVisualViewportLeft = false;
+        }
+
+        // logger.debug(
+        //     `positionSubmenu: idealLeftOffset: ${idealLeftOffset}; ` +
+        //     `visibleLeftEdge: ${visibleLeftEdge}; ` +
+        //     `overflowsVisualViewportLeft: ${overflowsVisualViewportLeft}`
+        // );
+
 
         // MARK: Determine Horizontal Alignment
         // #region determine-horizontal-alignment
@@ -1030,64 +1006,46 @@ export const DropdownItem = memo(function DropdownItem(
                 "positioning on side with more space"
             );
 
+            /**
+             * The distance from the left edge of the visual viewport to the
+             * left edge of the dropdown item container.
+             */
+            let distanceToLeftEdge: number;
+
+            /**
+             * The distance from the right edge of the visual viewport to the
+             * right edge of the dropdown item container.
+             */
+            let distanceToRightEdge: number;
+
             if (isWebkit) {
                 // is Safari
-                /**
-                 * The distance from the left edge of the visual viewport to
-                 * the left edge of the dropdown item container.
-                 */
-                const distanceToLeftEdge = dropdownItemRect.left;
-
-
-                /**
-                 * The distance from the right edge of the visual viewport to
-                 * the right edge of the dropdown item container.
-                 */
-                const distanceToRightEdge = visibleWidth - dropdownItemRect.right;
-
-                if (distanceToLeftEdge > distanceToRightEdge) {
-                    // position to the left of parent
-                    alignment = "left";
-                } else /* if (distanceToRightEdge >= distanceToLeftEdge) */ {
-                    // position to the right of parent
-                    alignment = "right";
-                }
+                distanceToLeftEdge = dropdownItemRect.left;
+                distanceToRightEdge = visibleWidth - dropdownItemRect.right;
             }
             else {
                 // is Chrome
-
-                /**
-                 * The distance from the left edge of the visual viewport to
-                 * the left edge of the dropdown item container.
-                 */
-                const distanceToLeftEdge = dropdownItemRect.left
-                    - vOffsetLeft;
-
-
-                /**
-                 * The distance from the right edge of the visual viewport to
-                 * the right edge of the dropdown item container.
-                 */
-                const distanceToRightEdge = visibleWidth - dropdownItemRect.right
+                distanceToLeftEdge = dropdownItemRect.left - vOffsetLeft;
+                distanceToRightEdge = visibleWidth - dropdownItemRect.right
                     + vOffsetLeft;
+            }
 
-                // const leftLargest = distanceToLeftEdge > distanceToRightEdge;
-                // const rightLargest = distanceToRightEdge > distanceToLeftEdge;
+            // const leftLargest = distanceToLeftEdge > distanceToRightEdge;
+            // const rightLargest = distanceToRightEdge > distanceToLeftEdge;
 
-                // logger.debug(
-                //     "positionSubmenu: " +
-                //     `\ndistanceToLeftEdge: ${distanceToLeftEdge} (largest: ${leftLargest})` +
-                //     `\ndistanceToRightEdge: ${distanceToRightEdge} (largest: ${rightLargest})`
-                // );
+            // logger.debug(
+            //     "positionSubmenu: " +
+            //     `\ndistanceToLeftEdge: ${distanceToLeftEdge} (largest: ${leftLargest})` +
+            //     `\ndistanceToRightEdge: ${distanceToRightEdge} (largest: ${rightLargest})`
+            // );
 
-                if (distanceToLeftEdge > distanceToRightEdge) {
-                    // position to the left of parent
-                    alignment = "left";
-                }
-                else /* if (distanceToRightEdge >= distanceToLeftEdge) */ {
-                    // position to the right of parent
-                    alignment = "right";
-                }
+            if (distanceToLeftEdge > distanceToRightEdge) {
+                // position to the left of parent
+                alignment = "left";
+            }
+            else /* if (distanceToRightEdge >= distanceToLeftEdge) */ {
+                // position to the right of parent
+                alignment = "right";
             }
         }
         else if (
@@ -1130,92 +1088,63 @@ export const DropdownItem = memo(function DropdownItem(
         if (alignment === "left") {
             // MARK: Position to the left of parent
 
+            let minLeftOffset: number;
+
             if (isWebkit) {
                 // is Safari
-
-                const minLeftOffset = scrollX + horizontalPadding;
-
-                const idealLeftOffset = dropdownItemRect.left - 1
-                    - dropdownMenuRect.width + scrollX;
-
-                const leftOffset = Math.max(
-                    idealLeftOffset,
-                    minLeftOffset
-                );
-
-                // MARK: Apply left positioning (Safari)
-                dropdownMenuMeasuringContainer.style.left = `${leftOffset}px`;
-
-                logger.debug(
-                    "positionSubmenu: left alignment: " +
-                    "dropdownMenuMeasuringContainerRect:", dropdownMenuRect,
-                    `\nidealLeft: ${idealLeftOffset}; ` +
-                    `minLeft: ${minLeftOffset}; ` +
-                    `leftOffset: ${leftOffset}`
-                );
+                minLeftOffset = scrollX + horizontalPadding;
             }
             else {
                 // is Chrome
-
-                const minLeftOffset = scrollX + horizontalPadding + vOffsetLeft;
-
-                const idealLeftOffset = dropdownItemRect.left - 1
-                    - dropdownMenuRect.width + scrollX;
-
-                const leftOffset = Math.max(
-                    idealLeftOffset,
-                    minLeftOffset
-                );
-
-                // MARK: Apply left positioning (Chrome)
-                dropdownMenuMeasuringContainer.style.left = `${leftOffset}px`;
-
-                logger.debug(
-                    "positionSubmenu: left alignment: " +
-                    // `oldIdealLeftOffset: ${oldIdealLeftOffset}; ` +
-                    `idealLeftOffset: ${idealLeftOffset}; ` +
-                    `minLeftOffset: ${minLeftOffset}; ` +
-                    `leftOffset: ${leftOffset}`
-                );
+                minLeftOffset = scrollX + horizontalPadding + vOffsetLeft;
             }
+
+            const idealLeftOffset = dropdownItemRect.left - 1
+                - dropdownMenuRect.width + scrollX;
+
+            const leftOffset = Math.max(
+                idealLeftOffset,
+                minLeftOffset
+            );
+
+            // MARK: Apply left positioning
+            dropdownMenuMeasuringContainer.style.left = `${leftOffset}px`;
+
+            logger.debug(
+                "positionSubmenu: left alignment: " +
+                "dropdownMenuMeasuringContainerRect:", dropdownMenuRect,
+                `\nidealLeft: ${idealLeftOffset}; ` +
+                `minLeft: ${minLeftOffset}; ` +
+                `leftOffset: ${leftOffset}`
+            );
+
         }
         else /* if (alignment === "right") */ {
             // MARK: Position to the right of parent
 
+            let maxLeftOffset: number;
+
             if (isWebkit) {
                 // is Safari
-
-                const idealLeftOffset = dropdownItemRect.right + 1 +
-                    scrollX;
-
-                const maxLeftOffset = visibleWidth - dropdownMenuRect.width
+                maxLeftOffset = visibleWidth - dropdownMenuRect.width
                     + scrollX - horizontalPadding;
-
-                const leftOffset = Math.min(
-                    idealLeftOffset,
-                    maxLeftOffset
-                );
-
-                // MARK: Apply right positioning (Safari)
-                dropdownMenuMeasuringContainer.style.left = `${leftOffset}px`;
             }
             else {
                 // is Chrome
-
-                const idealLeftOffset = dropdownItemRect.right + 1 +
-                    scrollX;
-
-                const maxLeftOffset = visibleWidth - dropdownMenuRect.width
+                maxLeftOffset = visibleWidth - dropdownMenuRect.width
                     + scrollX + vOffsetLeft - horizontalPadding;
-
-                const leftOffset = Math.min(
-                    idealLeftOffset,
-                    maxLeftOffset
-                );
-
-                // MARK: Apply right positioning (Chrome)
-                dropdownMenuMeasuringContainer.style.left = `${leftOffset}px`;
             }
+
+            const idealLeftOffset = dropdownItemRect.right + 1 +
+                scrollX;
+
+            const leftOffset = Math.min(
+                idealLeftOffset,
+                maxLeftOffset
+            );
+
+            // MARK: Apply right positioning
+            dropdownMenuMeasuringContainer.style.left = `${leftOffset}px`;
         }
 
         logger.debug(

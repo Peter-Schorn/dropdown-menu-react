@@ -7,8 +7,7 @@ import {
     useRef,
     useState,
     useImperativeHandle,
-    useEffect,
-    useLayoutEffect
+    useEffect
 } from "react";
 
 import { DropdownMenuScrollArrow } from "./DropdownMenuScrollArrow";
@@ -369,12 +368,8 @@ export function DropdownMenuCore(props: DropdownMenuCoreProps): JSX.Element {
     ]);
 
 
-    // MARK: update scroll properties when the dropdown menu is scrolled or
-    //  resized
-    useLayoutEffect(() => {
-
-        // useLayoutEffect is necessary because the immediate call to
-        // updateScrollProperties changes whether the scroll arrows appear
+    // MARK: update scroll properties when the dropdown menu is scrolled
+    useEffect(() => {
 
         function onScroll(): void {
             logger.debug(
@@ -386,9 +381,10 @@ export function DropdownMenuCore(props: DropdownMenuCoreProps): JSX.Element {
         const dropdownMenu = dropdownMenuRef.current;
 
         if (isOpen) {
-            // cannot use flushSync in a lifecycle method that is called during
-            // rendering.
-            updateScrollProperties({ flush: false });
+            // we do NOT need to call updateScrollProperties() here because the
+            // code that opens the menu will call it directly after opening the
+            // menu and positioning it
+
             if (dropdownMenu) {
                 dropdownMenu.addEventListener("scroll", onScroll);
             }

@@ -320,7 +320,8 @@ export function DropdownMenuScrollArrow(
 
                 appearedDateRef.current = null;
                 logger.debug(
-                    `useEffect: ${edge} set appearedDateRef to null`
+                    `useEffect: ${edge}: hide scroll arrow; set ` +
+                    "appearedDateRef to null"
                 );
             }
             else {
@@ -332,8 +333,8 @@ export function DropdownMenuScrollArrow(
 
                 appearedDateRef.current = new Date();
                 logger.debug(
-                    `useEffect: ${edge} set appearedDateRef to: ` +
-                    `${appearedDateRef.current}`
+                    `useEffect: ${edge}: show scroll arrow; set ` +
+                    `appearedDateRef to: ${appearedDateRef.current}`
                 );
                 pointerHasLeftAtLeastOnceSinceAppearRef.current = false;
             }
