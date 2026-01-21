@@ -5,12 +5,14 @@ import typedCssModules from "vite-plugin-typed-css-modules";
 
 export default defineConfig({
     build: {
+        sourcemap: true,
         lib: {
             entry: {
                 index: "src/index.ts",
                 loglevel: "src/logLevelModuleIntegration.ts"
             },
-            formats: ["es"]
+            formats: ["es"],
+            cssFileName: "index"
         },
         rollupOptions: {
             // do NOT bundle react
@@ -18,17 +20,7 @@ export default defineConfig({
                 "react",
                 "react-dom",
                 "loglevel"
-            ],
-            output: {
-                assetFileNames: (assetInfo) => {
-                    // console.log("\nassetInfo:", assetInfo);
-                    // console.log("------ end assetInfo ------");
-                    if (assetInfo.names.some(name => name.endsWith(".css"))) {
-                        return "index.css";
-                    }
-                    return assetInfo.names[0] ?? "[name][extname]";
-                },
-            }
+            ]
         }
     },
 

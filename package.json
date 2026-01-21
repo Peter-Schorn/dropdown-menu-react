@@ -18,8 +18,11 @@
             "import": "./dist/index.js",
             "types": "./dist/index.d.ts"
         },
-        "./index.css": "./dist/index.css",
-        "./loglevel": "./dist/logLevelModuleIntegration.js"
+        "./loglevel": {
+            "import": "./dist/loglevel.js",
+            "types": "./dist/loglevel.d.ts"
+        },
+        "./index.css": "./dist/index.css"
     },
     "scripts": {
         "build": "tsc -b && vite build",

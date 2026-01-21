@@ -43,6 +43,11 @@ export type DebugConfig = {
      */
     exposeDebugUtilitiesOnWindow: boolean;
 
+    /**
+     * If set to true, disables closing the menu when clicking outside of it.
+     */
+    disableMenuCloseOnClickOutside: boolean;
+
 };
 
 /**
@@ -56,7 +61,8 @@ let debugConfig: Readonly<DebugConfig> = {
     showScrollScrollbarHitboxes: false,
     mouseExpandedHitbox: false,
     disableExpandedHitbox: false,
-    exposeDebugUtilitiesOnWindow: false
+    exposeDebugUtilitiesOnWindow: false,
+    disableMenuCloseOnClickOutside: false
 };
 
 const debugConfigChangeListeners = new Set<() => void>();
@@ -75,7 +81,6 @@ function notifyDebugConfigChange(): void {
  * set.
  */
 export function setDebugConfig(newConfig: Partial<DebugConfig>): void {
-    // Object.assign(debugConfig, newConfig);
     debugConfig = {
         ...debugConfig,
         ...newConfig

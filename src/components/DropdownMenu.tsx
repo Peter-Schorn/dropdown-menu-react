@@ -615,8 +615,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         // width of the scroll container, which itself affects horizontal
         // positioning of this menu
         customScrollbarRef.current?.scheduleGeometryUpdate({
-            // this callee is already batched to animation frames and we need
-            // an update immediately anyway because the horizontal positioning
+            // this caller is already batched to animation frames and we need an
+            // update immediately anyway because the horizontal positioning
             // logic below relies on up-to-date geometry
             batchToAnimationFrame: false,
             // we will call `repositionScrollbarHitbox` after updating the
@@ -668,6 +668,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         );
 
         // #endregion horizontal-positioning
+
+        dropdownMenuCoreRef.current?.updateScrollProperties();
 
         customScrollbarRef.current?.repositionScrollbarHitbox();
 
@@ -1268,6 +1270,9 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
     useEffect(() => {
         logger.debug("useEffect: click outside begin");
 
+        if (debugConfig.disableMenuCloseOnClickOutside) {
+            return;
+        }
         function onClickOutside(event: MouseEvent): void {
 
             if (ignoreClicksUntilNextPointerDownRef.current) {
@@ -1312,7 +1317,11 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             window.removeEventListener("click", onClickOutside);
         };
 
-    }, [closeDropdownMenu, isOpen]);
+    }, [
+        closeDropdownMenu,
+        isOpen,
+        debugConfig.disableMenuCloseOnClickOutside
+    ]);
 
     // MARK: useEffect: keydown
     useEffect(() => {

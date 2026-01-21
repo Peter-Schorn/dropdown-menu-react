@@ -1,3 +1,5 @@
+import { flushSync } from "react-dom";
+
 export type HorizontalEdge = "left" | "right";
 export type VerticalEdge = "top" | "bottom";
 
@@ -58,8 +60,8 @@ export function clamp(value: number, { min, max }: ClampOptions): number {
  * @returns `true` if the DOMRect objects are equal; otherwise, `false`.
  */
 export function domRectsAreEqual(
-    rectA: DOMRect | null,
-    rectB: DOMRect | null
+    rectA: DOMRectReadOnly | null,
+    rectB: DOMRectReadOnly | null
 ): boolean {
 
     if (rectA === rectB) {
@@ -70,11 +72,7 @@ export function domRectsAreEqual(
         rectA?.x === rectB?.x &&
         rectA?.y === rectB?.y &&
         rectA?.width === rectB?.width &&
-        rectA?.height === rectB?.height &&
-        rectA?.top === rectB?.top &&
-        rectA?.right === rectB?.right &&
-        rectA?.bottom === rectB?.bottom &&
-        rectA?.left === rectB?.left
+        rectA?.height === rectB?.height
     );
 }
 
@@ -104,4 +102,23 @@ export function eventWithinDomRect(
         event.clientY < rect.bottom
     );
 
+}
+
+/**
+ * Flushes updates synchronously if the given condition is `true`. Otherwise,
+ * just calls the given function directly.
+ *
+ * @param condition - The condition to test.
+ * @param func - The function to call.
+ */
+export function flushSyncIf(
+    condition: boolean,
+    func: () => void
+): void {
+    if (condition) {
+        flushSync(func);
+    }
+    else {
+        func();
+    }
 }

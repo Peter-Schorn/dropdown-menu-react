@@ -18,6 +18,7 @@
             "dom.iterable",
             "es2020"
         ],
+        "types": [],
         // react
         "jsx": "react-jsx",
         "jsxImportSource": "react",

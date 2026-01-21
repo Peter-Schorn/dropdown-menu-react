@@ -4,4 +4,9 @@ export { DropdownItem } from "./components/DropdownItem";
 export { DropdownItemLabel } from "./components/DropdownItemLabel";
 export { DropdownItemSubmenu } from "./components/DropdownItemSubmenu";
 export { setDebugConfig } from "./utils/debugConfig";
-export { setLoggers } from "./utils/loggers";
+export {
+    type DropdownMenuLogger,
+    type DropdownMenuLoggers,
+    type SetLoggers,
+    setLoggers
+} from "./utils/loggers";

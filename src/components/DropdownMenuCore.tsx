@@ -18,8 +18,22 @@ import { dropdownMenuCoreLogger as logger } from "../utils/loggers";
 import { VelocityKickDetector } from "../model/VelocityKickDetector";
 
 import {
-    type VerticalEdge
+    type VerticalEdge,
+    flushSyncIf
 } from "../utils/MiscellaneousUtilities";
+
+export type DropdownMenuBeginContinuousScrolling = (
+    edge: VerticalEdge,
+    speed: "slow" | "fast"
+) => void;
+
+export type UpdateScrollPropertiesOptions = {
+    flush?: boolean;
+};
+
+export type UpdateScrollProperties = (
+    options?: UpdateScrollPropertiesOptions
+) => void;
 
 export type DropdownMenuCoreProps = PropsWithChildren & {
     /** Whether this dropdown menu/submenu is open. */
@@ -31,12 +45,8 @@ export type DropdownMenuCoreProps = PropsWithChildren & {
 
 export type DropdownMenuCoreHandle = {
     endContinuousScrolling: () => void;
+    updateScrollProperties: UpdateScrollProperties;
 };
-
-export type DropdownMenuBeginContinuousScrolling = (
-    edge: VerticalEdge,
-    speed: "slow" | "fast"
-) => void;
 
 /**
  * Contains the core logic shared by both the main dropdown menu and the
@@ -84,7 +94,9 @@ export function DropdownMenuCore(props: DropdownMenuCoreProps): JSX.Element {
 
     const pointerIsOverScrollArrowDownRef = useRef<boolean>(false);
 
-    const updateScrollProperties = useCallback((): void => {
+    const updateScrollProperties = useCallback<UpdateScrollProperties>((
+        { flush = true } = {}
+    ): void => {
 
         const dropdownMenu = dropdownMenuRef.current;
         if (!dropdownMenu) {
@@ -104,38 +116,54 @@ export function DropdownMenuCore(props: DropdownMenuCoreProps): JSX.Element {
             `\ndropdownMenu.scrollHeight: ${dropdownMenu.scrollHeight}`
         );
 
-        if (dropdownMenu.scrollTop <= 2) {
-            // dropdown menu content is at the top of the dropdown menu
-            setIsScrolledToTop(true);
-            logger.debug(
-                "updateScrollProperties: setIsScrolledToTop(true)"
-            );
-        }
-        else {
-            // dropdown menu content is scrolled down
-            logger.debug(
-                "updateScrollProperties: setIsScrolledToTop(false)"
-            );
-            setIsScrolledToTop(false);
-        }
+        // Theses updates to setIsScrolledToTop/Bottom must be flushed
+        // synchronously. When `positionDropdownMenu`, which synchronously calls
+        // this method, is called (e.g. in response to a visual viewport
+        // resize), it imperatively mutates DOM layout to set the dropdown
+        // menu's position, which may affect the below calculation of whether
+        // the menu content is scrolled to the top/bottom. If we allow the state
+        // update to be deferred, the browser may paint after the end of this
+        // task based on the imperative DOM mutations but before React commits
+        // this state change, causing a visible intermediate layout (e.g. scroll
+        // arrows briefly out of sync). `flushSync` forces React to commit this
+        // update and run any dependent layout effects before the next paint,
+        // keeping the visual update atomic.
+        flushSyncIf(flush, () => {
+            if (dropdownMenu.scrollTop <= 2) {
+                // the top of the dropdown menu content is at the top of the
+                // dropdown menu
+                setIsScrolledToTop(true);
+                logger.debug(
+                    "updateScrollProperties: setIsScrolledToTop(true)"
+                );
+            }
+            else {
+                // dropdown menu content is scrolled down
+                logger.debug(
+                    "updateScrollProperties: setIsScrolledToTop(false)"
+                );
+                setIsScrolledToTop(false);
+            }
 
-        if (
-            dropdownMenu.scrollTop + dropdownMenu.clientHeight >=
-            dropdownMenu.scrollHeight - 2
-        ) {
-            // dropdown menu content is at the bottom of the dropdown menu
-            setIsScrolledToBottom(true);
-            logger.debug(
-                "updateScrollProperties: setIsScrolledToBottom(true)"
-            );
-        }
-        else {
-            // dropdown menu content is scrolled up
-            setIsScrolledToBottom(false);
-            logger.debug(
-                "updateScrollProperties: setIsScrolledToBottom(false)"
-            );
-        }
+            if (
+                dropdownMenu.scrollTop + dropdownMenu.clientHeight >=
+                dropdownMenu.scrollHeight - 2
+            ) {
+                // the bottom of the dropdown menu content is at the bottom of the
+                // dropdown menu
+                setIsScrolledToBottom(true);
+                logger.debug(
+                    "updateScrollProperties: setIsScrolledToBottom(true)"
+                );
+            }
+            else {
+                // dropdown menu content is scrolled up
+                setIsScrolledToBottom(false);
+                logger.debug(
+                    "updateScrollProperties: setIsScrolledToBottom(false)"
+                );
+            }
+        });
 
     }, [
         // re-enable for logging
@@ -332,9 +360,13 @@ export function DropdownMenuCore(props: DropdownMenuCoreProps): JSX.Element {
         dropdownMenuRef
     ]);
 
-    useImperativeHandle(ref, () => ({
-        endContinuousScrolling
-    }), [endContinuousScrolling]);
+    useImperativeHandle(ref, (): DropdownMenuCoreHandle => ({
+        endContinuousScrolling,
+        updateScrollProperties
+    }), [
+        endContinuousScrolling,
+        updateScrollProperties
+    ]);
 
 
     // MARK: update scroll properties when the dropdown menu is scrolled or
@@ -344,26 +376,21 @@ export function DropdownMenuCore(props: DropdownMenuCoreProps): JSX.Element {
         // useLayoutEffect is necessary because the immediate call to
         // updateScrollProperties changes whether the scroll arrows appear
 
-        const resizeObserver = new ResizeObserver((): void => {
-            logger.info("DropdownMenuCore: useEffect: ResizeObserver callback");
+        function onScroll(): void {
+            logger.debug(
+                "DropdownMenuCore: useEffect: scroll event"
+            );
             updateScrollProperties();
-        });
+        }
 
         const dropdownMenu = dropdownMenuRef.current;
-        const dropdownMenuContent = dropdownMenuContentRef.current;
 
         if (isOpen) {
-            // I don't think I really have a choice here
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            updateScrollProperties();
-            if (dropdownMenu && dropdownMenuContent) {
-                dropdownMenu.addEventListener("scroll", updateScrollProperties);
-                resizeObserver.observe(dropdownMenu);
-                // We must also observe changes to dropdownMenuContent. For
-                // example, if the content already overflows the dropdown menu
-                // and more content is added, then the size of dropdownMenu
-                // will not change, but the size of dropdownMenuContent will.
-                resizeObserver.observe(dropdownMenuContent);
+            // cannot use flushSync in a lifecycle method that is called during
+            // rendering.
+            updateScrollProperties({ flush: false });
+            if (dropdownMenu) {
+                dropdownMenu.addEventListener("scroll", onScroll);
             }
             else {
                 logger.warn(
@@ -375,15 +402,13 @@ export function DropdownMenuCore(props: DropdownMenuCoreProps): JSX.Element {
 
         return (): void => {
             dropdownMenu?.removeEventListener(
-                "scroll", updateScrollProperties
+                "scroll", onScroll
             );
-            resizeObserver.disconnect();
         };
 
     }, [
         isOpen,
         dropdownMenuRef,
-        dropdownMenuContentRef,
         updateScrollProperties
     ]);
 

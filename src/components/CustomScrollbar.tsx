@@ -298,9 +298,10 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
 
         // content overflows the scroll container: show the scrollbar.
 
-        // when becoming visible, ensure the state is updated synchronously so
+        // When becoming visible, ensure the state is updated synchronously so
         // that the hitbox, which is only conditionally rendered, is inserted in
-        // the DOM and the ref is set before we try to reposition it below
+        // the DOM and the ref is set before we try to reposition it below when
+        // calling `repositionScrollbarHitbox`.
         if (!trackShouldShow) {
             flushSync(() => {
                 setTrackShouldShow(true);

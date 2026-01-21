@@ -196,6 +196,7 @@ export const DropdownItem = memo(function DropdownItem(
      */
     const dropdownMenuContentSizeRef = useRef<DOMRect | null>(null);
 
+    // logger.debug(`render dropdown item submenu ID ${submenuID}`);
 
     /**
      * Whether or not the pointer is currently inside the dropdown item
@@ -1223,6 +1224,8 @@ export const DropdownItem = memo(function DropdownItem(
             "\ndropdownMenuMeasuringContainer.style.top:",
             dropdownMenuMeasuringContainer.style.top
         );
+
+        dropdownMenuCoreRef.current?.updateScrollProperties();
 
         customScrollbarRef.current?.repositionScrollbarHitbox();
 
