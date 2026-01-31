@@ -35,7 +35,7 @@ export type ClampOptions = {
  * const clampedValue = clamp(10, { min: 0, max: 5 });
  * ```
  */
-export function clamp(value: number, { min, max }: ClampOptions): number {
+export function clamp(value:  number, { min, max }: ClampOptions): number {
     let resolvedMin: number;
     let resolvedMax: number;
 
@@ -122,3 +122,68 @@ export function flushSyncIf(
         func();
     }
 }
+
+
+/**
+ * Compares two arrays for **shallow** equality by comparing each of their
+ * elements.
+ *
+ * @param arrayA The first array.
+ * @param arrayB The second array.
+ *
+ * @returns `true` if the arrays are equal; otherwise, `false`.
+ */
+export function arraysAreEqualShallow<T>(
+    arrayA: readonly T[] | null,
+    arrayB: readonly T[] | null
+): boolean {
+    if (arrayA === arrayB) {
+        return true;
+    }
+
+    if (arrayA === null || arrayB === null) {
+        return false;
+    }
+
+    if (arrayA.length !== arrayB.length) {
+        return false;
+    }
+
+    for (let i = 0; i < arrayA.length; i++) {
+        if (arrayA[i] !== arrayB[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Compares two objects for **shallow** equality by comparing each of their
+ * properties.
+ *
+ * @param objA The first object.
+ * @param objB The second object.
+ *
+ * @returns `true` if the objects are equal; otherwise, `false`.
+ */
+export function objectsAreEqualShallow<T extends Record<string, unknown>>(
+    objA: T,
+    objB: T
+): boolean {
+    const keysA = Object.keys(objA);
+    const keysB = Object.keys(objB);
+
+    if (keysA.length !== keysB.length) {
+        return false;
+    }
+
+    for (const key of keysA) {
+        if (objA[key] !== objB[key]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+

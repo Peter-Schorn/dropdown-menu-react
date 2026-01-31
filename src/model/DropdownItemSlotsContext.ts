@@ -2,13 +2,12 @@ import {
     type ReactNode,
     createContext,
     useContext
-    // useMemo,
-    // useState
 } from "react";
 
 export type DropdownItemSlotsContextType = {
     setLabel: (node: ReactNode | null) => void;
     setSubmenu: (node: ReactNode | null) => void;
+    setSubmenuID: (id: string | null) => void;
 };
 
 export const DropdownItemSlotsContext =

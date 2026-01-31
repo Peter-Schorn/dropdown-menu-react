@@ -7,3 +7,5 @@ export function DropdownDivider(): JSX.Element {
         <hr className="bd-dropdown-divider" />
     );
 }
+
+DropdownDivider.displayName = "DropdownDivider";

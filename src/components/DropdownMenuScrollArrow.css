@@ -11,6 +11,7 @@
     errors */
     transform: translateZ(0);
     will-change: transform;
+    box-sizing: border-box;
 }
 
 .bd-dropdown-scroll-arrow-sticky-container[data-position="top"] {
@@ -44,6 +45,7 @@
     errors */
     transform: translateY(0);
     backface-visibility: hidden;
+    box-sizing: border-box;
 }
 
 .bd-dropdown-scroll-arrow-container-show {
@@ -93,6 +95,7 @@
     align-items: center;
     border-radius: var(--border-radius);
     /* border: 2px solid blue; */
+    box-sizing: border-box;
 }
 
 .bd-dropdown-scroll-arrow:hover {

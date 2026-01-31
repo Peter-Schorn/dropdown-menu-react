@@ -1,21 +1,24 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import dts from "vite-plugin-dts";
 import typedCssModules from "vite-plugin-typed-css-modules";
 
 export default defineConfig({
     build: {
         sourcemap: true,
+        // necessary because `tsc` is used to emit declaration files into the
+        // `dist` folder, which would be deleted by `vite build` if
+        // `emptyOutDir` were true
+        emptyOutDir: false,
         lib: {
+            name: "dropdown-menu",
             entry: {
                 index: "src/index.ts",
-                loglevel: "src/logLevelModuleIntegration.ts"
+                loglevel: "src/loglevel.ts"
             },
             formats: ["es"],
             cssFileName: "index"
         },
         rollupOptions: {
-            // do NOT bundle react
             external: [
                 "react",
                 "react-dom",
@@ -32,9 +35,6 @@ export default defineConfig({
             ],
             rootDir: "src-gen",
             srcDir: "src"
-        }),
-        dts({
-            insertTypesEntry: true
         })
     ]
 });

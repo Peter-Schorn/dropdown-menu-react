@@ -9,6 +9,7 @@ import React, {
     useRef,
     useState,
     memo,
+    useImperativeHandle
 } from "react";
 
 import { createPortal, flushSync } from "react-dom";
@@ -41,6 +42,10 @@ import {
     DROPDOWN_IDEAL_MIN_WIDTH
 } from "../utils/constants";
 
+import { useArrayState } from "../hooks/useArrayState";
+
+import { useEffectEvent } from "../hooks/useEffectEvent";
+
 import { useDebugConfig } from "../hooks/useDebugConfig";
 
 import {
@@ -52,15 +57,39 @@ import {
 
 // import {
 //     useEffectDebug
-// } from "../../hooks/useEffectDebug";
+// } from "../hooks/useEffectDebug";
 
 // import {
 //     useCallbackDebug
-// } from "../../hooks/useCallbackDebug";
+// } from "../hooks/useCallbackDebug";
 
 import { dropdownMenuLogger as logger } from "../utils/loggers";
 
-export type DropdownMenuProps = PropsWithChildren /* & { } */;
+export type DropdownMenuHandle = {
+    openSubmenu: (submenuID: string) => void;
+    closeSubmenu: (submenuID: string) => void;
+};
+
+export type DropdownMenuPropsBase = PropsWithChildren & {
+    /**
+     * Optional ref to access DropdownMenuHandle methods.
+     */
+    handle?: React.Ref<DropdownMenuHandle>;
+};
+
+export type DropdownMenuPropsInternallyControlled = DropdownMenuPropsBase & {
+    isOpen?: never;
+    onOpenChange?: never;
+};
+
+export type DropdownMenuPropsExternallyControlled = DropdownMenuPropsBase & {
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+};
+
+export type DropdownMenuProps =
+    | DropdownMenuPropsInternallyControlled
+    | DropdownMenuPropsExternallyControlled;
 
 export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps): JSX.Element {
 
@@ -69,17 +98,77 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
     const debugConfig = useDebugConfig();
 
     const {
+        handle,
+        isOpen: externalIsOpen,
+        onOpenChange,
         children
     } = props;
 
-    const [isOpen, setIsOpen] = useState(false);
+    // The internal open state of the dropdown menu. Used when the open state is
+    // not controlled externally via the `isOpen` prop.
+    const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+    /**
+     * Whether the open state is controlled externally via the `isOpen` prop
+     * provided by the user of this component.
+     */
+    const isExternallyControlled = externalIsOpen !== undefined;
+
+    /**
+     * The current open state of the dropdown menu. This is either controlled
+     * externally via the `externalIsOpen` prop, or internally via state
+     * (internalIsOpen).
+     */
+    const isOpen = isExternallyControlled
+        ? externalIsOpen
+        : internalIsOpen;
+
+    /**
+     * Sets the open state of the dropdown menu. If the open state is controlled
+     * externally, this will call the `onOpenChange` callback instead. If the
+     * open state is controlled internally, this will update the
+     * `internalIsOpen` state.
+     */
+    const setIsOpen = useCallback((
+        open: boolean | ((prevIsOpen: boolean) => boolean)
+    ): void => {
+
+        if (isExternallyControlled) {
+            // When `open` is a function, we call it with the `setIsOpen`
+            // closure's `isOpen` value, which could theoretically be stale if
+            // multiple updates occur before re-render. However, this is
+            // acceptable because in controlled mode, the parent owns the state
+            // and should handle updates properly.
+            const resolvedOpen = typeof open === "function"
+                ? open(isOpen)
+                : open;
+
+            onOpenChange(resolvedOpen);
+        } else {
+            // when internally controlled, we pass `open` directly to
+            // setInternalIsOpen, which guarantees access to the latest state
+            // via React's state updater mechanism
+            setInternalIsOpen(open);
+        }
+    }, [
+        isExternallyControlled,
+        onOpenChange,
+        isOpen
+    ]);
+
+    /**
+     * Whether the dropdown menu has finished opening. This becomes true after
+     * the menu has been opened and positioned. It becomes false when the menu
+     * is closed.
+     */
+    const didFinishOpenRef = useRef(false);
 
     const [
         submenusPortalContainer,
         setSubmenusPortalContainer
     ] = useState<HTMLDivElement | null>(null);
 
-    const [openMenuIDsPath, setOpenMenuIDsPath] = useState<string[]>([]);
+    const [openMenuIDsPath, setOpenMenuIDsPath] = useArrayState<string>([]);
 
     const [
         scrollbarHitbox,
@@ -138,11 +227,11 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
     const dropdownMenuContentSizeRef = useRef<DOMRect | null>(null);
 
     /**
-     * Used to ignore the initial callback from the ResizeObserver, which
-     * occurs when the observer is first created. The useEffect that creates
-     * the ResizeObserver will rerun when certain dependencies change, which
-     * will recreate the ResizeObserver and trigger the initial callback even
-     * if the size has not changed.
+     * Used to ignore the initial callback from the ResizeObserver, which occurs
+     * when the observer is first created. The useEffect that creates the
+     * ResizeObserver will rerun when certain dependencies change, which will
+     * recreate the ResizeObserver and trigger the initial callback even if the
+     * size has not changed.
      */
     const ignoreInitialResizeObserverCallbackRef = useRef<boolean>(false);
 
@@ -252,13 +341,13 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
     }, [buildMenuItemTree]);
 
     /**
-     * Notifies the submenus that they should reposition themselves. This
-     * should only occur after the main dropdown menu has finished positioning
-     * itself, because the position of the submenus is relative to the
-     * position of the main dropdown menu. Furthermore, the position of each
-     * submenu is relative to the position of its parent menu item, so
-     * the request for each submenu to reposition itself should occur in the
-     * order of the depth of the submenus in the menu item tree.
+     * Notifies the submenus that they should reposition themselves. This should
+     * only occur after the main dropdown menu has finished positioning itself,
+     * because the position of the submenus is relative to the position of the
+     * main dropdown menu. Furthermore, the position of each submenu is relative
+     * to the position of its parent menu item, so the request for each submenu
+     * to reposition itself should occur in the order of the depth of the
+     * submenus in the menu item tree.
      */
     const requestRepositionSubmenus = useCallback((): void => {
 
@@ -293,7 +382,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         openMenuIDsPath
     ]);
 
-    const positionDropdownMenu = useCallback((): void => {
+    const positionDropdownMenu = useCallback((
+    ): void => {
 
         const performanceMarkDetail = {
             menuID: menuID,
@@ -350,8 +440,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         const dropdownMenuContentRect = dropdownMenuContent.getBoundingClientRect();
 
         /**
-         * The vertical padding inside the dropdown menu container: Reflects
-         * the difference between the height of the dropdown menu measuring
+         * The vertical padding inside the dropdown menu container: Reflects the
+         * difference between the height of the dropdown menu measuring
          * container and the height of the dropdown menu content.
          */
         const dropdownMenuContainerVerticalPadding = Math.round(
@@ -411,17 +501,17 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
 
         /**
          * The height of the dropdown menu container if there were no scroll
-         * bars. Represents the total height that would be needed to display
-         * the entire dropdown menu.
+         * bars. Represents the total height that would be needed to display the
+         * entire dropdown menu.
          */
         const idealDropdownMenuContainerHeight =
             dropdownMenuContentRect.height
             + dropdownMenuContainerVerticalPadding;
 
         /**
-         * The bottom of the dropdown menu if the height was not constrained
-         * to be above the bottom of the visual viewport and there were no
-         * scroll bars.
+         * The bottom of the dropdown menu if the height was not constrained to
+         * be above the bottom of the visual viewport and there were no scroll
+         * bars.
          */
         const idealDropdownMenuContainerScrollBottom =
             dropdownToggleRect.bottom + idealDropdownMenuContainerHeight;
@@ -464,7 +554,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         if (overflowsVisualViewportBottom && moreSpaceAboveDropdownToggle) {
             // MARK: Align above the dropdown toggle
 
-            // MARK: Ensure menu does not overflow the *VISUAL* viewport
+            // Ensure menu does not overflow the *VISUAL* viewport
 
             logger.debug(
                 "positionDropdownMenu: aligning bottom edge of menu to " +
@@ -472,14 +562,14 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             );
 
             /**
-             * The ideal top offset to align the bottom of the dropdown
-             * menu to the top of the dropdown toggle.
+             * The ideal top offset to align the bottom of the dropdown menu to
+             * the top of the dropdown toggle.
              */
             const idealTopOffset = -idealDropdownMenuContainerHeight;
 
             /**
-             * The minimum top offset that would prevent the top of the
-             * dropdown menu from overflowing the top of the visual viewport
+             * The minimum top offset that would prevent the top of the dropdown
+             * menu from overflowing the top of the visual viewport
              */
             const minTopOffset = visibleTopEdge - dropdownToggleRect.top
                 + verticalPadding;
@@ -547,11 +637,11 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         else {
             // MARK: Align below the dropdown toggle
 
-            // MARK: Ensure menu does not overflow the *VISUAL* viewport
+            // Ensure menu does not overflow the *VISUAL* viewport
 
             /**
-             * The ideal top offset to align the top of the dropdown
-             * menu to the bottom of the dropdown toggle.
+             * The ideal top offset to align the top of the dropdown menu to the
+             * bottom of the dropdown toggle.
              */
             const idealTopOffset = dropdownToggleRect.height;
 
@@ -643,8 +733,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         }
 
 
-        // position the left edge of the menu to the left edge of the
-        //  dropdown toggle
+        // position the left edge of the menu to the left edge of the dropdown
+        // toggle
         const idealLeftOffset = 0;
 
         const minLeftOffset = -dropdownToggleRect.left + horizontalPadding
@@ -700,11 +790,18 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
 
         requestRepositionSubmenus();
 
-    }, [
-        openMenuIDsPath,
-        requestRepositionSubmenus,
-        menuID
-    ]);
+    },
+        [
+            openMenuIDsPath,
+            requestRepositionSubmenus,
+            menuID
+        ]
+        // [
+        //     "openMenuIDsPath",
+        //     "requestRepositionSubmenus",
+        //     "menuID"
+        // ]
+    );
 
     const scheduleDropdownMenuReposition = useCallback((): void => {
 
@@ -732,6 +829,15 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         logger.debug(
             `openDropdownMenu: id: ${menuID}`
         );
+
+        if (didFinishOpenRef.current) {
+            logger.debug(
+                `openDropdownMenu: menu with ID ${menuID} is already open; ` +
+                "not opening again"
+            );
+            return;
+        }
+
         dropdownMenuRef.current?.scrollTo(0, 0);
         dropdownMenuMeasuringContainerRef.current?.classList.add(
             "bd-dropdown-menu-measuring-container-show"
@@ -741,18 +847,36 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         ]);
         scheduleBuildMenuItemTree();
         setOpenMenuIDsPath([menuID]);
-        setIsOpen(true);
         positionDropdownMenu();
-    }, [
-        scheduleBuildMenuItemTree,
-        positionDropdownMenu,
-        menuID
-    ]);
+        didFinishOpenRef.current = true;
+    },
+        [
+            scheduleBuildMenuItemTree,
+            positionDropdownMenu,
+            menuID,
+            setOpenMenuIDsPath
+        ]
+        // [
+        //     "scheduleBuildMenuItemTree",
+        //     "positionDropdownMenu",
+        //     "menuID",
+        //     "setOpenMenuIDsPath",
+        //     "isOpen"
+        // ]
+    );
 
     const closeDropdownMenu = useCallback((): void => {
         logger.debug(
             `closeDropdownMenu: id: ${menuID}`
         );
+
+        if (!didFinishOpenRef.current) {
+            logger.debug(
+                `closeDropdownMenu: menu with ID ${menuID} is already ` +
+                "closed; not closing again"
+            );
+            return;
+        }
 
         const dropdownMenuMeasuringContainer =
             dropdownMenuMeasuringContainerRef.current;
@@ -768,7 +892,6 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             "bd-dropdown-menu-measuring-container-show"
         );
 
-        setIsOpen(false);
         setOpenMenuIDsPath([]);
         setHoveredMenuItem(null);
         menuItemsAlignmentRef.current.clear();
@@ -785,10 +908,17 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
 
         dropdownMenuMeasuringContainerSizeRef.current = null;
         dropdownMenuContentSizeRef.current = null;
-
+        didFinishOpenRef.current = false;
     }, [
         menuID,
-        setHoveredMenuItem
+        setHoveredMenuItem,
+        setOpenMenuIDsPath
+    ]);
+
+    const toggleDropdownMenu = useCallback((): void => {
+        setIsOpen((isOpen => !isOpen));
+    }, [
+        setIsOpen
     ]);
 
     const openSubmenu = useCallback((
@@ -842,7 +972,10 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             });
         });
 
-    }, [isOpen]);
+    }, [
+        isOpen,
+        setOpenMenuIDsPath
+    ]);
 
     const closeSubmenu = useCallback((
         submenuID: string
@@ -862,6 +995,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                 return prevIDs;
             }
 
+            // if the submenuID is the root menu, close the entire dropdown
             if (submenuID === menuID) {
                 // not really what this method is intended for, but we can
                 // easily handle this case
@@ -869,7 +1003,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                     `closeSubmenu: submenu with ID ${submenuID} is the root menu; ` +
                     "closing all menus"
                 );
-                closeDropdownMenu();
+                // closeDropdownMenu();
+                setIsOpen(false);
                 return [];
             }
 
@@ -899,15 +1034,16 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             return newIds;
         });
     }, [
-        closeDropdownMenu,
-        menuID
+        setIsOpen,
+        menuID,
+        setOpenMenuIDsPath
     ]);
 
     const handleClick = useCallback((
         event: React.MouseEvent<HTMLDivElement, MouseEvent>
     ): void => {
 
-        logger.debug("handleClick");
+        logger.debug("handleClick; event.target:", event.target);
 
         if (ignoreClicksUntilNextPointerDownRef.current) {
             logger.debug(
@@ -931,17 +1067,10 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             return;
         }
 
-        if (isOpen) {
-            closeDropdownMenu();
-        }
-        else {
-            openDropdownMenu();
-        }
+        toggleDropdownMenu();
 
     }, [
-        closeDropdownMenu,
-        openDropdownMenu,
-        isOpen
+        toggleDropdownMenu
     ]);
 
     /**
@@ -1102,7 +1231,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         if (event.key === "Escape") {
             logger.debug("handleKeyDown: Escape");
             event.preventDefault();
-            closeDropdownMenu();
+            // closeDropdownMenu();
+            setIsOpen(false);
         }
         else if (event.key === "Enter") {
             logger.debug("handleKeyDown: Enter");
@@ -1256,7 +1386,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         }
 
     }, [
-        closeDropdownMenu,
+        setIsOpen,
         getCurrentMenuDropdownItems,
         isOpen,
         closeSubmenu,
@@ -1266,6 +1396,48 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         debugConfig.disableMenuKeyEvents
     ]);
 
+    useImperativeHandle(handle, (): DropdownMenuHandle => ({
+        openSubmenu,
+        closeSubmenu
+    }), [
+        openSubmenu,
+        closeSubmenu
+    ]);
+
+    const openDropdownMenuEffectEvent = useEffectEvent(openDropdownMenu);
+    const closeDropdownMenuEffectEvent = useEffectEvent(closeDropdownMenu);
+
+    // MARK: useEffect: change to isOpen
+    useEffect((/* changes */) => {
+
+        logger.debug(
+            "useEffect: isOpen:", isOpen
+            // "\nchanges:", changes,
+            // "\nopenDropdownMenu._debug:", openDropdownMenu._debug,
+            // "\npositionDropdownMenu._debug:", positionDropdownMenu._debug
+        );
+
+        // use a microtask because the code that opens and positions the menu
+        // calls flushSync (in order to ensure atomic layout updates), which
+        // must not be called inside a useEffect callback
+        queueMicrotask(() => {
+            if (isOpen) {
+                openDropdownMenuEffectEvent();
+            }
+            else if (!isOpen) {
+                closeDropdownMenuEffectEvent();
+            }
+        });
+
+    },
+        [
+            isOpen
+        ]
+        // [
+        //     "isOpen"
+        // ]
+    );
+
     // MARK: useEffect: Click outside
     useEffect(() => {
         logger.debug("useEffect: click outside begin");
@@ -1273,6 +1445,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         if (debugConfig.disableMenuCloseOnClickOutside) {
             return;
         }
+
         function onClickOutside(event: MouseEvent): void {
 
             if (ignoreClicksUntilNextPointerDownRef.current) {
@@ -1289,6 +1462,14 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                 return;
             }
 
+            if (!didFinishOpenRef.current) {
+                logger.debug(
+                    "onClickOutside: dropdown menu has not finished opening; " +
+                    "ignoring click"
+                );
+                return;
+            }
+
             const dropdown = dropdownRef.current;
             if (!dropdown) {
                 logger.warn(
@@ -1300,17 +1481,28 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             if (
                 !dropdown.contains(event.target as Node)
             ) {
-                logger.debug("onClickOutside: hiding dropdown menu");
-                closeDropdownMenu();
+                logger.debug(
+                    "onClickOutside: hiding dropdown menu; target:",
+                    event.target
+                );
+                setIsOpen(false);
             }
             else {
-                logger.debug("onClickOutside: inside dropdown; not hiding");
+                logger.debug(
+                    "onClickOutside: inside dropdown; not hiding; target:",
+                    event.target
+                );
             }
 
         }
 
         if (isOpen) {
-            window.addEventListener("click", onClickOutside);
+            // use setTimeout to delay adding the event listener until after
+            // the current call stack is complete, to avoid immediately
+            // triggering the listener from the click that opened the menu
+            setTimeout(() => {
+                window.addEventListener("click", onClickOutside);
+            }, 0);
         }
 
         return (): void => {
@@ -1318,8 +1510,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         };
 
     }, [
-        closeDropdownMenu,
         isOpen,
+        setIsOpen,
         debugConfig.disableMenuCloseOnClickOutside
     ]);
 
@@ -1382,24 +1574,6 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         handleKeyDown,
         isOpen,
         scheduleDropdownMenuReposition
-    ]);
-
-    // MARK: useEffect: Children changes
-    useEffect(() => {
-        logger.debug("useEffect: children changes begin");
-
-        if (isOpen) {
-            logger.debug(
-                "useEffect: children changes: dropdown menu is open; " +
-                "rebuilding menu item tree"
-            );
-            scheduleBuildMenuItemTree();
-        }
-
-    }, [
-        scheduleBuildMenuItemTree,
-        isOpen,
-        children
     ]);
 
     // MARK: useEffect: MutationObserver and ResizeObserver
@@ -1648,8 +1822,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
     //     openDropdownMenu();
     // }, [openDropdownMenu]);
 
-    const dropdownMenuContextValue = useMemo<DropdownMenuContextType>(
-        () => ({
+    const dropdownMenuContextValue = useMemo(
+        (): DropdownMenuContextType => ({
             isOpen,
             submenusPortalContainer,
             menuItemTreeRef,
@@ -1678,8 +1852,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         ]
     );
 
-    const dropdownSubmenuContextValue = useMemo<DropdownSubmenuContextType>(
-        () => ({
+    const dropdownSubmenuContextValue = useMemo(
+        (): DropdownSubmenuContextType => ({
             parentMenuIsOpen: isOpen,
             parentDropdownMenuMeasuringContainerRef:
                 dropdownMenuMeasuringContainerRef,
@@ -1731,7 +1905,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                     >
                         <DropdownMenuCore
                             isOpen={isOpen}
-                            ref={dropdownMenuCoreRef}
+                            handle={dropdownMenuCoreRef}
                             dropdownMenuRef={dropdownMenuRef}
                             dropdownMenuContentRef={dropdownMenuContentRef}
                         >
@@ -1744,7 +1918,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                     </div>
                     <CustomScrollbar
                         scrollContainerIsVisible={isOpen}
-                        ref={customScrollbarRef}
+                        handle={customScrollbarRef}
                         scrollContainerWrapperRef={
                             dropdownMenuMeasuringContainerRef
                         }
@@ -1777,3 +1951,5 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
     );
 
 });
+
+DropdownMenu.displayName = "DropdownMenu";

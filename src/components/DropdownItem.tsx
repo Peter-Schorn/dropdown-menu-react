@@ -26,6 +26,11 @@ import {
 } from "../model/DropdownItemSlotsContext";
 
 import {
+    type DisclosureIndicatorContextType,
+    DisclosureIndicatorContext
+} from "../model/DisclosureIndicatorContext";
+
+import {
     type DropdownMenuCoreHandle,
     DropdownMenuCore
 } from "./DropdownMenuCore";
@@ -127,7 +132,6 @@ export const DropdownItem = memo(function DropdownItem(
     ] = useState(false);
 
     const isSubmenu = useMemo((): boolean => {
-        // return props.children !== undefined;
         return submenu !== null && submenu !== undefined;
     }, [submenu]);
 
@@ -169,11 +173,26 @@ export const DropdownItem = memo(function DropdownItem(
      */
     const parentMenuScrollTopAtOpenRef = useRef<number>(0);
 
-    /** A unique identifier for this submenu */
-    const submenuID = useMemo(
+    /**
+     * An internally generated unique identifier for this submenu. Used if no
+     * external submenu ID is provided via the `DropdownItemSubmenu` slot
+     * component.
+     */
+    const submenuIDDefault = useMemo<string>(
         () => crypto.randomUUID(),
         []
     );
+
+    // The setter for this state is exposed via context to the
+    // `DropdownItemSubmenu` slot component so external code can set the submenu
+    // ID. If not set externally (`null`), we use our internally generated ID
+    // (`submenuIDDefault`).
+    const [submenuIDExternal, setSubmenuID] = useState<string | null>(
+        submenuIDDefault
+    );
+
+    /** A unique identifier for this submenu. */
+    const submenuID = submenuIDExternal ?? submenuIDDefault;
 
     const repositionSubmenuListenerIDRef = useRef<string | null>(null);
 
@@ -2226,8 +2245,8 @@ export const DropdownItem = memo(function DropdownItem(
     //     }
     // }, [openSubmenu, props.text, submenuIsOpen]);
 
-    const dropdownSubmenuContextValue = useMemo<DropdownSubmenuContextType>(
-        () => ({
+    const dropdownSubmenuContextValue = useMemo(
+        (): DropdownSubmenuContextType => ({
             parentMenuIsOpen: submenuIsOpen,
             parentDropdownMenuMeasuringContainerRef:
                 dropdownMenuMeasuringContainerRef,
@@ -2240,12 +2259,22 @@ export const DropdownItem = memo(function DropdownItem(
         ]
     );
 
-    const dropdownItemSlotsContextValue = useMemo<DropdownItemSlotsContextType>(
-        () => ({
+    const dropdownItemSlotsContextValue = useMemo(
+        (): DropdownItemSlotsContextType => ({
             setLabel,
-            setSubmenu
+            setSubmenu,
+            setSubmenuID
         }),
         []
+    );
+
+    const disclosureIndicatorContextValue = useMemo(
+        (): DisclosureIndicatorContextType => ({
+            submenuIsOpen
+        }),
+        [
+            submenuIsOpen
+        ]
     );
 
     return (
@@ -2271,23 +2300,29 @@ export const DropdownItem = memo(function DropdownItem(
                     data-hover={hoveredMenuItem === submenuID}
                     data-secondary-focus={dropdownItemSecondaryFocus}
                 >
-                    {label}
-                    {debugConfig.showMenuIds &&
-                        isSubmenu && (
-                            <div className="bd-dropdown-debug-id">
-                                {submenuID}
-                            </div>
-                        )
-                    }
+                    <DisclosureIndicatorContext.Provider
+                        value={disclosureIndicatorContextValue}
+                    >
+                        {label}
+                        {
+                            debugConfig.showMenuIds &&
+                            isSubmenu &&
+                            (
+                                <div className="bd-dropdown-debug-id">
+                                    {submenuID}
+                                </div>
+                            )
+                        }
+                    </DisclosureIndicatorContext.Provider>
                 </div>
-                {/* WebKit (Safari) clips the submenu to the parent element when the
-                    parent is scrollable. Also, even on non-WebKit browsers, the
-                    submenu does not move up and down with the page when it is
-                    rubber band scrolling if it is inside the
+                {/* WebKit (Safari) clips the submenu to the parent element when
+                    the parent is scrollable. Also, even on non-WebKit browsers,
+                    the submenu does not move up and down with the page when it
+                    is rubber band scrolling if it is inside the
                     dropdownItemContainer. */}
                 {isSubmenu && createPortal((
-                    // the measuring container is necessary so that the width of the
-                    // scroll bar can be measured
+                    // the measuring container is necessary so that the width of
+                    // the scroll bar can be measured
                     <div
                         className="bd-dropdown-menu-measuring-container"
                         ref={dropdownMenuMeasuringContainerRef}
@@ -2306,7 +2341,7 @@ export const DropdownItem = memo(function DropdownItem(
                         >
                             <DropdownMenuCore
                                 isOpen={submenuIsOpen}
-                                ref={dropdownMenuCoreRef}
+                                handle={dropdownMenuCoreRef}
                                 dropdownMenuRef={dropdownMenuRef}
                                 dropdownMenuContentRef={dropdownMenuContentRef}
                             >
@@ -2319,7 +2354,7 @@ export const DropdownItem = memo(function DropdownItem(
                         </div>
                         <CustomScrollbar
                             scrollContainerIsVisible={submenuIsOpen}
-                            ref={customScrollbarRef}
+                            handle={customScrollbarRef}
                             scrollContainerWrapperRef={
                                 dropdownMenuMeasuringContainerRef
                             }
@@ -2337,3 +2372,5 @@ export const DropdownItem = memo(function DropdownItem(
         </DropdownItemSlotsContext.Provider>
     );
 });
+
+DropdownItem.displayName = "DropdownItem";

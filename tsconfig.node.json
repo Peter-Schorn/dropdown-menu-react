@@ -1,0 +1,14 @@
+{
+    "extends": "./tsconfig.options.json",
+    "compilerOptions": {
+        "types": ["node"],
+        "composite": true,
+        "tsBuildInfoFile": "./node_modules/.cache/tsconfig.node.tsbuildinfo",
+        "noEmit": true,
+        "lib": ["es2020"]
+    },
+    "include": [
+        "vite.config.ts",
+        "eslint.config.ts"
+    ]
+}

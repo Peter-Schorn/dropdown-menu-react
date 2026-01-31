@@ -8,14 +8,18 @@ import {
 
 import { useSlot } from "../hooks/useSlot";
 
-type DropdownItemLabelProps = PropsWithChildren;
+export type DropdownItemLabelProps = PropsWithChildren;
 
 export function DropdownItemLabel(
     { children }: DropdownItemLabelProps
 ): null {
     const { setLabel } = useDropdownItemSlotsContext();
 
-    useSlot(setLabel, children);
+    useSlot(
+        { setter: setLabel, value: children }
+    );
 
     return null;
 }
+
+DropdownItemLabel.displayName = "DropdownItemLabel";

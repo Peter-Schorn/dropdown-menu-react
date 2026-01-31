@@ -1,0 +1,55 @@
+import { useCallback, useRef } from "react";
+
+export type DebugCallbackInfo<T extends readonly unknown[]> = {
+    prevDeps: T | null;
+    nextDeps: T;
+    changed: number[];
+    changedNames?: string[];
+};
+
+export type DebugCallbackWrappedFn<Fn> = Fn & {
+    _debug?: DebugCallbackInfo<readonly unknown[]>;
+};
+
+export function useCallbackDebug<
+    Fn extends (...args: unknown[]) => unknown,
+    T extends readonly unknown[]
+>(
+    fn: Fn,
+    deps: T,
+    depNames?: readonly string[]
+): DebugCallbackWrappedFn<Fn> {
+    const prevDepsRef = useRef<T | null>(null);
+    const debugInfoRef = useRef<DebugCallbackInfo<T> | null>(null);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const wrapped = useCallback(fn, deps) as DebugCallbackWrappedFn<Fn>;
+
+    const prev = prevDepsRef.current;
+    const changed: number[] = [];
+
+    if (prev !== null) {
+        for (let i = 0; i < deps.length; i++) {
+            if (!Object.is(prev[i], deps[i])) {
+                changed.push(i);
+            }
+        }
+    }
+
+    debugInfoRef.current = {
+        prevDeps: prev,
+        nextDeps: deps,
+        changed,
+        changedNames:
+            depNames && changed.length > 0
+                ? changed.map(i => depNames[i] ?? `#${i}`)
+                : undefined
+    };
+
+    prevDepsRef.current = deps;
+
+    // attach debug metadata
+    wrapped._debug = debugInfoRef.current;
+
+    return wrapped;
+}

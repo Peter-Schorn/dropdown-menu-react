@@ -42,6 +42,8 @@ export function DropdownMenuScrollArrow(
     }: DropdownMenuScrollArrowProps
 ): JSX.Element {
 
+    logger.debug("render; edge:", edge);
+
     const {
         ignoreClicksUntilNextPointerDownRef,
         disableMouseHoverEvents
@@ -295,7 +297,7 @@ export function DropdownMenuScrollArrow(
             appearedDateRef.current = null;
             pointerHasLeftAtLeastOnceSinceAppearRef.current = false;
             logger.debug(
-                `useEffect: ${edge} isOpen false: resetting`
+                `useEffect: ${edge}: isOpen false: resetting`
             );
         }
     }, [
@@ -341,13 +343,13 @@ export function DropdownMenuScrollArrow(
         }
         else {
             logger.debug(
-                `useEffect: ${edge} scrollArrowContainerRef is null`
+                `useEffect: ${edge}: scrollArrowContainerRef is null`
             );
         }
 
         return (): void => {
             logger.debug(
-                `useEffect: ${edge} appearedDateRef: cleanup`
+                `useEffect: ${edge}: appearedDateRef: cleanup`
             );
             appearedDateRef.current = null;
             pointerHasLeftAtLeastOnceSinceAppearRef.current = false;
@@ -385,3 +387,5 @@ export function DropdownMenuScrollArrow(
         </div>
     );
 }
+
+DropdownMenuScrollArrow.displayName = "DropdownMenuScrollArrow";

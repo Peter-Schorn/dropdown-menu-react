@@ -1,0 +1,31 @@
+{
+    "extends": "./tsconfig.options.json",
+    "compilerOptions": {
+        "rootDir": "src",
+        "rootDirs": [
+            "src",
+            "src-gen"
+        ],
+        "outDir": "./dist",
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "es2020"
+        ],
+        "composite": true,
+        "tsBuildInfoFile": "./node_modules/.cache/tsconfig.app.tsbuildinfo",
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "types": [],
+        // react
+        "jsx": "react-jsx",
+        "jsxImportSource": "react",
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

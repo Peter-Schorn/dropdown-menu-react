@@ -80,7 +80,7 @@ export type CustomScrollbarProps = {
     /**
      * A ref to the handle of this custom scrollbar.
      */
-    ref: React.RefObject<CustomScrollbarHandle | null>;
+    handle: React.RefObject<CustomScrollbarHandle | null>;
 
     /**
      * A ref to the wrapper element that contains both the scroll container and
@@ -120,7 +120,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
 
     const {
         scrollContainerIsVisible,
-        ref,
+        handle: handle,
         scrollContainerWrapperRef,
         scrollContainerRef,
         scrollbarHitbox,
@@ -290,13 +290,13 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
         const scrollContainerScrollTop = scrollContainer.scrollTop;
 
         if (scrollContainerScrollHeight <= scrollContainerClientHeight + 1) {
-            // content fits within the scroll container: hide the scrollbar.
+            // content fits within the scroll container: hide the scrollbar
             setTrackShouldShow(false);
             scrollbarTrack.classList.remove(styles.scrollbarTrackShow);
             return;
         }
 
-        // content overflows the scroll container: show the scrollbar.
+        // content overflows the scroll container: show the scrollbar
 
         // When becoming visible, ensure the state is updated synchronously so
         // that the hitbox, which is only conditionally rendered, is inserted in
@@ -897,7 +897,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
     ]);
 
     // MARK: useImperativeHandle: Expose scheduleGeometryUpdate method
-    useImperativeHandle(ref, (): CustomScrollbarHandle => ({
+    useImperativeHandle(handle, (): CustomScrollbarHandle => ({
         scheduleGeometryUpdate,
         repositionScrollbarHitbox
     }), [
@@ -1113,3 +1113,5 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
     );
 
 }
+
+CustomScrollbar.displayName = "CustomScrollbar";

@@ -6,16 +6,32 @@ import {
     useDropdownItemSlotsContext
 } from "../model/DropdownItemSlotsContext";
 
-import { useSlot } from "../hooks/useSlot";
+import {
+    useSlot
+} from "../hooks/useSlot";
 
-type DropdownItemSubmenuProps = PropsWithChildren;
+export type DropdownItemSubmenuProps = PropsWithChildren & {
+    submenuID?: string;
+};
 
 export function DropdownItemSubmenu(
-    { children }: DropdownItemSubmenuProps
+    {
+        children,
+        submenuID
+    }: DropdownItemSubmenuProps
 ): null {
-    const { setSubmenu } = useDropdownItemSlotsContext();
 
-    useSlot(setSubmenu, children);
+    const {
+        setSubmenu,
+        setSubmenuID
+    } = useDropdownItemSlotsContext();
+
+    useSlot(
+        { setter: setSubmenu, value: children },
+        submenuID ? { setter: setSubmenuID, value: submenuID } : null
+    );
 
     return null;
 }
+
+DropdownItemSubmenu.displayName = "DropdownItemSubmenu";

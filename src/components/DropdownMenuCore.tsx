@@ -7,7 +7,8 @@ import {
     useRef,
     useState,
     useImperativeHandle,
-    useEffect
+    useEffect,
+    memo
 } from "react";
 
 import { DropdownMenuScrollArrow } from "./DropdownMenuScrollArrow";
@@ -37,7 +38,7 @@ export type UpdateScrollProperties = (
 export type DropdownMenuCoreProps = PropsWithChildren & {
     /** Whether this dropdown menu/submenu is open. */
     isOpen: boolean;
-    ref: React.RefObject<DropdownMenuCoreHandle | null>;
+    handle: React.RefObject<DropdownMenuCoreHandle | null>;
     dropdownMenuRef: React.RefObject<HTMLDivElement | null>;
     dropdownMenuContentRef: React.RefObject<HTMLDivElement | null>;
 };
@@ -51,11 +52,13 @@ export type DropdownMenuCoreHandle = {
  * Contains the core logic shared by both the main dropdown menu and the
  * submenus
  */
-export function DropdownMenuCore(props: DropdownMenuCoreProps): JSX.Element {
+export const DropdownMenuCore = memo(function DropdownMenuCore(
+    props: DropdownMenuCoreProps
+): JSX.Element {
 
     const {
         isOpen,
-        ref,
+        handle,
         dropdownMenuRef,
         dropdownMenuContentRef,
         children
@@ -93,6 +96,12 @@ export function DropdownMenuCore(props: DropdownMenuCoreProps): JSX.Element {
 
     const pointerIsOverScrollArrowDownRef = useRef<boolean>(false);
 
+    /**
+     * Updates whether the dropdown menu is scrolled to the top or bottom, which
+     * affects the visibility of the scroll arrows.
+     *
+     * @param options - Options for updating the scroll properties.
+     */
     const updateScrollProperties = useCallback<UpdateScrollProperties>((
         { flush = true } = {}
     ): void => {
@@ -148,8 +157,8 @@ export function DropdownMenuCore(props: DropdownMenuCoreProps): JSX.Element {
                 dropdownMenu.scrollTop + dropdownMenu.clientHeight >=
                 dropdownMenu.scrollHeight - 2
             ) {
-                // the bottom of the dropdown menu content is at the bottom of the
-                // dropdown menu
+                // the bottom of the dropdown menu content is at the bottom of
+                // the dropdown menu
                 setIsScrolledToBottom(true);
                 logger.debug(
                     "updateScrollProperties: setIsScrolledToBottom(true)"
@@ -359,7 +368,7 @@ export function DropdownMenuCore(props: DropdownMenuCoreProps): JSX.Element {
         dropdownMenuRef
     ]);
 
-    useImperativeHandle(ref, (): DropdownMenuCoreHandle => ({
+    useImperativeHandle(handle, (): DropdownMenuCoreHandle => ({
         endContinuousScrolling,
         updateScrollProperties
     }), [
@@ -483,4 +492,6 @@ export function DropdownMenuCore(props: DropdownMenuCoreProps): JSX.Element {
             />
         </>
     );
-}
+});
+
+DropdownMenuCore.displayName = "DropdownMenuCore";

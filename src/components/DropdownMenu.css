@@ -1,6 +1,7 @@
 .bd-dropdown {
     position: relative;
     display: inline-block;
+    box-sizing: border-box;
 }
 
 .bd-dropdown-toggle {
@@ -17,15 +18,21 @@
     /* disables double-tap to zoom, which removes the need for the browser to
     delay the generation of click events when the user taps the screen */
     touch-action: manipulation;
+    box-sizing: border-box;
 }
 
 .bd-dropdown-menu-measuring-container {
-    --selected-background-color: #f1f1f1;
-    --scroll-arrow-container-height: 35px;
     --bd-dropdown-menu-active-background-color: #dddddd;
+
+    --selected-background-color: #f1f1f1;
+    --secondary-selected-background-color: #f8f8f8;
+    /* --secondary-selected-background-color: rgb(220, 166, 166); */
+
     --dropdown-menu-focus-ring-color: rgba(236, 112, 2, 0.65);
     --dropdown-menu-focus-ring-style: 2px solid
         var(--dropdown-menu-focus-ring-color);
+
+    --scroll-arrow-container-height: 35px;
     --border-radius: 6px;
 
     display: none;
@@ -44,6 +51,7 @@
     overflow: clip;
 
     /* background-color: lightblue; */
+    box-sizing: border-box;
 }
 
 .bd-dropdown-menu-measuring-container-show {
@@ -77,6 +85,7 @@
     scroll-padding-bottom: var(--scroll-arrow-container-height);
 
     /* background-color: lightcoral; */
+    box-sizing: border-box;
 }
 
 /* .bd-dropdown-submenu {
@@ -88,6 +97,7 @@
     overflow: clip;
     /* background-color: lightgreen; */
     /* border: 1px solid green; */
+    box-sizing: border-box;
 }
 
 .bd-dropdown-item-container {
@@ -106,15 +116,13 @@
     delay the generation of click events when the user taps the screen */
     touch-action: manipulation;
     cursor: pointer;
+    box-sizing: border-box;
 }
 
 .bd-dropdown-item {
-    --secondary-selected-background-color: #f8f8f8;
-    /* --secondary-selected-background-color: rgb(220, 166, 166); */
-
     position: relative;
     color: black;
-    padding: 10px;
+    padding: 5px;
     text-decoration: none;
     display: block;
     border-radius: var(--border-radius);
@@ -125,6 +133,7 @@
     /* disables double-tap to zoom, which removes the need for the browser to
     delay the generation of click events when the user taps the screen */
     touch-action: manipulation;
+    box-sizing: border-box;
 }
 
 /* MARK: The order of the 4 selectors below is very specific to ensure proper
@@ -154,11 +163,6 @@
 
 /* --- end ordered selectors --- */
 
-.bd-dropdown-item-text {
-    /* white-space: nowrap; */
-    flex-grow: 1;
-}
-
 .bd-dropdown-main-debug-id {
     display: inline-block;
     position: absolute;
@@ -178,4 +182,3 @@
 .bd-dropdown-divider {
     margin: 5px;
 }
-

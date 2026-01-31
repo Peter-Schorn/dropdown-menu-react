@@ -28,13 +28,8 @@ export default defineConfig(
                 ecmaFeatures: {
                     jsx: true
                 },
-                // tsconfigRootDir: import.meta.dirname,
-                projectService: {
-                    allowDefaultProject: [
-                        "eslint.config.ts",
-                        "vite.config.ts"
-                    ]
-                }
+                tsconfigRootDir: import.meta.dirname,
+                projectService: true
             },
         },
         extends: [
@@ -150,19 +145,15 @@ export default defineConfig(
             "no-control-regex": "off"
         },
     },
-    // Disables rules for the config file itself
-    {
-        files: ["eslint.config.ts"],
-        rules: {
-            // "@typescript-eslint/no-unsafe-assignment": "off",
-            // "@typescript-eslint/no-unsafe-member-access": "off",
-        }
-    },
+    // config files
     {
         files: [
             "vite.config.ts",
             "eslint.config.ts"
         ],
+        languageOptions: {
+            globals: globals.node
+        },
         rules: {
             "no-console": "off"
         }
