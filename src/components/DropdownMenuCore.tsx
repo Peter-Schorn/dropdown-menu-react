@@ -1,7 +1,6 @@
-import "./DropdownMenu.css";
-
 import {
     type JSX,
+    type RefObject,
     type PropsWithChildren,
     useCallback,
     useRef,
@@ -35,13 +34,13 @@ export type UpdateScrollProperties = (
     options?: UpdateScrollPropertiesOptions
 ) => void;
 
-export type DropdownMenuCoreProps = PropsWithChildren & {
+export type DropdownMenuCoreProps = PropsWithChildren<{
     /** Whether this dropdown menu/submenu is open. */
     isOpen: boolean;
-    handle: React.RefObject<DropdownMenuCoreHandle | null>;
-    dropdownMenuRef: React.RefObject<HTMLDivElement | null>;
-    dropdownMenuContentRef: React.RefObject<HTMLDivElement | null>;
-};
+    handle: RefObject<DropdownMenuCoreHandle | null>;
+    dropdownMenuRef: RefObject<HTMLDivElement | null>;
+    dropdownMenuContentRef: RefObject<HTMLDivElement | null>;
+}>;
 
 export type DropdownMenuCoreHandle = {
     endContinuousScrolling: () => void;

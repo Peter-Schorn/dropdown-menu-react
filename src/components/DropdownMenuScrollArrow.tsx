@@ -46,7 +46,7 @@ export function DropdownMenuScrollArrow(
 
     const {
         ignoreClicksUntilNextPointerDownRef,
-        disableMouseHoverEvents
+        mouseHoverEvents
     } = useContext(DropdownMenuContext);
 
     const scrollArrowContainerRef = useRef<HTMLDivElement | null>(null);
@@ -175,7 +175,7 @@ export function DropdownMenuScrollArrow(
         event: React.PointerEvent<HTMLElement>
     ): void => {
 
-        if (disableMouseHoverEvents) {
+        if (!mouseHoverEvents) {
             return;
         }
 
@@ -217,14 +217,14 @@ export function DropdownMenuScrollArrow(
         edge,
         shouldIgnorePointerEvents,
         pointerIsOverRef,
-        disableMouseHoverEvents
+        mouseHoverEvents
     ]);
 
     const handleScrollArrowPointerLeave = useCallback((
         event: React.PointerEvent<HTMLElement>
     ): void => {
 
-        if (disableMouseHoverEvents) {
+        if (!mouseHoverEvents) {
             return;
         }
 
@@ -246,14 +246,14 @@ export function DropdownMenuScrollArrow(
         edge,
         endContinuousScrolling,
         pointerIsOverRef,
-        disableMouseHoverEvents
+        mouseHoverEvents
     ]);
 
     const handlePointerMove = useCallback((
         event: React.PointerEvent<HTMLElement>
     ): void => {
 
-        if (disableMouseHoverEvents) {
+        if (!mouseHoverEvents) {
             return;
         }
 
@@ -288,7 +288,7 @@ export function DropdownMenuScrollArrow(
         // pointerIsOver,
         shouldIgnorePointerEvents,
         isContinuouslyScrollingRef,
-        disableMouseHoverEvents
+        mouseHoverEvents
     ]);
 
     useEffect(() => {

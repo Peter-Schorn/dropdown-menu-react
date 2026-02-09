@@ -1,0 +1,31 @@
+{
+    "name": "dropdown-menu-compat-react-18_3",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "description": "Type compatibility test for dropdown-menu against React 18.3",
+    "scripts": {
+        "test": "npm run build && node dist/render.test.js",
+        "clean-test": "npm run clean-install-all && npm run test",
+        "build": "tsc",
+        "test:types": "tsc --noEmit",
+        "clean-test:types": "npm run clean-install-all && npm run test:types",
+        "clean": "rm -rf dist node_modules package-lock.json",
+        "pack-dropdown-menu": "cd ../../.. && npm run build:dev && npm --silent pack",
+        "clean-install-all": "npm run clean && npm run install-all",
+        "install-all": "npm run pack-dropdown-menu && npm install && npm run post-install-dropdown-menu",
+        "post-install-dropdown-menu": "rm -rf ../../../dropdown-menu-1.0.0.tgz"
+    },
+    "dependencies": {
+        "dropdown-menu": "file:../../../dropdown-menu-1.0.0.tgz",
+        "react": "19.0.0",
+        "react-dom": "19.0.0"
+    },
+    "devDependencies": {
+        "@types/react": "19.0.0",
+        "@types/react-dom": "19.0.0",
+        "jsdom": "^27.4.0",
+        "@types/jsdom": "^27.0.0",
+        "typescript": "^5.9.3"
+    }
+}

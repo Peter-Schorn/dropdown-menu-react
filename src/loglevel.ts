@@ -1,26 +1,32 @@
-import log, {
-    type Logger
-} from "loglevel";
+import log from "loglevel";
 
 import {
-    type DropdownMenuLoggers,
     setLoggers
 } from "./utils/loggers";
 
-/**
- * A type representing the loggers for the dropdown menu components where each
- * logger is of type `Logger` from the `loglevel` module. Only use if
- * `enableLogLevelModuleLogging` has been called or if you have otherwise
- * assigned loggers from the `loglevel` module to each logger.
- */
-export type DropdownMenuLogLevelModuleLoggers = {
-    // each property K in DropdownMenuLoggers is mapped to Logger if `Logger` is
-    // assignable to DropdownMenuLoggers[K]; otherwise, it is kept as is.
-    [K in keyof DropdownMenuLoggers]: Logger extends DropdownMenuLoggers[K]
-    ? Logger
-    : DropdownMenuLoggers[K];
-};
+// MARK: Log Levels:
+// 0: trace
+// 1: debug
+// 2: info
+// 3: warn
+// 4: error
+// 5: silent
 
+/**
+ * Configures the dropdown menu loggers to use loggers from the `loglevel`
+ * module.
+ *
+ * After calling this function, if you wish to further customize the loggers via
+ * `setLoggers`, you can use the `Logger` type from the `loglevel` module as the
+ * type parameter for `setLoggers` to get proper typing. For example:
+ *
+ * ```ts
+ * setLoggers<Logger>((loggers) => {
+ *     // customize loggers...
+ *     return loggers;
+ * });
+ * ```
+ */
 export function enableLogLevelModuleLogging(): void {
 
     try {

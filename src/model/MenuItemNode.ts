@@ -1,7 +1,7 @@
 export type MenuItemNodeConstructor = {
     id: string;
     parent?: MenuItemNode | string | null;
-    children?: Iterable<MenuItemNode | string> | MenuItemNode | string;
+    children?: Iterable<MenuItemNode | string> | MenuItemNode | string | null;
 };
 
 export type MenuItemNodePOD = {
@@ -69,7 +69,18 @@ export class MenuItemNode {
         this.children.add(childNode);
     }
 
-    hasChild(childID: string): boolean {
+    /**
+     * Checks if this node has a specified child node, or if this node is the
+     * child itself.
+     *
+     * @param child - The child node or node ID to search for.
+     * @returns `true` if this node has the child or is the child; `false`
+     * otherwise.
+     */
+    hasChild(child: MenuItemNode | string): boolean {
+
+        const childID = typeof child === "string" ? child : child.id;
+
         if (this.id === childID) {
             return true;
         }
@@ -82,23 +93,27 @@ export class MenuItemNode {
     }
 
     /**
-     * Checks if the node with the given ID has a child with the specified child
-     * ID, or if the node is the child itself.
+     * Checks if the given node has a child, or if the node is the child itself.
      *
-     * @param nodeID - The ID of the node to check.
-     * @param childID - The ID of the child to check for.
+     * @param node - The node or node ID to search within.
+     * @param child - The child node or node ID to search for in `node`.
      * @returns `true` if the node has the child or is the child; `false`
      * otherwise.
      */
     nodeHasChild(
-        nodeID: string,
-        childID: string
+        node: MenuItemNode | string,
+        child: MenuItemNode | string
     ): boolean {
-        const node = this.getNodeByID(nodeID);
-        if (!node) {
+
+        const resolvedNode = typeof node === "string"
+            ? this.getNodeByID(node)
+            : node;
+
+        if (!resolvedNode) {
             return false;
         }
-        return node.hasChild(childID);
+
+        return resolvedNode.hasChild(child);
     }
 
     /**
@@ -319,6 +334,7 @@ export class MenuItemNode {
 
         function buildLines(node: MenuItemNode, prefix: string): void {
             const childrenArray = Array.from(node.children);
+
             for (let i = 0; i < childrenArray.length; i++) {
                 const child = childrenArray[i]!;
                 const isLast = i === childrenArray.length - 1;

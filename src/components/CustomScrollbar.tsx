@@ -2,6 +2,7 @@ import styles from "./CustomScrollbar.module.css";
 
 import {
     type JSX,
+    type RefObject,
     useEffect,
     useImperativeHandle,
     useRef,
@@ -80,19 +81,19 @@ export type CustomScrollbarProps = {
     /**
      * A ref to the handle of this custom scrollbar.
      */
-    handle: React.RefObject<CustomScrollbarHandle | null>;
+    handle: RefObject<CustomScrollbarHandle | null>;
 
     /**
      * A ref to the wrapper element that contains both the scroll container and
      * this scroll bar itself.
      */
-    scrollContainerWrapperRef: React.RefObject<HTMLElement | null>;
+    scrollContainerWrapperRef: RefObject<HTMLElement | null>;
 
     /**
      * A ref to the scrollable container element that this custom scrollbar is
      * associated with.
      */
-    scrollContainerRef: React.RefObject<HTMLElement | null>;
+    scrollContainerRef: RefObject<HTMLElement | null>;
 
     scrollbarHitbox: HTMLDivElement | null;
     setScrollbarHitbox: (hitbox: HTMLDivElement | null) => void;

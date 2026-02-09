@@ -24,7 +24,7 @@ export type DropdownMenuContextType = {
     readonly menuItemTreeRef: RefObject<MenuItemNode>;
     readonly menuItemsAlignmentRef: RefObject<Map<string, HorizontalEdge>>;
     readonly mainDropdownMenuEventEmitter: DropdownMenuEventEmitter;
-    readonly openMenuIDsPath: string[];
+    readonly openMenuIDsPath: readonly string[];
     hoveredMenuItem: string | null;
     setHoveredMenuItem: Dispatch<SetStateAction<string | null>>;
     scheduleDropdownMenuReposition: () => void;
@@ -41,11 +41,13 @@ export type DropdownMenuContextType = {
     ignoreClicksUntilNextPointerDownRef: RefObject<boolean>;
 
     /**
-     * If true, mouse mouse enter and leave events do not cause the
-     * dropdown menus to open or close. They still affect the appearance of
-     * the menu items.
+     * If false, mouse mouse enter and leave events do not cause the dropdown
+     * menus to open or close or cause the menu to scroll when hovering over
+     * scroll arrows. They still affect the appearance of the menu items.
      */
-    disableMouseHoverEvents: boolean;
+    mouseHoverEvents: boolean;
+
+    closeOnClickLeafItem: boolean;
 };
 
 export const DropdownMenuContext = createContext<DropdownMenuContextType>({
@@ -69,5 +71,6 @@ export const DropdownMenuContext = createContext<DropdownMenuContextType>({
         // default implementation does nothing
     },
     ignoreClicksUntilNextPointerDownRef: { current: false },
-    disableMouseHoverEvents: false
+    mouseHoverEvents: true,
+    closeOnClickLeafItem: true
 });

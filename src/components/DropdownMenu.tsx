@@ -1,15 +1,17 @@
-import "./DropdownMenu.css";
+import type React from "react";
 
-import React, {
+import {
     type JSX,
     type PropsWithChildren,
+    type ReactNode,
     useCallback,
     useEffect,
     useMemo,
     useRef,
     useState,
     memo,
-    useImperativeHandle
+    useImperativeHandle,
+    useLayoutEffect,
 } from "react";
 
 import { createPortal, flushSync } from "react-dom";
@@ -47,6 +49,7 @@ import { useArrayState } from "../hooks/useArrayState";
 import { useEffectEvent } from "../hooks/useEffectEvent";
 
 import { useDebugConfig } from "../hooks/useDebugConfig";
+// import { defaultDebugConfig } from "../utils/debugConfig";
 
 import {
     type HorizontalEdge,
@@ -63,45 +66,136 @@ import {
 //     useCallbackDebug
 // } from "../hooks/useCallbackDebug";
 
+// import { useDebugProps } from "../hooks/useDebugProps";
+
 import { dropdownMenuLogger as logger } from "../utils/loggers";
 
+/**
+ * An event that could trigger a request for the dropdown menu to change its
+ * open state. This could be a native DOM event or a React synthetic event.
+ */
+export type OnRequestOpenChangeEvent =
+    | Event
+    | React.SyntheticEvent;
+
 export type DropdownMenuHandle = {
+    /**
+     * Opens the submenu with the given ID. If the submenu is already open, does
+     * nothing.
+     */
     openSubmenu: (submenuID: string) => void;
+
+    /**
+     * Closes the submenu with the given ID. If the submenu is already closed,
+     * does nothing.
+     */
     closeSubmenu: (submenuID: string) => void;
+
+    /**
+     * Returns the path of open menu IDs from the root menu to the deepest open
+     * submenu, or an empty array if the dropdown menu is not open.
+     *
+     * Mutating the returned array will not affect the internal state of the
+     * dropdown menu.
+     */
+    getOpenMenuIDsPath: () => string[];
 };
 
-export type DropdownMenuPropsBase = PropsWithChildren & {
+export type DropdownMenuPropsBase = PropsWithChildren<{
     /**
      * Optional ref to access DropdownMenuHandle methods.
      */
     handle?: React.Ref<DropdownMenuHandle>;
-};
+
+    /**
+     * Whether the entire dropdown menu should close when clicking outside of
+     * the menu. default: `true`.
+     */
+    closeOnClickOutside?: boolean;
+
+    /**
+     * Whether the entire dropdown menu should close when clicking on a menu
+     * item that does not contain a sub menu. default: `true`. This can be
+     * overridden on a per-menu-item basis by calling `event.stopPropagation()`
+     * in the `DropdownItem`'s `onClick` handler, which will prevent the click
+     * event from bubbling up to this `DropdownMenu` click handler.
+     */
+    closeOnClickLeafItem?: boolean;
+
+    /**
+     * Whether to enable opening and closing of submenus via mouse hover events,
+     * and scrolling menus when hovering over the scroll arrows. Defaults to
+     * `true`. Even if set to `false`, hover events will still change the
+     * hovered state of menu items, which can affect styling.
+     */
+    mouseHoverEvents?: boolean;
+
+    /**
+     * Callback that is called whenever the open menu path changes, with the
+     * path of open menu IDs from the root menu to the deepest open submenu.
+     * This can be used to track which submenus are open.
+     */
+    onOpenMenusChange?: (openMenuIDsPath: string[]) => void;
+}>;
 
 export type DropdownMenuPropsInternallyControlled = DropdownMenuPropsBase & {
     isOpen?: never;
-    onOpenChange?: never;
+    onRequestOpenChange?: never;
 };
 
 export type DropdownMenuPropsExternallyControlled = DropdownMenuPropsBase & {
+    /**
+     * Whether the dropdown menu is open.
+     */
     isOpen: boolean;
-    onOpenChange: (open: boolean) => void;
+
+    /**
+     * Callback that is called whenever the dropdown menu requests to change its
+     * open state.
+     *
+     * @param open The requested new open state of the dropdown menu.
+     * @param event The event that triggered the open state change request, if
+     * applicable.
+     */
+    onRequestOpenChange: (
+        open: boolean,
+        event?: OnRequestOpenChangeEvent
+    ) => void;
 };
 
+/**
+ * Props for the `DropdownMenu` component. This component can be used in either
+ * an internally controlled or externally controlled mode. In the internally
+ * controlled mode, the open state of the dropdown menu is managed internally by
+ * the component, and the `isOpen` and `onOpenChange` props should not be
+ * provided. In the externally controlled mode, the open state of the dropdown
+ * menu is managed by the parent component, and BOTH the `isOpen` and
+ * `onOpenChange` props must be provided.
+ */
 export type DropdownMenuProps =
     | DropdownMenuPropsInternallyControlled
     | DropdownMenuPropsExternallyControlled;
 
-export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps): JSX.Element {
+const _DropdownMenu = memo(function DropdownMenu(
+    props: DropdownMenuProps
+): JSX.Element {
 
     logger.debug("DropdownMenu: render");
 
+    // useDebugProps(props, "DropdownMenu Props");
+
     const debugConfig = useDebugConfig();
+    // const debugConfig = defaultDebugConfig;
 
     const {
         handle,
         isOpen: externalIsOpen,
-        onOpenChange,
-        children
+        onRequestOpenChange,
+        children,
+        closeOnClickLeafItem = true,
+        closeOnClickOutside = true,
+        mouseHoverEvents = true,
+        onOpenMenusChange
     } = props;
 
     // The internal open state of the dropdown menu. Used when the open state is
@@ -130,7 +224,10 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
      * `internalIsOpen` state.
      */
     const setIsOpen = useCallback((
-        open: boolean | ((prevIsOpen: boolean) => boolean)
+        open:
+            | boolean
+            | ((prevIsOpen: boolean, event?: OnRequestOpenChangeEvent) => boolean),
+        event?: OnRequestOpenChangeEvent
     ): void => {
 
         if (isExternallyControlled) {
@@ -140,10 +237,10 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             // acceptable because in controlled mode, the parent owns the state
             // and should handle updates properly.
             const resolvedOpen = typeof open === "function"
-                ? open(isOpen)
+                ? open(isOpen, event)
                 : open;
 
-            onOpenChange(resolvedOpen);
+            onRequestOpenChange(resolvedOpen, event);
         } else {
             // when internally controlled, we pass `open` directly to
             // setInternalIsOpen, which guarantees access to the latest state
@@ -152,7 +249,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         }
     }, [
         isExternallyControlled,
-        onOpenChange,
+        onRequestOpenChange,
         isOpen
     ]);
 
@@ -179,11 +276,6 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         hoveredMenuItem,
         setHoveredMenuItem
     ] = useState<string | null>(null);
-
-    const [
-        disableMouseHoverEvents,
-        setDisableMouseHoverEvents
-    ] = useState<boolean>(true);
 
     const menuID = useMemo(
         () => crypto.randomUUID(),
@@ -235,6 +327,14 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
      */
     const ignoreInitialResizeObserverCallbackRef = useRef<boolean>(false);
 
+    /**
+     * If the client requests to open a submenu when the dropdown menu is not
+     * currently open, then we must ask the dropdown menu to open first, and
+     * then, if the open request is not blocked, open the requested submenu
+     * after the menu has finished opening.
+     */
+    const pendingOpenSubmenuIDRef = useRef<string | null>(null);
+
     const getSubmenuItemTree = useCallback((
         submenuID: string
     ): MenuItemNode => {
@@ -245,7 +345,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
 
         if (!submenusPortalContainer) {
             logger.warn(
-                "getMenuItemChildren: submenusPortalContainer is null"
+                "getSubmenuItemTree: submenusPortalContainer is null"
             );
             return node;
         }
@@ -254,9 +354,6 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             `.bd-dropdown-submenu[data-submenu-id="${submenuID}"]`
         );
         if (!submenu) {
-            logger.debug(
-                `getMenuItemChildren: submenu with ID ${submenuID} not found`
-            );
             return node;
         }
 
@@ -265,12 +362,12 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         );
 
         for (const menuItem of submenuItems) {
-            const submenuID = menuItem.getAttribute("data-submenu-id");
+            const submenuID = menuItem.dataset.submenuId;
             if (!submenuID) {
                 // no submenu;
                 continue;
             }
-            // has submenu; get its children recursively
+            // recursion
             // eslint-disable-next-line react-hooks/immutability
             const submenuTree = getSubmenuItemTree(submenuID);
             node.addChild(submenuTree);
@@ -301,7 +398,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         );
 
         for (const menuItem of topLevelMenuItems) {
-            const submenuID = menuItem.getAttribute("data-submenu-id");
+            const submenuID = menuItem.dataset.submenuId;
             if (!submenuID) {
                 continue;
             }
@@ -314,8 +411,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
 
         menuItemTreeRef.current = menuItemTree;
         logger.debug(
-            "buildMenuItemTree: built menu item tree:\n",
-            menuItemTree.toTreeString()
+            "buildMenuItemTree: built menu item tree:\n" +
+            `${menuItemTree.toTreeString()}`
         );
 
     }, [
@@ -323,7 +420,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         menuID
     ]);
 
-    const scheduleBuildMenuItemTree = useCallback((): void => {
+    const scheduleBuildMenuItemTreeEffectEvent = useEffectEvent((): void => {
 
         logger.debug(
             "scheduleBuildMenuItemTree: scheduling build of menu item tree"
@@ -338,7 +435,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             buildMenuItemTree();
         });
 
-    }, [buildMenuItemTree]);
+    });
 
     /**
      * Notifies the submenus that they should reposition themselves. This should
@@ -825,7 +922,164 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         });
     }, [positionDropdownMenu]);
 
-    const openDropdownMenu = useCallback((): void => {
+    const toggleDropdownMenu = useCallback((
+        event?: OnRequestOpenChangeEvent
+    ): void => {
+        setIsOpen(
+            isOpen => !isOpen,
+            event
+        );
+    }, [
+        setIsOpen
+    ]);
+
+    const openSubmenu = useCallback((
+        submenuID: string
+    ): void => {
+
+
+        if (!isOpen) {
+
+            if (!menuItemTreeRef.current.hasChild(submenuID)) {
+                logger.error(
+                    `openSubmenu: submenu with ID ${submenuID} not found ` +
+                    "in menu item tree:\n" +
+                    `${menuItemTreeRef.current.toTreeString()}`
+                );
+                return;
+            }
+
+            logger.debug(
+                "openSubmenu: dropdown menu is not open; setting pending " +
+                `open submenu ID to ${submenuID} and opening dropdown menu`
+            );
+
+            // if the client requests to open a submenu when the dropdown menu
+            // is not currently open, then we must ask the dropdown menu to open
+            // first, and then, if the open request is not blocked, open the
+            // requested submenu after the menu has finished opening.
+            pendingOpenSubmenuIDRef.current = submenuID;
+            setIsOpen(true);
+
+            return;
+        }
+
+        // If one submenu (a) is already open and we are opening a different
+        // submenu (b) that is not a child of any currently open submenu, we
+        // need to close (a) and open (b) synchronously to avoid flicker where
+        // (a) stays open for a frame after (b) opens. This would happen without
+        // `flushSync` because opening b in response to a user action (e.g.
+        // click, keyboard event) is synchronous (at least once the event for
+        // the user action has been dispatched), but closing (a) in response to
+        // the `openMenuIDsPath` state change would be asynchronous.
+        flushSync(() => {
+            setOpenMenuIDsPath((prevIDs) => {
+
+                if (prevIDs[prevIDs.length - 1] === submenuID) {
+                    logger.debug(
+                        `openSubmenu: submenu with ID ${submenuID} is already ` +
+                        "open as the last submenu in the path; not opening " +
+                        "again"
+                    );
+                    return prevIDs;
+                }
+
+                // the submenuID that we want to open may be a non-direct child
+                // of one of the currently open submenus, meaning we also have
+                // to add all of the ancestors of that submenu to the open
+                // submenu IDs
+                const newIDs = menuItemTreeRef.current.pathToChild(submenuID);
+                if (newIDs.length === 0) {
+                    logger.error(
+                        `openSubmenu: submenu with ID ${submenuID} not found ` +
+                        "in menu item tree:\n" +
+                        `${menuItemTreeRef.current.toTreeString()}`
+                    );
+                    return prevIDs;
+                }
+
+                logger.debug(
+                    `openSubmenu: newIDs: ${newIDs}`
+                );
+                return newIDs;
+            });
+        });
+
+    }, [
+        isOpen,
+        setOpenMenuIDsPath,
+        setIsOpen
+    ]);
+
+    const closeSubmenu = useCallback((
+        submenuID: string
+    ): void => {
+
+        logger.debug(
+            `closeSubmenu: submenuID: ${submenuID}`
+        );
+
+        setOpenMenuIDsPath((prevIDs) => {
+
+            if (!prevIDs.includes(submenuID)) {
+                logger.debug(
+                    `closeSubmenu: submenu with ID ${submenuID} is not open; ` +
+                    "not closing"
+                );
+                return prevIDs;
+            }
+
+            // if the submenuID is the root menu, close the entire dropdown
+            if (submenuID === menuID) {
+                // not really what this method is intended for, but we can
+                // easily handle this case
+                logger.debug(
+                    `closeSubmenu: submenu with ID ${submenuID} is the root ` +
+                    "menu; requesting close all menus"
+                );
+                setIsOpen(false);
+                // If the open/close state is controlled externally, then the
+                // parent component could block the close request, so we do NOT
+                // change the open IDs path here. Instead, if the menu does
+                // actually close, then the `openMenuIDsPath` will be set to
+                // `[]` in the `closeDropdownMenuEffectEvent` effect event.
+                return prevIDs;
+            }
+
+            const parent = menuItemTreeRef.current.parentOf(submenuID);
+            if (!parent) {
+                logger.error(
+                    `closeSubmenu: parent of submenu with ID ${submenuID} ` +
+                    "not found in menu item tree:\n" +
+                    `${menuItemTreeRef.current.toTreeString()}`
+                );
+                return prevIDs;
+            }
+            const newIds = menuItemTreeRef.current.pathToChild(parent.id);
+            if (newIds.length === 0) {
+                // this should never happen as we have already verified that the
+                // parent exists in the menu item tree
+                logger.error(
+                    "closeSubmenu: could not find path to child for parent " +
+                    `${parent.id} of submenu ${submenuID}; menuItemTree:\n` +
+                    `${menuItemTreeRef.current.toTreeString()}`
+                );
+                return prevIDs;
+            }
+
+            logger.debug(
+                `closeSubmenu: newIds: ${newIds}`
+            );
+
+            return newIds;
+        });
+    }, [
+        setIsOpen,
+        menuID,
+        setOpenMenuIDsPath
+    ]);
+
+    const openDropdownMenuEffectEvent = useEffectEvent((): void => {
         logger.debug(
             `openDropdownMenu: id: ${menuID}`
         );
@@ -845,27 +1099,25 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         menuItemsAlignmentRef.current = new Map<string, HorizontalEdge>([
             [menuID, "right"]
         ]);
-        scheduleBuildMenuItemTree();
-        setOpenMenuIDsPath([menuID]);
-        positionDropdownMenu();
-        didFinishOpenRef.current = true;
-    },
-        [
-            scheduleBuildMenuItemTree,
-            positionDropdownMenu,
-            menuID,
-            setOpenMenuIDsPath
-        ]
-        // [
-        //     "scheduleBuildMenuItemTree",
-        //     "positionDropdownMenu",
-        //     "menuID",
-        //     "setOpenMenuIDsPath",
-        //     "isOpen"
-        // ]
-    );
 
-    const closeDropdownMenu = useCallback((): void => {
+        // if there is a pending request to open a submenu, then we should not
+        // update the `openMenuIDsPath` until after we have handled the pending
+        // submenu open request, which will happen in `openSubmenu`
+        if (!pendingOpenSubmenuIDRef.current) {
+            setOpenMenuIDsPath([menuID]);
+        }
+
+        positionDropdownMenu();
+
+        if (pendingOpenSubmenuIDRef.current) {
+            openSubmenu(pendingOpenSubmenuIDRef.current);
+            pendingOpenSubmenuIDRef.current = null;
+        }
+
+        didFinishOpenRef.current = true;
+    });
+
+    const closeDropdownMenuEffectEvent = useEffectEvent((): void => {
         logger.debug(
             `closeDropdownMenu: id: ${menuID}`
         );
@@ -892,6 +1144,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             "bd-dropdown-menu-measuring-container-show"
         );
 
+        pendingOpenSubmenuIDRef.current = null;
         setOpenMenuIDsPath([]);
         setHoveredMenuItem(null);
         menuItemsAlignmentRef.current.clear();
@@ -909,135 +1162,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         dropdownMenuMeasuringContainerSizeRef.current = null;
         dropdownMenuContentSizeRef.current = null;
         didFinishOpenRef.current = false;
-    }, [
-        menuID,
-        setHoveredMenuItem,
-        setOpenMenuIDsPath
-    ]);
-
-    const toggleDropdownMenu = useCallback((): void => {
-        setIsOpen((isOpen => !isOpen));
-    }, [
-        setIsOpen
-    ]);
-
-    const openSubmenu = useCallback((
-        submenuID: string
-    ): void => {
-
-        if (!isOpen) {
-            logger.error(
-                `openSubmenu: cannot open submenu with ID ${submenuID} ` +
-                "because the dropdown menu is not open"
-            );
-            return;
-        }
-
-        // If one submenu (a) is already open and we are opening a different
-        // submenu (b) that is not a child of any currently open submenu, we
-        // need to close (a) and open (b) synchronously to avoid flicker where
-        // (a) stays open for a frame after (b) opens. This would happen without
-        // `flushSync` because opening b in response to a user action (e.g.
-        // click, keyboard event) is synchronous (at least once the event for
-        // the user action has been dispatched), but closing (a) in response to
-        // the `openMenuIDsPath` state change would be asynchronous.
-        flushSync(() => {
-            setOpenMenuIDsPath((prevIDs) => {
-
-                if (prevIDs[prevIDs.length - 1] === submenuID) {
-                    logger.debug(
-                        `openSubmenu: submenu with ID ${submenuID} is already ` +
-                        "open as the last submenu in the path; not opening again"
-                    );
-                    return prevIDs;
-                }
-
-                // the submenuID that we want to open may be a non-direct child
-                // of one of the currently open submenus, meaning we also have
-                // to add all of the ancestors of that submenu to the open
-                // submenu IDs
-                const newIDs = menuItemTreeRef.current.pathToChild(submenuID);
-                if (newIDs.length === 0) {
-                    logger.error(
-                        `openSubmenu: submenu with ID ${submenuID} not found in ` +
-                        "menu item tree:", menuItemTreeRef.current.toPODObject()
-                    );
-                    return prevIDs;
-                }
-
-                logger.debug(
-                    `openSubmenu: newIDs: ${newIDs}`
-                );
-                return newIDs;
-            });
-        });
-
-    }, [
-        isOpen,
-        setOpenMenuIDsPath
-    ]);
-
-    const closeSubmenu = useCallback((
-        submenuID: string
-    ): void => {
-
-        logger.debug(
-            `closeSubmenu: submenuID: ${submenuID}`
-        );
-
-        setOpenMenuIDsPath((prevIDs) => {
-
-            if (!prevIDs.includes(submenuID)) {
-                logger.debug(
-                    `closeSubmenu: submenu with ID ${submenuID} is not open; ` +
-                    "not closing"
-                );
-                return prevIDs;
-            }
-
-            // if the submenuID is the root menu, close the entire dropdown
-            if (submenuID === menuID) {
-                // not really what this method is intended for, but we can
-                // easily handle this case
-                logger.debug(
-                    `closeSubmenu: submenu with ID ${submenuID} is the root menu; ` +
-                    "closing all menus"
-                );
-                // closeDropdownMenu();
-                setIsOpen(false);
-                return [];
-            }
-
-            const parent = menuItemTreeRef.current.parentOf(submenuID);
-            if (!parent) {
-                logger.error(
-                    `closeSubmenu: parent of submenu with ID ${submenuID} ` +
-                    "not found in menu item tree"
-                );
-                return prevIDs;
-            }
-            const newIds = menuItemTreeRef.current.pathToChild(parent.id);
-            if (newIds.length === 0) {
-                // this should never happen as we have already verified that the
-                // parent exists in the menu item tree
-                logger.error(
-                    "closeSubmenu: could not find path to child for parent " +
-                    `${parent.id} of submenu ${submenuID}; menuItemTree:`,
-                    menuItemTreeRef.current.toPODObject()
-                );
-                return prevIDs;
-            }
-            logger.debug(
-                `closeSubmenu: newIds: ${newIds}`
-            );
-
-            return newIds;
-        });
-    }, [
-        setIsOpen,
-        menuID,
-        setOpenMenuIDsPath
-    ]);
+    });
 
     const handleClick = useCallback((
         event: React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -1067,7 +1192,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             return;
         }
 
-        toggleDropdownMenu();
+        toggleDropdownMenu(event);
 
     }, [
         toggleDropdownMenu
@@ -1078,6 +1203,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
      * regardless of whether it is focused.
      */
     const getCurrentMenuDropdownItems = useCallback((): HTMLElement[] => {
+
         const dropdownMenu = dropdownMenuRef.current;
         if (!dropdownMenu || !submenusPortalContainer) {
             logger.warn(
@@ -1152,8 +1278,8 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             return false;
         }
 
-        // the menu may have just opened and may be positioned offscreen, so
-        // prevent scrolling when focusing
+        // the menu may have just opened and may be positioned outside the
+        // viewport, so prevent scrolling when focusing
         firstSubmenuItem.focus({ preventScroll: true });
         logger.debug(
             "focusFirstSubmenuItem: focused first submenu item with ID " +
@@ -1205,7 +1331,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         dropdownItem.focus();
     }, [submenusPortalContainer]);
 
-    const handleKeyDown = useCallback((
+    const handleKeyDownEffectEvent = useEffectEvent((
         event: KeyboardEvent
     ): void => {
 
@@ -1228,13 +1354,37 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             return;
         }
 
+        const dropdown = dropdownRef.current;
+        if (!dropdown) {
+            logger.warn(
+                "handleKeyDown: dropdown is null"
+            );
+            return;
+        }
+
+        const dropDownIsFocused =
+            document.activeElement &&
+            (
+                dropdown.contains(document.activeElement) ||
+                submenusPortalContainer?.contains(document.activeElement)
+            );
+
         if (event.key === "Escape") {
             logger.debug("handleKeyDown: Escape");
             event.preventDefault();
-            // closeDropdownMenu();
-            setIsOpen(false);
+            setIsOpen(false, event);
         }
-        else if (event.key === "Enter") {
+        else if (!dropDownIsFocused) {
+            logger.debug(
+                "handleKeyDown: dropdown menu is not focused; ignoring"
+            );
+            return;
+        }
+        // MARK: the below keyboard interactions only apply when the dropdown
+        //  is focused
+        else if (
+            event.key === "Enter"
+        ) {
             logger.debug("handleKeyDown: Enter");
             const focusedItem = document.activeElement;
 
@@ -1249,8 +1399,10 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             ignoreClicksUntilNextPointerDownRef.current = false;
             focusedItem.click();
 
-            const submenuID = focusedItem.getAttribute("data-submenu-id");
-            if (submenuID) {
+            const submenuID = focusedItem.dataset.submenuId;
+            const hasSubmenu = focusedItem.dataset.hasSubmenu === "true";
+
+            if (submenuID && hasSubmenu) {
                 focusFirstSubmenuItem(submenuID);
             }
             else {
@@ -1350,8 +1502,9 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                 return;
             }
 
-            const submenuID = focusedItem.getAttribute("data-submenu-id");
-            if (!submenuID) {
+            const submenuID = focusedItem.dataset.submenuId;
+            const hasSubmenu = focusedItem.dataset.hasSubmenu === "true";
+            if (!submenuID || !hasSubmenu) {
                 logger.debug(
                     "handleKeyDown: ArrowRight: no submenu ID; returning"
                 );
@@ -1385,27 +1538,30 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             }
         }
 
-    }, [
-        setIsOpen,
-        getCurrentMenuDropdownItems,
-        isOpen,
-        closeSubmenu,
-        openMenuIDsPath,
-        focusSubmenuDropdownItem,
-        focusFirstSubmenuItem,
-        debugConfig.disableMenuKeyEvents
-    ]);
+    });
 
     useImperativeHandle(handle, (): DropdownMenuHandle => ({
         openSubmenu,
-        closeSubmenu
+        closeSubmenu,
+        // return a copy of the openMenuIDsPath to prevent external mutation of
+        // the internal state
+        getOpenMenuIDsPath: () => [...openMenuIDsPath]
     }), [
         openSubmenu,
-        closeSubmenu
+        closeSubmenu,
+        openMenuIDsPath
     ]);
 
-    const openDropdownMenuEffectEvent = useEffectEvent(openDropdownMenu);
-    const closeDropdownMenuEffectEvent = useEffectEvent(closeDropdownMenu);
+    // MARK: Effect Events
+
+    // using these effect event wrappers to prevent the effects from running
+    // more often than necessary due to changes in non-reactive values
+
+    const buildMenuItemTreeEffectEvent = useEffectEvent(buildMenuItemTree);
+
+    const scheduleDropdownMenuRepositionEffectEvent = useEffectEvent(
+        scheduleDropdownMenuReposition
+    );
 
     // MARK: useEffect: change to isOpen
     useEffect((/* changes */) => {
@@ -1438,11 +1594,22 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         // ]
     );
 
+    // MARK: useEffect: change to openMenuIDsPath
+    useEffect(() => {
+        logger.debug(
+            "useEffect: openMenuIDsPath changed; new path:", openMenuIDsPath
+        );
+        onOpenMenusChange?.(openMenuIDsPath);
+    }, [
+        onOpenMenusChange,
+        openMenuIDsPath
+    ]);
+
     // MARK: useEffect: Click outside
     useEffect(() => {
         logger.debug("useEffect: click outside begin");
 
-        if (debugConfig.disableMenuCloseOnClickOutside) {
+        if (!closeOnClickOutside) {
             return;
         }
 
@@ -1485,7 +1652,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                     "onClickOutside: hiding dropdown menu; target:",
                     event.target
                 );
-                setIsOpen(false);
+                setIsOpen(false, event);
             }
             else {
                 logger.debug(
@@ -1512,21 +1679,21 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
     }, [
         isOpen,
         setIsOpen,
-        debugConfig.disableMenuCloseOnClickOutside
+        closeOnClickOutside
     ]);
 
     // MARK: useEffect: keydown
     useEffect(() => {
 
         if (isOpen) {
-            window.addEventListener("keydown", handleKeyDown);
+            window.addEventListener("keydown", handleKeyDownEffectEvent);
         }
 
         return (): void => {
-            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keydown", handleKeyDownEffectEvent);
         };
 
-    }, [handleKeyDown, isOpen]);
+    }, [isOpen]);
 
     // MARK: useEffect: Viewport changes
     useEffect(() => {
@@ -1553,7 +1720,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                 `event.type: ${thisName}.${event.type}; scheduling dropdown ` +
                 "menu reposition"
             );
-            scheduleDropdownMenuReposition();
+            scheduleDropdownMenuRepositionEffectEvent();
         }
 
         if (isOpen) {
@@ -1571,22 +1738,31 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         };
 
     }, [
-        handleKeyDown,
-        isOpen,
-        scheduleDropdownMenuReposition
+        isOpen
     ]);
 
     // MARK: useEffect: MutationObserver and ResizeObserver
     useEffect(() => {
 
-        logger.debug("useEffect: MutationObserver/ResizeObserver begin");
+        const mutationObserverOptions: MutationObserverInit = {
+            childList: true,
+            subtree: true,
+            attributeFilter: [
+                "data-submenu-id"
+            ]
+        };
+
+        logger.debug(
+            "useEffect: MutationObserver/ResizeObserver begin; isOpen:", isOpen
+        );
+
 
         const mutationObserver = new MutationObserver((): void => {
             logger.debug(
                 "useEffect: MutationObserver: DOM changed; " +
                 "rebuilding menu item tree"
             );
-            scheduleBuildMenuItemTree();
+            scheduleBuildMenuItemTreeEffectEvent();
         });
 
         const resizeObserver = new ResizeObserver((/* entries */): void => {
@@ -1662,33 +1838,50 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                     "repositioning dropdown menu"
                 );
 
-                scheduleDropdownMenuReposition();
+                scheduleDropdownMenuRepositionEffectEvent();
             }
 
         });
 
-        if (isOpen) {
+        if (submenusPortalContainer) {
+            // we must build the menu item tree even if the dropdown menu is
+            // currently closed because the client could still call
+            // `openSubmenu`, which needs the menu item tree to find the submenu
+            // to open
 
-            if (submenusPortalContainer) {
-                mutationObserver.observe(submenusPortalContainer, {
-                    childList: true,
-                    subtree: true,
-                    attributeFilter: [
-                        "data-submenu-id"
-                    ]
-                });
-            }
-            else {
-                logger.warn(
-                    "useEffect: submenusPortalContainer is null; " +
-                    "not observing for mutations"
-                );
-            }
+            // in case there is a mutation between when the cleanup function of
+            // this effect runs and when the new observers are set up
+            buildMenuItemTreeEffectEvent();
+
+            mutationObserver.observe(
+                submenusPortalContainer,
+                mutationObserverOptions
+            );
+            logger.debug(
+                "useEffect: MutationObserver observing " +
+                "submenusPortalContainer for mutations:",
+                submenusPortalContainer
+            );
+        }
+        else {
+            logger.info(
+                "useEffect: submenusPortalContainer is null; " +
+                "not observing for mutations"
+            );
+        }
+
+        if (isOpen) {
 
             if (
                 dropdownMenuMeasuringContainerRef.current &&
                 dropdownMenuContentRef.current
             ) {
+
+                mutationObserver.observe(
+                    dropdownMenuMeasuringContainerRef.current,
+                    mutationObserverOptions
+                );
+
                 ignoreInitialResizeObserverCallbackRef.current = true;
                 resizeObserver.observe(
                     dropdownMenuMeasuringContainerRef.current
@@ -1715,14 +1908,16 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         }
 
         return (): void => {
+            logger.debug(
+                "useEffect: MutationObserver/ResizeObserver cleanup: " +
+                "disconnecting observers"
+            );
             mutationObserver.disconnect();
             resizeObserver.disconnect();
         };
 
     }, [
-        scheduleBuildMenuItemTree,
         isOpen,
-        scheduleDropdownMenuReposition,
         submenusPortalContainer
     ]);
 
@@ -1776,33 +1971,6 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
         debugConfig.exposeDebugUtilitiesOnWindow
     ]);
 
-    // MARK: useEffect: Disable mouse hover events in debug mode
-    useEffect(() => {
-
-        if (isOpen) {
-
-            if (
-                debugConfig.disableMenuMouseHoverEvents
-            ) {
-                logger.debug(
-                    "useEffect: disabling mouse hover events"
-                );
-                setDisableMouseHoverEvents(true);
-            }
-            else {
-                logger.debug(
-                    "useEffect: enabling mouse hover events"
-                );
-                setDisableMouseHoverEvents(false);
-            }
-        }
-
-    }, [
-        isOpen,
-        buildMenuItemTree,
-        debugConfig.disableMenuMouseHoverEvents
-    ]);
-
     // MARK: useEffect: Cleanup on unmount
     useEffect(() => {
         return (): void => {
@@ -1816,6 +1984,13 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             }
         };
     }, []);
+
+    // MARK: useLayoutEffect: log commits
+    useLayoutEffect(() => {
+        logger.debug(
+            "useLayoutEffect: commit; isOpen:", isOpen
+        );
+    });
 
     // MARK: DEBUG: open dropdown menu on mount
     // useEffect(() => {
@@ -1836,19 +2011,21 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
             openSubmenu,
             closeSubmenu,
             ignoreClicksUntilNextPointerDownRef,
-            disableMouseHoverEvents
+            mouseHoverEvents,
+            closeOnClickLeafItem
         }),
         [
             isOpen,
             submenusPortalContainer,
+            mainDropdownMenuEventEmitter,
             openMenuIDsPath,
             hoveredMenuItem,
             setHoveredMenuItem,
             scheduleDropdownMenuReposition,
             openSubmenu,
             closeSubmenu,
-            disableMouseHoverEvents,
-            mainDropdownMenuEventEmitter
+            mouseHoverEvents,
+            closeOnClickLeafItem
         ]
     );
 
@@ -1936,13 +2113,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
                 <div
                     className="bd-submenus-portal-container"
                     id={menuID}
-                    ref={(node) => {
-                        setSubmenusPortalContainer(node);
-
-                        return () => {
-                            setSubmenusPortalContainer(null);
-                        };
-                    }}
+                    ref={setSubmenusPortalContainer}
                 />
             ),
                 document.body
@@ -1952,4 +2123,7 @@ export const DropdownMenu = memo(function DropdownMenu(props: DropdownMenuProps)
 
 });
 
-DropdownMenu.displayName = "DropdownMenu";
+_DropdownMenu.displayName = "DropdownMenu";
+
+export const DropdownMenu = _DropdownMenu as
+    (props: DropdownMenuProps) => ReactNode;

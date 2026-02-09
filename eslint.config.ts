@@ -8,10 +8,10 @@ import stylistic from "@stylistic/eslint-plugin";
 import jsdoc from "eslint-plugin-jsdoc";
 import sonarjs from "eslint-plugin-sonarjs";
 import "eslint-import-resolver-typescript";
-import { defineConfig } from "eslint/config";
+import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig(
-    { ignores: ["dist", "src-gen"] },
+    globalIgnores(["**/dist", "**/src-gen"]),
     {
         files: [
             "**/*.{ts,tsx,js}",
@@ -89,7 +89,8 @@ export default defineConfig(
             }],
             "@stylistic/no-trailing-spaces": "warn",
 
-            quotes: ["error", "double", { avoidEscape: true }],
+            "@stylistic/quotes": ["error", "double", { avoidEscape: true }],
+            "@stylistic/jsx-quotes": ["error", "prefer-double"],
             "prefer-const": "error",
             "@typescript-eslint/no-unused-vars": ["warn", {
                 varsIgnorePattern: "^_+$",
@@ -144,6 +145,20 @@ export default defineConfig(
             "@typescript-eslint/restrict-template-expressions": "off",
             "no-control-regex": "off"
         },
+    },
+    // build compat tests
+    {
+        files: [
+            "tests/types/react-19_0/**/*.{ts,tsx,js}"
+        ],
+        rules: {
+            "no-console": "off",
+            "@typescript-eslint/no-explicit-any": "off",
+            "@typescript-eslint/no-unsafe-assignment": "off",
+            "@typescript-eslint/no-unsafe-member-access": "off",
+            "@typescript-eslint/no-unsafe-call": "off",
+            "@typescript-eslint/no-unused-vars": "off"
+        }
     },
     // config files
     {

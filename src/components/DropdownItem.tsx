@@ -1,8 +1,9 @@
-import "./DropdownMenu.css";
+import type React from "react";
 
-import React, {
+import {
     type JSX,
     type PropsWithChildren,
+    type ReactNode,
     useRef,
     useContext,
     useEffect,
@@ -10,7 +11,6 @@ import React, {
     useState,
     useMemo,
     memo,
-    type ReactNode
 } from "react";
 
 import { createPortal } from "react-dom";
@@ -69,11 +69,11 @@ import {
 
 import { dropdownItemLogger as logger } from "../utils/loggers";
 
-type DropdownItemProps = PropsWithChildren & {
+export type DropdownItemProps = PropsWithChildren<{
     onClick?: (event: MouseEvent) => void;
-};
+}>;
 
-export const DropdownItem = memo(function DropdownItem(
+const _DropdownItem = memo(function DropdownItem(
     props: DropdownItemProps
 ): JSX.Element {
 
@@ -106,7 +106,8 @@ export const DropdownItem = memo(function DropdownItem(
         hoveredMenuItem,
         setHoveredMenuItem,
         ignoreClicksUntilNextPointerDownRef,
-        disableMouseHoverEvents
+        mouseHoverEvents,
+        closeOnClickLeafItem
     } = useContext(DropdownMenuContext);
 
     const {
@@ -1397,9 +1398,9 @@ export const DropdownItem = memo(function DropdownItem(
             "bd-dropdown-menu-measuring-container-show"
         );
 
-        // we must position the submenu after opening it;
-        // otherwise, it will have a rect with all 0s and we won't be able to
-        // calculate the position correctly
+        // we must position the submenu after opening it; otherwise, it will
+        // have a rect with all 0s and we won't be able to calculate the
+        // position correctly
 
         if (updateContext) {
             // notify the context that this submenu is open
@@ -1412,7 +1413,6 @@ export const DropdownItem = memo(function DropdownItem(
             // may be opened at once, so we need to schedule the positioning of
             // all submenus in order after all have been opened
             scheduleDropdownMenuReposition();
-            // positionSubmenu();
         }
 
         setDropdownItemSecondaryFocus(true);
@@ -1478,20 +1478,55 @@ export const DropdownItem = memo(function DropdownItem(
             event.stopPropagation();
             event.stopImmediatePropagation();
             logger.debug(
-                "handleDropdownItemClick submenu: stopping propagation for " +
+                "handleDropdownItemClick: submenu: stopping propagation for " +
                 `dropdown item with submenu ID ${submenuID}`
             );
             // toggle the submenu visibility
             toggleSubmenu();
 
         } else {
-            // the user clicked on a dropdown item without a submenu, so allow
-            // the click to propagate to close the entire dropdown menu after
-            // handling the click
+            // the user clicked on a dropdown item without a submenu
             logger.debug(
-                "handleDropdownItemClick regular: allowing propagation for " +
-                `dropdown item with submenu ID ${submenuID}`
+                "handleDropdownItemClick: leaf item: for dropdown item with " +
+                `submenu ID ${submenuID}`
             );
+
+            // if the client has blocked closing the entire dropdown menu,
+            // at least close any non-parent open submenus of this menu item
+
+            // get the id of the parent (sub)menu of this menu item
+            const parentMenuItemID = menuItemTreeRef.current.parentOf(
+                submenuID
+            )?.id;
+
+            if (parentMenuItemID) {
+                // tell the context to open the parent (sub)menu of this menu
+                // item (which must already be open if this item was just
+                // clicked), which has the effect of closing any submenus that
+                // are not ancestors of this menu item
+                contextOpenSubmenu(parentMenuItemID);
+            }
+            else /* if (!parentMenuItemID) */ {
+                logger.debug(
+                    "handleDropdownItemClick: no parent menu item ID for " +
+                    `dropdown item with submenu ID ${submenuID}; not closing ` +
+                    "any submenus"
+                );
+            }
+
+            if (!closeOnClickLeafItem) {
+                // if the client has specified that clicking on a leaf item
+                // should not close the entire dropdown menu, then stop
+                // propagation to prevent the main dropdown menu's click handler
+                // from closing the menu
+
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+            }
+            // else, if closeOnClickLeafItem is true, then we can allow the
+            // click to propagate to the main dropdown menu's click handler,
+            // which will close the entire menu, including all submenus, so we
+            // do not need to do anything here
         }
 
         onClick?.(event);
@@ -1500,7 +1535,10 @@ export const DropdownItem = memo(function DropdownItem(
         toggleSubmenu,
         onClick,
         ignoreClicksUntilNextPointerDownRef,
-        submenuID
+        submenuID,
+        menuItemTreeRef,
+        contextOpenSubmenu,
+        closeOnClickLeafItem
     ]);
 
     /**
@@ -1614,7 +1652,7 @@ export const DropdownItem = memo(function DropdownItem(
 
         pointerIsOverDropdownItemContainerComponentTreeRef.current = true;
 
-        if (disableMouseHoverEvents) {
+        if (!mouseHoverEvents) {
             return;
         }
 
@@ -1644,7 +1682,7 @@ export const DropdownItem = memo(function DropdownItem(
         }, POINTER_ENTER_EXIT_DELAY_MS);
 
     }, [
-        disableMouseHoverEvents,
+        mouseHoverEvents,
         isSubmenu,
         submenuIsOpen,
         openSubmenu,
@@ -1687,7 +1725,7 @@ export const DropdownItem = memo(function DropdownItem(
 
         pointerIsOverDropdownItemContainerComponentTreeRef.current = false;
 
-        if (disableMouseHoverEvents) {
+        if (!mouseHoverEvents) {
             return;
         }
 
@@ -1751,7 +1789,7 @@ export const DropdownItem = memo(function DropdownItem(
 
     }, [
         closeSubmenu,
-        disableMouseHoverEvents,
+        mouseHoverEvents,
         isSubmenu,
         submenuIsOpen,
         eventWithinDropdownItemContainerComponentTreeRects,
@@ -2284,7 +2322,8 @@ export const DropdownItem = memo(function DropdownItem(
             {children}
             <button
                 className="bd-dropdown-item-container"
-                data-submenu-id={isSubmenu ? submenuID : undefined}
+                data-submenu-id={submenuID}
+                data-has-submenu={isSubmenu}
                 ref={dropdownItemContainerRef}
                 onPointerEnter={handleDropdownItemContainerPointerEnter}
                 onPointerLeave={handleDropdownItemContainerPointerLeave}
@@ -2296,17 +2335,28 @@ export const DropdownItem = memo(function DropdownItem(
                 <div
                     className="bd-dropdown-item"
                     ref={dropdownItemRef}
-                    data-submenu-id={isSubmenu ? submenuID : undefined}
+                    data-has-submenu={isSubmenu}
+                    data-submenu-id={submenuID}
                     data-hover={hoveredMenuItem === submenuID}
                     data-secondary-focus={dropdownItemSecondaryFocus}
                 >
                     <DisclosureIndicatorContext.Provider
                         value={disclosureIndicatorContextValue}
                     >
-                        {label}
+
+                        <div
+                            className="bd-dropdown-item-label"
+                            // provided so that the client can customize styles
+                            // based on these states
+                            data-has-submenu={isSubmenu}
+                            data-submenu-id={submenuID}
+                            data-hover={hoveredMenuItem === submenuID}
+                            data-secondary-focus={dropdownItemSecondaryFocus}
+                        >
+                            {label}
+                        </div>
                         {
                             debugConfig.showMenuIds &&
-                            isSubmenu &&
                             (
                                 <div className="bd-dropdown-debug-id">
                                     {submenuID}
@@ -2373,4 +2423,7 @@ export const DropdownItem = memo(function DropdownItem(
     );
 });
 
-DropdownItem.displayName = "DropdownItem";
+_DropdownItem.displayName = "DropdownItem";
+
+export const DropdownItem = _DropdownItem as
+    (props: DropdownItemProps) => ReactNode;

@@ -4,13 +4,13 @@ import {
 } from "react";
 
 /**
- * A custom implementation of useEffectEvent for React. As of React 19, the
+ * A custom implementation of useEffectEvent for React. As of React 19.2, the
  * built-in useEffectEvent has a bug where it does not update the callback
  * reference for memoized components. See
  * https://github.com/facebook/react/issues/35187
  *
  */
-export function useEffectEvent<T extends (...args: unknown[]) => unknown>(
+export function useEffectEvent<T extends (...args: never[]) => unknown>(
     callback: T
 ): T {
     const fnRef = useRef<T | null>(null);
@@ -21,7 +21,7 @@ export function useEffectEvent<T extends (...args: unknown[]) => unknown>(
         fnRef.current = callback;
     });
 
-    return ((...args: unknown[]): unknown => {
+    return ((...args: never[]): unknown => {
         if (!fnRef.current) {
             // eslint-disable-next-line no-console
             console.error(

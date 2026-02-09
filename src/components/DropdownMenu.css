@@ -34,6 +34,8 @@
 
     --scroll-arrow-container-height: 35px;
     --border-radius: 6px;
+    --dropdown-item-padding: 5px;
+    --dropdown-item-container-horizontal-padding: 5px;
 
     display: none;
     position: absolute;
@@ -106,9 +108,10 @@
 
     box-sizing: border-box;
 
-    position: relative;
-    padding: 0px 5px;
+    padding: 0px var(--dropdown-item-container-horizontal-padding);
     display: block;
+    /* this element is a button, so override the default intrinsic size and make
+    it expand horizontally to fill the width of the menu */
     width: 100%;
     /* border: 2px solid green; */
 
@@ -120,12 +123,18 @@
 }
 
 .bd-dropdown-item {
+    /* necessary to create new positioning context so that increasing the
+    z-index when the focus ring is visible on this item (see
+    `.bd-dropdown-item-container:focus-visible .bd-dropdown-item`) causes it to
+    layer above siblings */
     position: relative;
-    color: black;
-    padding: 5px;
-    text-decoration: none;
+
     display: block;
+
+    min-width: 0;
+
     border-radius: var(--border-radius);
+
     /* add some padding between focus ring and other dropdown items */
     outline-offset: -1px;
     /* background-color: red; */
@@ -134,6 +143,8 @@
     delay the generation of click events when the user taps the screen */
     touch-action: manipulation;
     box-sizing: border-box;
+
+    /* outline: 1px solid red; */
 }
 
 /* MARK: The order of the 4 selectors below is very specific to ensure proper
@@ -163,6 +174,20 @@
 
 /* --- end ordered selectors --- */
 
+.bd-dropdown-item-label {
+    display: flex;
+
+    overflow: clip;
+    overflow-wrap: anywhere;
+
+    padding: var(--dropdown-item-padding);
+
+    /* ensures that the label can shrink when the dropdown menu's width is
+    constrained by the viewport, and that it will wrap instead of overflowing
+    the container */
+    min-width: 0;
+}
+
 .bd-dropdown-main-debug-id {
     display: inline-block;
     position: absolute;
@@ -174,11 +199,25 @@
 }
 
 .bd-dropdown-debug-id {
-    white-space: nowrap;
     color: gray;
     font-size: 0.6em;
+
+    padding: 0 var(--dropdown-item-padding);
+}
+
+.bd-disclosure-indicator {
+    padding-left: 5px;
+    margin-left: auto;
+}
+
+.bd-disclosure-indicator[data-submenu-open="true"] {
+    color: black;
+}
+
+.bd-disclosure-indicator[data-submenu-open="false"] {
+    color: gray;
 }
 
 .bd-dropdown-divider {
-    margin: 5px;
+    margin: 5px var(--dropdown-item-container-horizontal-padding);
 }

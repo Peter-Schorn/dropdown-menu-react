@@ -10,9 +10,9 @@ import {
     useSlot
 } from "../hooks/useSlot";
 
-export type DropdownItemSubmenuProps = PropsWithChildren & {
+export type DropdownItemSubmenuProps = PropsWithChildren<{
     submenuID?: string;
-};
+}>;
 
 export function DropdownItemSubmenu(
     {

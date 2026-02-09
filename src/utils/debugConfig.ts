@@ -13,11 +13,6 @@ export type DebugConfig = {
     showMenuIds: boolean;
 
     /**
-     * If set to true, disables mouse hover events for the dropdown menus for
-     * debugging purposes.
-     */
-    disableMenuMouseHoverEvents: boolean;
-    /**
      * If set to true, visually shows the hitboxes for custom scrollbars for
      * debugging purposes.
      */
@@ -42,28 +37,25 @@ export type DebugConfig = {
      * for easy access from the browser console.
      */
     exposeDebugUtilitiesOnWindow: boolean;
-
-    /**
-     * If set to true, disables closing the menu when clicking outside of it.
-     */
-    disableMenuCloseOnClickOutside: boolean;
-
 };
 
 /**
- * Debug configuration options for the dropdown menu.
+ * Default debug configuration. This can be changed via setDebugConfig. Never
+ * mutate this object directly, as it is frozen.
  */
-// these are the default values; they can be overridden by `setDebugConfig`.
-let debugConfig: Readonly<DebugConfig> = {
+export const defaultDebugConfig = Object.freeze<DebugConfig>({
     disableMenuKeyEvents: false,
     showMenuIds: false,
-    disableMenuMouseHoverEvents: false,
     showScrollScrollbarHitboxes: false,
     mouseExpandedHitbox: false,
     disableExpandedHitbox: false,
     exposeDebugUtilitiesOnWindow: false,
-    disableMenuCloseOnClickOutside: false
-};
+});
+
+/**
+ * Debug configuration options for the dropdown menu.
+ */
+let debugConfig: Readonly<DebugConfig> = defaultDebugConfig;
 
 const debugConfigChangeListeners = new Set<() => void>();
 
@@ -72,7 +64,6 @@ function notifyDebugConfigChange(): void {
         listener();
     }
 }
-
 
 /**
  * Sets debug configuration options for the dropdown menu.
