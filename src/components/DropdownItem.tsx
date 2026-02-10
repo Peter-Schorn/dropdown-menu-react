@@ -45,13 +45,15 @@ import {
     CustomScrollbar
 } from "./CustomScrollbar";
 
+import { useEffectEvent } from "../hooks/useEffectEvent";
+
 // import {
 //     useEffectDebug
-// } from "../../hooks/useEffectDebug";
+// } from "../hooks/useEffectDebug";
 
 // import {
 //     useCallbackDebug
-// } from "../../hooks/useCallbackDebug";
+// } from "../hooks/useCallbackDebug";
 
 import {
     DROPDOWN_IDEAL_MIN_WIDTH
@@ -241,8 +243,15 @@ const _DropdownItem = memo(function DropdownItem(
      * Clears the hovered menu item if and only if this item is currently
      * hovered.
      */
-    const unsetHoveredMenuItem = useCallback((): void => {
+    const unsetHoveredMenuItem = useEffectEvent((): void => {
         setHoveredMenuItem(item => {
+            // logger.debug(
+            //     "unsetHoveredMenuItem: " +
+            //     `item: ${item}; submenuID: ${submenuID}; ` +
+            //     `hoveredMenuItem: ${hoveredMenuItem}; ` +
+            //     `item === submenuID: ${item === submenuID}`
+            // );
+
             // only clear hover if this item is currently hovered
             if (item === submenuID) {
                 return null;
@@ -250,10 +259,7 @@ const _DropdownItem = memo(function DropdownItem(
             // if some other item is hovered, do nothing
             return item;
         });
-    }, [
-        setHoveredMenuItem,
-        submenuID
-    ]);
+    });
 
     /**
      * Whether or not the event is within the dropdown item container rect.
@@ -416,7 +422,7 @@ const _DropdownItem = memo(function DropdownItem(
 
     }
 
-    const handleDropdownItemContainerPointerDown = useCallback((
+    const handleDropdownItemContainerPointerDown = useEffectEvent((
         // event: React.PointerEvent<HTMLButtonElement>
     ): void => {
         logger.debug(
@@ -427,10 +433,7 @@ const _DropdownItem = memo(function DropdownItem(
 
         ignoreClicksUntilNextPointerDownRef.current = false;
 
-    }, [
-        ignoreClicksUntilNextPointerDownRef,
-        submenuID
-    ]);
+    });
 
     const getPreferredEdge = useCallback((): HorizontalEdge => {
 
@@ -1557,7 +1560,7 @@ const _DropdownItem = memo(function DropdownItem(
      * excluding portaled children. Attached using `addEventListener`. Sets the
      * hovered menu item to this dropdown item container.
      */
-    const handleDropdownItemContainerPointerEnterDOM = useCallback((
+    const handleDropdownItemContainerPointerEnterDOM = useEffectEvent((
         event?: PointerEvent
     ): void => {
 
@@ -1572,17 +1575,14 @@ const _DropdownItem = memo(function DropdownItem(
         );
 
         setHoveredMenuItem(submenuID);
-    }, [
-        setHoveredMenuItem,
-        submenuID
-    ]);
+    });
 
     /**
      * Handles pointer leave events on the dropdown item container DOM element,
      * excluding portaled children. Attached using `addEventListener`. Clears
      * the hovered menu item if it is currently this dropdown item container.
      */
-    const handleDropdownItemContainerPointerLeaveDOM = useCallback((
+    const handleDropdownItemContainerPointerLeaveDOM = useEffectEvent((
         event?: PointerEvent
     ): void => {
 
@@ -1615,12 +1615,7 @@ const _DropdownItem = memo(function DropdownItem(
             // the pointer has logically left the dropdown item container DOM
             unsetHoveredMenuItem();
         }
-    }, [
-        eventWithinDropdownItemContainerRect,
-        unsetHoveredMenuItem,
-        scrollbarHitbox,
-        submenuID
-    ]);
+    });
 
     /**
      * Handles pointer enter events on the dropdown item container. Attached
@@ -1814,7 +1809,7 @@ const _DropdownItem = memo(function DropdownItem(
      * including portaled child submenus, and opens/closes the submenu and sets
      * hover state of the dropdown item accordingly.
      */
-    const handleScrollbarHitboxPointerChange = useCallback((
+    const handleScrollbarHitboxPointerChange = useEffectEvent((
         event: PointerEvent
     ): void => {
 
@@ -1877,16 +1872,19 @@ const _DropdownItem = memo(function DropdownItem(
             handleDropdownItemContainerPointerLeave();
         }
 
-    }, [
-        eventWithinDropdownItemContainerRect,
-        eventWithinDropdownItemContainerComponentTreeRects,
-        handleDropdownItemContainerPointerEnter,
-        handleDropdownItemContainerPointerLeave,
-        handleDropdownItemContainerPointerEnterDOM,
-        handleDropdownItemContainerPointerLeaveDOM,
-        isSubmenu,
-        submenuID
-    ]);
+    });
+
+    // MARK: Effect Events
+
+    const positionSubmenuEffectEvent = useEffectEvent(positionSubmenu);
+
+    const handleDropdownItemClickEffectEvent = useEffectEvent(
+        handleDropdownItemClick
+    );
+
+    const scheduleDropdownMenuRepositionEffectEvent = useEffectEvent(
+        scheduleDropdownMenuReposition
+    );
 
     // MARK: useEffect: parent menu events
     useEffect((/* changes */) => {
@@ -1899,9 +1897,6 @@ const _DropdownItem = memo(function DropdownItem(
             // // @ts-expect-error
             // handleDropdownItemClick.__debug
         );
-
-        // const parentDropdownMenuMeasuringContainer =
-        //     parentDropdownMenuMeasuringContainerRef.current;
 
         const dropdownItemContainer = dropdownItemContainerRef.current;
 
@@ -1926,7 +1921,7 @@ const _DropdownItem = memo(function DropdownItem(
                 // events on the actual dropdown item container, excluding
                 // portaled submenus
                 dropdownItemContainer.addEventListener(
-                    "click", handleDropdownItemClick
+                    "click", handleDropdownItemClickEffectEvent
                 );
                 dropdownItemContainer.addEventListener(
                     "pointerdown", handleDropdownItemContainerPointerDown
@@ -1975,7 +1970,7 @@ const _DropdownItem = memo(function DropdownItem(
             );
 
             dropdownItemContainer?.removeEventListener(
-                "click", handleDropdownItemClick
+                "click", handleDropdownItemClickEffectEvent
             );
             dropdownItemContainer?.removeEventListener(
                 "pointerdown", handleDropdownItemContainerPointerDown
@@ -1996,24 +1991,12 @@ const _DropdownItem = memo(function DropdownItem(
         [
             parentMenuIsOpen,
             submenuID,
-            parentScrollbarHitbox,
-            unsetHoveredMenuItem,
-            handleScrollbarHitboxPointerChange,
-            handleDropdownItemClick,
-            handleDropdownItemContainerPointerDown,
-            handleDropdownItemContainerPointerEnterDOM,
-            handleDropdownItemContainerPointerLeaveDOM
+            parentScrollbarHitbox
         ],
         // [
         //     "parentMenuIsOpen",
-        //     "props.text",
-        //     "parentScrollbarHitbox",
-        //     "unsetHoveredMenuItem",
-        //     "handleScrollbarHitboxPointerChange",
-        //     "handleDropdownItemClick",
-        //     "handleDropdownItemContainerPointerDown",
-        //     "handleDropdownItemContainerPointerEnterDOM",
-        //     "handleDropdownItemContainerPointerLeaveDOM"
+        //     "submenuID",
+        //     "parentScrollbarHitbox"
         // ]
     );
 
@@ -2096,7 +2079,7 @@ const _DropdownItem = memo(function DropdownItem(
                     "change; repositioning dropdown menu"
                 );
 
-                scheduleDropdownMenuReposition();
+                scheduleDropdownMenuRepositionEffectEvent();
             }
 
         });
@@ -2127,7 +2110,6 @@ const _DropdownItem = memo(function DropdownItem(
         };
 
     }, [
-        scheduleDropdownMenuReposition,
         submenuIsOpen
     ]);
 
@@ -2143,7 +2125,7 @@ const _DropdownItem = memo(function DropdownItem(
                         "handleRepositionSubmenu: repositioning submenu for " +
                         `dropdown item with submenu ID ${submenuID}`
                     );
-                    positionSubmenu();
+                    positionSubmenuEffectEvent();
                 }
                 else {
                     logger.debug(
@@ -2171,7 +2153,6 @@ const _DropdownItem = memo(function DropdownItem(
         };
 
     }, [
-        positionSubmenu,
         mainDropdownMenuEventEmitter,
         openMenuIDsPath,
         submenuID
@@ -2275,9 +2256,7 @@ const _DropdownItem = memo(function DropdownItem(
             unsetHoveredMenuItem();
         };
 
-    }, [
-        unsetHoveredMenuItem
-    ]);
+    }, []);
 
     // MARK: DEBUG: open submenu on mount
     // useEffect(() => {

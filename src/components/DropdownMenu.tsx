@@ -1637,6 +1637,10 @@ const _DropdownMenu = memo(function DropdownMenu(
         scheduleDropdownMenuReposition
     );
 
+    const onOpenMenusChangeEffectEvent = useEffectEvent(
+        onOpenMenusChange ?? ((): void => { })
+    );
+
     // MARK: useEffect: change to isOpen
     useEffect((/* changes */) => {
 
@@ -1673,9 +1677,8 @@ const _DropdownMenu = memo(function DropdownMenu(
         logger.debug(
             "useEffect: openMenuIDsPath changed; new path:", openMenuIDsPath
         );
-        onOpenMenusChange?.(openMenuIDsPath);
+        onOpenMenusChangeEffectEvent(openMenuIDsPath);
     }, [
-        onOpenMenusChange,
         openMenuIDsPath
     ]);
 
