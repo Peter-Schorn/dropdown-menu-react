@@ -1,6 +1,7 @@
 import "./index.css";
 
 export {
+    type OnRequestOpenChangeEvent,
     type DropdownMenuHandle,
     type DropdownMenuProps,
     type DropdownMenuPropsBase,
@@ -14,7 +15,10 @@ export {
     DropdownItem
 } from "./components/DropdownItem";
 
-export { DropdownItemLabel } from "./components/DropdownItemLabel";
+export {
+    type DropdownItemLabelProps,
+    DropdownItemLabel
+ } from "./components/DropdownItemLabel";
 
 export {
     type DropdownItemSubmenuProps,

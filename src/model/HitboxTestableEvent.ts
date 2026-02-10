@@ -33,7 +33,7 @@ export class HitboxTestableEvent {
     /**
      * Creates a HitboxTestableEvent from a PointerEvent.
      *
-     * @param event the PointerEvent.
+     * @param event - the PointerEvent.
      * @returns the HitboxTestableEvent.
      */
     static fromPointerEvent(
@@ -54,8 +54,8 @@ export class HitboxTestableEvent {
     /**
      * Creates a HitboxTestableEvent from a TouchEvent and a specific Touch.
      *
-     * @param event the TouchEvent.
-     * @param touch the Touch within the TouchEvent to use.
+     * @param event - the TouchEvent.
+     * @param touch - the Touch within the TouchEvent to use.
      * @returns the HitboxTestableEvent.
      */
     static fromTouchEvent(
@@ -78,7 +78,7 @@ export class HitboxTestableEvent {
     /**
      * Creates a HitboxTestableEvent.
      *
-     *  @param options the constructor options.
+     *  @param options - the constructor options.
      */
     constructor(options: HitboxTestableEventConstructor) {
         this.clientX = options.clientX;

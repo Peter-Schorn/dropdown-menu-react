@@ -1,3 +1,8 @@
+/**
+ * The basic interface for loggers used in this library.
+ *
+ * @public
+ */
 export type DropdownMenuLogger = {
     trace(...args: unknown[]): void;
     debug(...args: unknown[]): void;
@@ -6,6 +11,14 @@ export type DropdownMenuLogger = {
     error(...args: unknown[]): void;
 };
 
+/**
+ * An object containing all loggers used in this library. This can be used to
+ * set all loggers at once via the `setLoggers` function.
+ *
+ * @public
+ *
+ * @typeParam T - The logger type used for each logger.
+ */
 export type DropdownMenuLoggers<T extends DropdownMenuLogger = DropdownMenuLogger> = {
     dropdownMenuLogger: T;
     dropdownItemLogger: T;
@@ -30,6 +43,17 @@ export let dropdownMenuCoreLogger: DropdownMenuLogger = noopLogger;
 export let dropdownMenuScrollArrowLogger: DropdownMenuLogger = noopLogger;
 export let customScrollbarLogger: DropdownMenuLogger = noopLogger;
 
+/**
+ * The type for the `setLoggers` function, which can be used to set the loggers
+ * for this library. This can be either an object containing the loggers to set,
+ * or a function that takes the current loggers and returns such an object or
+ * void to indicate no reassignments to the loggers. The latter form allows for
+ * in-place mutation of the loggers.
+ *
+ * @public
+ *
+ * @typeParam T - The logger type used for each logger.
+ */
 export type SetLoggers<T extends DropdownMenuLogger = DropdownMenuLogger> =
     | Partial<DropdownMenuLoggers<T>>
     | ((loggers: DropdownMenuLoggers<T>) => Partial<DropdownMenuLoggers<T>> | void);
@@ -37,7 +61,9 @@ export type SetLoggers<T extends DropdownMenuLogger = DropdownMenuLogger> =
 /**
  * Sets the loggers for this library.
  *
- * @template T The logger type used for each logger.
+ * @public
+ *
+ * @typeParam T - The logger type used for each logger.
  * @param loggers - An object containing the loggers to set, or a function that
  * takes the current loggers and returns such an object or void to indicate no
  * reassignments to the loggers. The latter form allows for in-place mutation of
@@ -85,6 +111,8 @@ export function setLoggers<
  * Creates a logger that logs to the browser console. The logger prefixes each
  * log message with the logger name in square brackets.
  *
+ * @public
+ *
  * @param name - The name of the logger.
  * @returns A logger that logs to the browser console.
  */
@@ -119,6 +147,8 @@ function makeConsoleLogger(
  * console.
  *
  * Each log message is prefixed with the logger name in square brackets.
+ *
+ * @public
  */
 export function setConsoleLoggers(): void {
     setLoggers((loggers) => {

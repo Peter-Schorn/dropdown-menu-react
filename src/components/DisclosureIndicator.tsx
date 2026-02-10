@@ -11,6 +11,8 @@ import {
 
 /**
  * Props for the `DisclosureIndicator` component.
+ *
+ * @public
  */
 export type DisclosureIndicatorProps = PropsWithChildren & {
     /**
@@ -56,12 +58,14 @@ export type DisclosureIndicatorProps = PropsWithChildren & {
  * }
  * ```
  *
- * @param props - The props for this component.
- * @param props.className - Class name(s) to apply to this component. If
- * provided, these will be used instead of the default class. The DOM node that
- * this class is applied to will have a `data-submenu-open` attribute that
- * reflects the open/closed state of the submenu, which can be used in CSS to
- * style the indicator based on that state. For example:
+ * @public
+ *
+ * @param props - An object containing:
+ * - `className`: Class name(s) to apply to this component. If provided, these
+ *   will be used instead of the default class. The DOM node that this class is
+ *   applied to will have a `data-submenu-open` attribute that reflects the
+ *   open/closed state of the submenu, which can be used in CSS to style the
+ *   indicator based on that state. For example:
  * ```css
  * .my-indicator[data-submenu-open="true"] {
  *     color: black;
@@ -70,10 +74,10 @@ export type DisclosureIndicatorProps = PropsWithChildren & {
  *     color: gray;
  * }
  * ```
- * @param props.style - Optional inline styles to apply to this component.
- * @param props.children - Optional custom content to render instead of the
- * default disclosure icon. If not provided, a default right-pointing caret icon
- * will be rendered.
+ * - `style`: Optional inline styles to apply to this component.
+ * - `children` - Optional custom content to render instead of the default
+ *   disclosure icon. If not provided, a default right-pointing caret icon will
+ *   be rendered.
  */
 export function DisclosureIndicator(
     {
@@ -107,4 +111,6 @@ export function DisclosureIndicator(
 
 }
 
-DisclosureIndicator.displayName = "DisclosureIndicator";
+// use any to exclude from the generated .d.ts file
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+(DisclosureIndicator as any).displayName = "DisclosureIndicator";

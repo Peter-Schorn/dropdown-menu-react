@@ -24,9 +24,9 @@ export type ClampOptions = {
  * Clamps a value between a minimum and maximum range.
  *
  * @param value - The value to clamp.
- * @param options - An object containing the min and max values.
- * @param options.min - The minimum value.
- * @param options.max - The maximum value.
+ * @param options - An object containing the min and max values:
+ * - `min`: The minimum value.
+ * - `max`: The maximum value.
  * @returns The clamped value.
  *
  * @example
@@ -55,8 +55,8 @@ export function clamp(value:  number, { min, max }: ClampOptions): number {
 /**
  * Compares two DOMRect objects for equality.
  *
- * @param rectA The first DOMRect object.
- * @param rectB The second DOMRect object.
+ * @param rectA - The first DOMRect object.
+ * @param rectB - The second DOMRect object.
  * @returns `true` if the DOMRect objects are equal; otherwise, `false`.
  */
 export function domRectsAreEqual(
@@ -85,10 +85,9 @@ export type DomRectTestableEvent = {
  * Determines if the given event occurred within the given DOMRect using the
  * `clientX` and `clientY` properties of the event.
  *
- * @param event the event to test.
- * @param rect the DOMRect to test against.
- * @returns `true` if the event occurred within the DOMRect; otherwise,
- * `false`.
+ * @param event - The event to test.
+ * @param rect - The DOMRect to test against.
+ * @returns `true` if the event occurred within the DOMRect; otherwise, `false`.
  */
 export function eventWithinDomRect(
     event: DomRectTestableEvent,
@@ -128,8 +127,8 @@ export function flushSyncIf(
  * Compares two arrays for **shallow** equality by comparing each of their
  * elements.
  *
- * @param arrayA The first array.
- * @param arrayB The second array.
+ * @param arrayA - The first array.
+ * @param arrayB - The second array.
  *
  * @returns `true` if the arrays are equal; otherwise, `false`.
  */
@@ -162,8 +161,8 @@ export function arraysAreEqualShallow<T>(
  * Compares two objects for **shallow** equality by comparing each of their
  * properties.
  *
- * @param objA The first object.
- * @param objB The second object.
+ * @param objA - The first object.
+ * @param objB - The second object.
  *
  * @returns `true` if the objects are equal; otherwise, `false`.
  */
@@ -186,4 +185,3 @@ export function objectsAreEqualShallow<T extends Record<string, unknown>>(
 
     return true;
 }
-

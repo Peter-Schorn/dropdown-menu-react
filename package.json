@@ -8,7 +8,8 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "files": [
-        "dist"
+        "dist",
+        "scripts"
     ],
     "packageManager": "pnpm@10.28.1",
     "scripts": {
@@ -16,12 +17,14 @@
         "build:dev": "pnpm run pre-build && tsc -b && vite build --mode development",
         "dev": "pnpm run pre-build && concurrently -n tsc,vite 'tsc -b --watch' 'vite build --watch --mode development'",
         "pre-build": "pnpm run tcm && pnpm run copy-files",
-        "preinstall": "only-allow pnpm",
+        "preinstall": "node scripts/enforcePnpm.js",
         "lint": "eslint .",
         "clean": "rm -rf dist src-gen node_modules/.cache",
         "clean-build": "pnpm run clean && pnpm run build",
+        "clean-build:dev": "pnpm run clean && pnpm run build:dev",
         "tcm": "tcm -p '**/*.module.css' -o src-gen src",
-        "copy-files": "copyfiles -u 1 src/index.css.d.ts dist"
+        "copy-files": "copyfiles -u 1 src/index.css.d.ts dist",
+        "docs": "api-extractor run --local && api-documenter markdown -i temp -o docs"
     },
     "exports": {
         ".": {
@@ -60,6 +63,8 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.39.2",
+        "@microsoft/api-documenter": "^7.28.9",
+        "@microsoft/api-extractor": "^7.56.3",
         "@stylistic/eslint-plugin": "^5.7.0",
         "@types/node": "^25.1.0",
         "@types/react": "^19.2.10",
@@ -69,11 +74,12 @@
         "copyfiles": "^2.4.1",
         "eslint": "^9.39.2",
         "eslint-import-resolver-typescript": "^4.4.4",
-        "eslint-plugin-jsdoc": "^62.1.0",
+        "eslint-plugin-jsdoc": "^62.5.4",
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^7.0.1",
         "eslint-plugin-react-refresh": "^0.4.26",
         "eslint-plugin-sonarjs": "^3.0.5",
+        "eslint-plugin-tsdoc": "^0.5.0",
         "globals": "^17.0.0",
         "jiti": "^2.6.1",
         "loglevel": "^1.9.2",

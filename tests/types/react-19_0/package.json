@@ -11,7 +11,7 @@
         "test:types": "tsc --noEmit",
         "clean-test:types": "npm run clean-install-all && npm run test:types",
         "clean": "rm -rf dist node_modules package-lock.json",
-        "pack-dropdown-menu": "cd ../../.. && npm run build:dev && npm --silent pack",
+        "pack-dropdown-menu": "cd ../../.. && pnpm run clean-build:dev && pnpm --silent pack",
         "clean-install-all": "npm run clean && npm run install-all",
         "install-all": "npm run pack-dropdown-menu && npm install && npm run post-install-dropdown-menu",
         "post-install-dropdown-menu": "rm -rf ../../../dropdown-menu-1.0.0.tgz"

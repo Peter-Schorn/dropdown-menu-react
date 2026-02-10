@@ -388,4 +388,6 @@ export function DropdownMenuScrollArrow(
     );
 }
 
-DropdownMenuScrollArrow.displayName = "DropdownMenuScrollArrow";
+// use any to exclude from the generated .d.ts file
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+(DropdownMenuScrollArrow as any).displayName = "DropdownMenuScrollArrow";

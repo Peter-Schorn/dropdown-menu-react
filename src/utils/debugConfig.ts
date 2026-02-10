@@ -1,10 +1,9 @@
+/**
+ * Debug configuration options for the dropdown menu.
+ *
+ * @public
+ */
 export type DebugConfig = {
-
-    /**
-     * If set to true, disables all keyboard event handling for the dropdown
-     * menus.
-     */
-    disableMenuKeyEvents: boolean;
 
     /**
      * If set to true, show menu IDs next to dropdown menus for debugging
@@ -42,9 +41,10 @@ export type DebugConfig = {
 /**
  * Default debug configuration. This can be changed via setDebugConfig. Never
  * mutate this object directly, as it is frozen.
+ *
+ * @public
  */
 export const defaultDebugConfig = Object.freeze<DebugConfig>({
-    disableMenuKeyEvents: false,
     showMenuIds: false,
     showScrollScrollbarHitboxes: false,
     mouseExpandedHitbox: false,
@@ -67,6 +67,8 @@ function notifyDebugConfigChange(): void {
 
 /**
  * Sets debug configuration options for the dropdown menu.
+ *
+ * @public
  *
  * @param newConfig - An object containing the debug configuration options to
  * set.

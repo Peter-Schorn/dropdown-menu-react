@@ -27,12 +27,10 @@ export default defineConfig((config) => {
             },
             rollupOptions: {
                 treeshake: !debugMode,
-                output: {
-                    preserveModules: debugMode ? true : undefined,
-                    preserveModulesRoot: debugMode ? "src" : undefined
-                },
                 external: [
                     "react",
+                    "react/jsx-runtime",
+                    "react/jsx-dev-runtime",
                     "react-dom",
                     "loglevel"
                 ]

@@ -1115,4 +1115,6 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
 
 }
 
-CustomScrollbar.displayName = "CustomScrollbar";
+// use any to exclude from the generated .d.ts file
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+(CustomScrollbar as any).displayName = "CustomScrollbar";

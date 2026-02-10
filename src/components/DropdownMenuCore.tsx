@@ -493,4 +493,6 @@ export const DropdownMenuCore = memo(function DropdownMenuCore(
     );
 });
 
-DropdownMenuCore.displayName = "DropdownMenuCore";
+// use any to exclude from the generated .d.ts file
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+(DropdownMenuCore as any).displayName = "DropdownMenuCore";

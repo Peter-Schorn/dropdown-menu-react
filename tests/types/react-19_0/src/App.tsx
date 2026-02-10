@@ -93,7 +93,7 @@ function TestComponent2(): JSX.Element {
     return (
         <DropdownMenu
             isOpen={menuIsOpen}
-            onOpenChange={setMenuIsOpen}
+            onRequestOpenChange={setMenuIsOpen}
         >
             <DropdownItem>
                 <DropdownItemLabel>

@@ -8,7 +8,7 @@ import {
  * A hook that creates a state setter which transforms the next state using the
  * provided `transform` function before passing it to the original setter.
  *
- * @template T - The type of the state value.
+ * @typeParam T - The type of the state value.
  * @param setState - The original state setter function.
  * @param transform - A function that accepts the prev state and next state and
  * transforms the next state value.

@@ -1,4 +1,4 @@
-import type React from "react";
+import type * as React from "react";
 
 import {
     type JSX,
@@ -69,10 +69,20 @@ import {
 
 import { dropdownItemLogger as logger } from "../utils/loggers";
 
-export type DropdownItemProps = PropsWithChildren<{
+/**
+ * Props for the {@link DropdownItem} component.
+ *
+ * @public
+ */
+export type DropdownItemProps = PropsWithChildren & {
+    /**
+     * A click handler for the dropdown item.
+     */
     onClick?: (event: MouseEvent) => void;
-}>;
+};
 
+// doc comments are on the exported `DropdownItem` component at the bottom, so
+// that they are visible in the docs
 const _DropdownItem = memo(function DropdownItem(
     props: DropdownItemProps
 ): JSX.Element {
@@ -294,7 +304,7 @@ const _DropdownItem = memo(function DropdownItem(
      * its portaled submenu DOM elements that are currently open. Used to
      * determine whether to open/close the submenu on pointer events.
      *
-     * @param knownOutsideDropdownItemContainerDOM If true, skips checking
+     * @param knownOutsideDropdownItemContainerDOM - If true, skips checking
      * the dropdown item container DOM rect and only checks portaled submenus.
      */
     const eventWithinDropdownItemContainerComponentTreeRects = useCallback((
@@ -1214,9 +1224,10 @@ const _DropdownItem = memo(function DropdownItem(
     /**
      * Closes the submenu.
      *
-     * @param options.updateContext If true, the openSubmenuID in the context
-     * will be set to null. If false, the openSubmenuID will not be
-     * set to null, allowing another submenu to be opened.
+     * @param options - An object containing:
+     * - `updateContext`: If true, the openSubmenuID in the context will be set
+     *   to null. If false, the openSubmenuID will not be set to null, allowing
+     *   another submenu to be opened.
      */
     const closeSubmenu = useCallback((
         { updateContext = true }: ToggleSubmenuOptions = {}
@@ -2423,7 +2434,17 @@ const _DropdownItem = memo(function DropdownItem(
     );
 });
 
-_DropdownItem.displayName = "DropdownItem";
+// use any to exclude from the generated .d.ts file
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+(_DropdownItem as any).displayName = "DropdownItem";
 
+/**
+ * A dropdown item component that can optionally contain a submenu.
+ *
+ * @param props - An object containing:
+ * - `onClick` - A click handler for the dropdown item.
+ *
+ * @public
+ */
 export const DropdownItem = _DropdownItem as
     (props: DropdownItemProps) => ReactNode;

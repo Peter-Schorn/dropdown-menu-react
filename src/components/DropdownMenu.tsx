@@ -1,4 +1,4 @@
-import type React from "react";
+import type * as React from "react";
 
 import {
     type JSX,
@@ -73,11 +73,20 @@ import { dropdownMenuLogger as logger } from "../utils/loggers";
 /**
  * An event that could trigger a request for the dropdown menu to change its
  * open state. This could be a native DOM event or a React synthetic event.
+ *
+ * @public
  */
 export type OnRequestOpenChangeEvent =
     | Event
     | React.SyntheticEvent;
 
+/**
+ * An imperative handle for the {@link DropdownMenu} component that allows
+ * parent components to imperatively control the open state of the dropdown menu
+ * and access information about the open submenus.
+ *
+ * @public
+ */
 export type DropdownMenuHandle = {
     /**
      * Opens the submenu with the given ID. If the submenu is already open, does
@@ -99,8 +108,30 @@ export type DropdownMenuHandle = {
      * dropdown menu.
      */
     getOpenMenuIDsPath: () => string[];
+
+    /**
+     * Clears any pending open submenu request that has not yet been executed.
+     *
+     * When the dropdown menu is externally controlled and a client requests to
+     * open a submenu when the dropdown menu is not currently open, the dropdown
+     * menu must first request to change the open state via
+     * `onRequestOpenChange`. Only after the client sets `isOpen` to true will
+     * the dropdown menu open and execute the pending open submenu request. If
+     * the client does not set `isOpen` to true, then the pending open submenu
+     * request will never be executed and will remain pending until the next
+     * time dropdown menu opens. Calling this method allows the client to clear
+     * the pending open submenu request.
+     */
+    clearPendingOpenSubmenuRequest: () => void;
 };
 
+/**
+ * The base props for the {@link DropdownMenu} component, which are shared
+ * between both the internally controlled and externally controlled versions of
+ * the component.
+ *
+ * @public
+ */
 export type DropdownMenuPropsBase = PropsWithChildren<{
     /**
      * Optional ref to access DropdownMenuHandle methods.
@@ -131,6 +162,14 @@ export type DropdownMenuPropsBase = PropsWithChildren<{
     mouseHoverEvents?: boolean;
 
     /**
+     * Whether to enable navigating the menu and opening/closing submenus via
+     * keyboard events. Defaults to `true`. Even if set to `false`, does *not*
+     * disable any browser-default keyboard interactions, such as using tab to
+     * focus dropdown items.
+     */
+    enableKeyEvents?: boolean;
+
+    /**
      * Callback that is called whenever the open menu path changes, with the
      * path of open menu IDs from the root menu to the deepest open submenu.
      * This can be used to track which submenus are open.
@@ -138,12 +177,37 @@ export type DropdownMenuPropsBase = PropsWithChildren<{
     onOpenMenusChange?: (openMenuIDsPath: string[]) => void;
 }>;
 
+/**
+ * Props for the `DropdownMenu` component when the open state is controlled
+ * internally by the component. In this case, the `isOpen` and
+ * `onRequestOpenChange` props should not be provided.
+ *
+ * @public
+ */
 export type DropdownMenuPropsInternallyControlled = DropdownMenuPropsBase & {
+    /**
+     * The open state of the dropdown menu is managed internally by the
+     * component.
+     */
     isOpen?: never;
+
+    /**
+     * The `onRequestOpenChange` prop should not be provided when the dropdown
+     * menu is internally controlled, because there is no external open state to
+     * request changes to.
+     */
     onRequestOpenChange?: never;
 };
 
+/**
+ * Props for the `DropdownMenu` component when the open state is controlled
+ * externally via the `isOpen` prop. In this case, the `isOpen` and
+ * `onRequestOpenChange` props must both be provided.
+ *
+ * @public
+ */
 export type DropdownMenuPropsExternallyControlled = DropdownMenuPropsBase & {
+
     /**
      * Whether the dropdown menu is open.
      */
@@ -153,8 +217,8 @@ export type DropdownMenuPropsExternallyControlled = DropdownMenuPropsBase & {
      * Callback that is called whenever the dropdown menu requests to change its
      * open state.
      *
-     * @param open The requested new open state of the dropdown menu.
-     * @param event The event that triggered the open state change request, if
+     * @param open - The requested new open state of the dropdown menu.
+     * @param event - The event that triggered the open state change request, if
      * applicable.
      */
     onRequestOpenChange: (
@@ -164,13 +228,16 @@ export type DropdownMenuPropsExternallyControlled = DropdownMenuPropsBase & {
 };
 
 /**
- * Props for the `DropdownMenu` component. This component can be used in either
- * an internally controlled or externally controlled mode. In the internally
- * controlled mode, the open state of the dropdown menu is managed internally by
- * the component, and the `isOpen` and `onOpenChange` props should not be
- * provided. In the externally controlled mode, the open state of the dropdown
- * menu is managed by the parent component, and BOTH the `isOpen` and
- * `onOpenChange` props must be provided.
+ * Props for the `DropdownMenu` component.
+ *
+ * This component can be used in either an internally controlled or externally
+ * controlled mode. In the internally controlled mode, the open state of the
+ * dropdown menu is managed internally by the component, and the `isOpen` and
+ * `onOpenChange` props should not be provided. In the externally controlled
+ * mode, the open state of the dropdown menu is managed by the parent component,
+ * and BOTH the `isOpen` and `onOpenChange` props must be provided.
+ *
+ * @public
  */
 export type DropdownMenuProps =
     | DropdownMenuPropsInternallyControlled
@@ -195,6 +262,7 @@ const _DropdownMenu = memo(function DropdownMenu(
         closeOnClickLeafItem = true,
         closeOnClickOutside = true,
         mouseHoverEvents = true,
+        enableKeyEvents = true,
         onOpenMenusChange
     } = props;
 
@@ -436,6 +504,10 @@ const _DropdownMenu = memo(function DropdownMenu(
         });
 
     });
+
+    const clearPendingOpenSubmenuRequest = useCallback((): void => {
+        pendingOpenSubmenuIDRef.current = null;
+    }, []);
 
     /**
      * Notifies the submenus that they should reposition themselves. This should
@@ -1111,7 +1183,7 @@ const _DropdownMenu = memo(function DropdownMenu(
 
         if (pendingOpenSubmenuIDRef.current) {
             openSubmenu(pendingOpenSubmenuIDRef.current);
-            pendingOpenSubmenuIDRef.current = null;
+            clearPendingOpenSubmenuRequest();
         }
 
         didFinishOpenRef.current = true;
@@ -1144,7 +1216,7 @@ const _DropdownMenu = memo(function DropdownMenu(
             "bd-dropdown-menu-measuring-container-show"
         );
 
-        pendingOpenSubmenuIDRef.current = null;
+        clearPendingOpenSubmenuRequest();
         setOpenMenuIDsPath([]);
         setHoveredMenuItem(null);
         menuItemsAlignmentRef.current.clear();
@@ -1335,7 +1407,7 @@ const _DropdownMenu = memo(function DropdownMenu(
         event: KeyboardEvent
     ): void => {
 
-        if (debugConfig.disableMenuKeyEvents) {
+        if (!enableKeyEvents) {
             return;
         }
 
@@ -1545,11 +1617,13 @@ const _DropdownMenu = memo(function DropdownMenu(
         closeSubmenu,
         // return a copy of the openMenuIDsPath to prevent external mutation of
         // the internal state
-        getOpenMenuIDsPath: () => [...openMenuIDsPath]
+        getOpenMenuIDsPath: () => [...openMenuIDsPath],
+        clearPendingOpenSubmenuRequest
     }), [
         openSubmenu,
         closeSubmenu,
-        openMenuIDsPath
+        openMenuIDsPath,
+        clearPendingOpenSubmenuRequest
     ]);
 
     // MARK: Effect Events
@@ -2123,7 +2197,21 @@ const _DropdownMenu = memo(function DropdownMenu(
 
 });
 
-_DropdownMenu.displayName = "DropdownMenu";
+// use any to exclude from the generated .d.ts file
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+(_DropdownMenu as any).displayName = "DropdownMenu";
 
+/**
+ * A dropdown menu component that can contain dropdown items and arbitrarily
+ * nested submenus. The dropdown menu is opened by clicking on the toggle
+ * button, and can be closed by clicking outside of the menu or by pressing the
+ * Escape key. The menu supports keyboard navigation and will automatically
+ * reposition itself to stay within the visual viewport.
+ *
+ * @param props - The props for this component. See {@link DropdownMenuProps}
+ * for details.
+ *
+ * @public
+ */
 export const DropdownMenu = _DropdownMenu as
     (props: DropdownMenuProps) => ReactNode;
