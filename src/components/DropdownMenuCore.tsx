@@ -86,8 +86,8 @@ export const DropdownMenuCore = memo(function DropdownMenuCore(
 
     // const dropdownMenuContext = useContext(DropdownMenuContext);
 
-    const scrollArrowUpRef = useRef<HTMLDivElement>(null);
-    const scrollArrowDownRef = useRef<HTMLDivElement>(null);
+    const scrollArrowUpRef = useRef<HTMLButtonElement>(null);
+    const scrollArrowDownRef = useRef<HTMLButtonElement>(null);
 
     const continuousScrollingIntervalID = useRef<number | undefined>(undefined);
     const isContinuouslyScrollingRef = useRef<boolean>(false);

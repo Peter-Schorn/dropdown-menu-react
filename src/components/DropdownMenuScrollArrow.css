@@ -88,6 +88,11 @@
 }
 
 .bd-dropdown-scroll-arrow {
+    /* remove button styles */
+    all: unset;
+
+    cursor: pointer;
+
     display: flex;
     /* expand to fill all available space on main axis (y) */
     flex: 1;

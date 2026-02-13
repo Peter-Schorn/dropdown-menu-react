@@ -22,7 +22,7 @@ import { dropdownMenuScrollArrowLogger as logger } from "../utils/loggers";
 
 export type DropdownMenuScrollArrowProps = {
     isOpen: boolean;
-    ref: RefObject<HTMLDivElement | null>;
+    ref: RefObject<HTMLButtonElement | null>;
     edge: VerticalEdge;
     isScrolledToEdge: boolean;
     isContinuouslyScrollingRef: RefObject<boolean>;
@@ -120,7 +120,7 @@ export function DropdownMenuScrollArrow(
 
 
     const handleScrollArrowClick = useCallback((
-        event: ReactMouseEvent<HTMLDivElement, MouseEvent>
+        event: ReactMouseEvent<HTMLButtonElement, MouseEvent>
     ): void => {
         logger.debug(`handleScrollArrowClick: edge: ${edge}`);
         event.stopPropagation();
@@ -373,7 +373,7 @@ export function DropdownMenuScrollArrow(
                 className="bd-dropdown-scroll-arrow-container"
                 ref={scrollArrowContainerRef}
             >
-                <div
+                <button
                     className="bd-dropdown-scroll-arrow"
                     ref={ref}
                     onClick={handleScrollArrowClick}
@@ -385,7 +385,7 @@ export function DropdownMenuScrollArrow(
                     onPointerMove={handlePointerMove}
                 >
                     <i className={arrowIconName}></i>
-                </div>
+                </button>
             </div>
         </div>
     );
