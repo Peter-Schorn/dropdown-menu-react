@@ -8,8 +8,9 @@ import { Context } from 'react';
 import { CSSProperties } from 'react';
 import { JSX } from 'react';
 import { PropsWithChildren } from 'react';
-import type * as React_2 from 'react';
 import { ReactNode } from 'react';
+import { Ref } from 'react';
+import { SyntheticEvent } from 'react';
 
 // @public
 export type DebugConfig = {
@@ -31,7 +32,7 @@ export const DisclosureIndicatorContext: Context<DisclosureIndicatorContextType>
 
 // @public
 export type DisclosureIndicatorContextType = {
-    submenuIsOpen: boolean;
+    readonly submenuIsOpen: boolean;
 };
 
 // @public
@@ -92,6 +93,10 @@ export type DropdownMenuLoggers<T extends DropdownMenuLogger = DropdownMenuLogge
     dropdownMenuCoreLogger: T;
     dropdownMenuScrollArrowLogger: T;
     customScrollbarLogger: T;
+    dropdownItemLabelLogger: T;
+    dropdownItemSubmenuLogger: T;
+    disclosureIndicatorLogger: T;
+    dropdownItemSlotProviderLogger: T;
 };
 
 // @public
@@ -99,7 +104,7 @@ export type DropdownMenuProps = DropdownMenuPropsInternallyControlled | Dropdown
 
 // @public
 export type DropdownMenuPropsBase = PropsWithChildren<{
-    handle?: React_2.Ref<DropdownMenuHandle>;
+    handle?: Ref<DropdownMenuHandle>;
     closeOnClickOutside?: boolean;
     closeOnClickLeafItem?: boolean;
     mouseHoverEvents?: boolean;
@@ -120,7 +125,7 @@ export type DropdownMenuPropsInternallyControlled = DropdownMenuPropsBase & {
 };
 
 // @public
-export type OnRequestOpenChangeEvent = Event | React_2.SyntheticEvent;
+export type OnRequestOpenChangeEvent = Event | SyntheticEvent;
 
 // @public
 export function setConsoleLoggers(): void;

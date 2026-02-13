@@ -364,6 +364,15 @@ export class MenuItemNode {
         return lines.join("\n");
     }
 
+    length(): number {
+        let count = 1;
+        for (const child of this.children) {
+            count += child.length();
+        }
+        return count;
+    }
+
+
     toString(): string {
         return JSON.stringify(this.toPODObject(), null, 4);
     }

@@ -5,13 +5,17 @@ import {
     createContext
 } from "react";
 
-import { MenuItemNode } from "../model/MenuItemNode";
+// import {
+//     createContext
+// } from "use-context-selector";
 
-import { DropdownMenuEventEmitter } from "../model/DropdownMenuEventEmitter";
+import { MenuItemNode } from "../MenuItemNode";
+
+import { DropdownMenuEventEmitter } from "../DropdownMenuEventEmitter";
 
 import {
     type HorizontalEdge
- } from "../utils/MiscellaneousUtilities";
+ } from "../../types/misc";
 
 export type DropdownMenuContextType = {
     /**
@@ -25,7 +29,8 @@ export type DropdownMenuContextType = {
     readonly menuItemsAlignmentRef: RefObject<Map<string, HorizontalEdge>>;
     readonly mainDropdownMenuEventEmitter: DropdownMenuEventEmitter;
     readonly openMenuIDsPath: readonly string[];
-    hoveredMenuItem: string | null;
+    readonly openMenuIDsPathRef: RefObject<readonly string[]>;
+    readonly hoveredMenuItemRef: RefObject<string | null>;
     setHoveredMenuItem: Dispatch<SetStateAction<string | null>>;
     scheduleDropdownMenuReposition: () => void;
     openSubmenu: (submenuID: string) => void;
@@ -57,7 +62,8 @@ export const DropdownMenuContext = createContext<DropdownMenuContextType>({
     menuItemsAlignmentRef: { current: new Map<string, HorizontalEdge>() },
     mainDropdownMenuEventEmitter: new DropdownMenuEventEmitter(),
     openMenuIDsPath: [],
-    hoveredMenuItem: null,
+    openMenuIDsPathRef: { current: [] },
+    hoveredMenuItemRef: { current: null },
     setHoveredMenuItem: () => {
         // default implementation does nothing
     },
@@ -74,3 +80,5 @@ export const DropdownMenuContext = createContext<DropdownMenuContextType>({
     mouseHoverEvents: true,
     closeOnClickLeafItem: true
 });
+
+DropdownMenuContext.displayName = "DropdownMenuContext";

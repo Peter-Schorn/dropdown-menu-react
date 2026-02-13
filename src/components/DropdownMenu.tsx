@@ -1,9 +1,11 @@
-import type * as React from "react";
-
 import {
     type JSX,
     type PropsWithChildren,
     type ReactNode,
+    type SetStateAction,
+    type Ref as ReactRef,
+    type SyntheticEvent as ReactSyntheticEvent,
+    type MouseEvent as ReactMouseEvent,
     useCallback,
     useEffect,
     useMemo,
@@ -29,12 +31,15 @@ import {
 import {
     type DropdownMenuContextType,
     DropdownMenuContext
-} from "../model/DropdownMenuContext";
+} from "../model/context/DropdownMenuContext";
+
 import {
     type DropdownSubmenuContextType,
     DropdownSubmenuContext
-} from "../model/DropdownSubmenuContext";
+} from "../model/context/DropdownSubmenuContext";
+
 import { MenuItemNode } from "../model/MenuItemNode";
+
 import {
     DropdownMenuEventEmitter,
     DropdownMenuEventType,
@@ -44,19 +49,13 @@ import {
     DROPDOWN_IDEAL_MIN_WIDTH
 } from "../utils/constants";
 
-import { useArrayState } from "../hooks/useArrayState";
+import { useArrayStateRef } from "../hooks/useStateRef";
 
 import { useEffectEvent } from "../hooks/useEffectEvent";
 
 import { useDebugConfig } from "../hooks/useDebugConfig";
-// import { defaultDebugConfig } from "../utils/debugConfig";
 
-import {
-    type HorizontalEdge,
-    isWebkit,
-    clamp,
-    domRectsAreEqual
-} from "../utils/MiscellaneousUtilities";
+// import { defaultDebugConfig } from "../utils/debugConfig";
 
 // import {
 //     useEffectDebug
@@ -66,7 +65,13 @@ import {
 //     useCallbackDebug
 // } from "../hooks/useCallbackDebug";
 
-// import { useDebugProps } from "../hooks/useDebugProps";
+import type { HorizontalEdge, } from "../types/misc";
+
+import {
+    isWebkit,
+    clamp,
+    domRectsAreEqual
+} from "../utils/MiscellaneousUtilities";
 
 import { dropdownMenuLogger as logger } from "../utils/loggers";
 
@@ -78,7 +83,7 @@ import { dropdownMenuLogger as logger } from "../utils/loggers";
  */
 export type OnRequestOpenChangeEvent =
     | Event
-    | React.SyntheticEvent;
+    | ReactSyntheticEvent;
 
 /**
  * An imperative handle for the {@link DropdownMenu} component that allows
@@ -136,7 +141,7 @@ export type DropdownMenuPropsBase = PropsWithChildren<{
     /**
      * Optional ref to access DropdownMenuHandle methods.
      */
-    handle?: React.Ref<DropdownMenuHandle>;
+    handle?: ReactRef<DropdownMenuHandle>;
 
     /**
      * Whether the entire dropdown menu should close when clicking outside of
@@ -173,6 +178,8 @@ export type DropdownMenuPropsBase = PropsWithChildren<{
      * Callback that is called whenever the open menu path changes, with the
      * path of open menu IDs from the root menu to the deepest open submenu.
      * This can be used to track which submenus are open.
+     *
+     * Will also be called when the dropdown menu mounts.
      */
     onOpenMenusChange?: (openMenuIDsPath: string[]) => void;
 }>;
@@ -243,13 +250,13 @@ export type DropdownMenuProps =
     | DropdownMenuPropsInternallyControlled
     | DropdownMenuPropsExternallyControlled;
 
+// doc comments are on the exported `DropdownMenu` component at the bottom so
+// that they are visible in the docs
 const _DropdownMenu = memo(function DropdownMenu(
     props: DropdownMenuProps
 ): JSX.Element {
 
     logger.debug("DropdownMenu: render");
-
-    // useDebugProps(props, "DropdownMenu Props");
 
     const debugConfig = useDebugConfig();
     // const debugConfig = defaultDebugConfig;
@@ -333,25 +340,26 @@ const _DropdownMenu = memo(function DropdownMenu(
         setSubmenusPortalContainer
     ] = useState<HTMLDivElement | null>(null);
 
-    const [openMenuIDsPath, setOpenMenuIDsPath] = useArrayState<string>([]);
+    const [
+        openMenuIDsPath,
+        setOpenMenuIDsPath,
+        openMenuIDsPathRef
+    ] = useArrayStateRef<string>([]);
 
     const [
         scrollbarHitbox,
         setScrollbarHitbox
     ] = useState<HTMLDivElement | null>(null);
 
-    const [
-        hoveredMenuItem,
-        setHoveredMenuItem
-    ] = useState<string | null>(null);
-
-    const menuID = useMemo(
-        () => crypto.randomUUID(),
+    const mainDropdownMenuEventEmitter = useMemo(
+        () => new DropdownMenuEventEmitter(),
         []
     );
 
-    const mainDropdownMenuEventEmitter = useMemo(
-        () => new DropdownMenuEventEmitter(),
+    const hoveredMenuItemRef = useRef<string | null>(null);
+
+    const menuID = useMemo(
+        () => crypto.randomUUID(),
         []
     );
 
@@ -402,6 +410,35 @@ const _DropdownMenu = memo(function DropdownMenu(
      * after the menu has finished opening.
      */
     const pendingOpenSubmenuIDRef = useRef<string | null>(null);
+
+    const setHoveredMenuItem = useCallback((
+        setter: SetStateAction<string | null>
+    ): void => {
+
+        const nextHoveredMenuItem = typeof setter === "function"
+            ? setter(hoveredMenuItemRef.current)
+            : setter;
+
+        if (nextHoveredMenuItem === hoveredMenuItemRef.current) {
+            // no change in hovered menu item, so bail out
+            return;
+        }
+
+        hoveredMenuItemRef.current = nextHoveredMenuItem;
+
+        logger.debug(
+            "setHoveredMenuItem: set hovered menu item to " +
+            `${nextHoveredMenuItem}`
+        );
+
+        mainDropdownMenuEventEmitter.emitEvent(
+            DropdownMenuEventType.HoveredMenuItemChange, {
+            hoveredMenuItem: nextHoveredMenuItem
+        });
+
+    }, [
+        mainDropdownMenuEventEmitter
+    ]);
 
     const getSubmenuItemTree = useCallback((
         submenuID: string
@@ -520,7 +557,7 @@ const _DropdownMenu = memo(function DropdownMenu(
      */
     const requestRepositionSubmenus = useCallback((): void => {
 
-        if (openMenuIDsPath.length <= 1) {
+        if (openMenuIDsPathRef.current.length <= 1) {
             logger.debug(
                 "requestRepositionSubmenus: no open submenus; nothing to do"
             );
@@ -531,7 +568,7 @@ const _DropdownMenu = memo(function DropdownMenu(
             "requestRepositionSubmenus: queuing reposition of submenus"
         );
 
-        const submenuIDs = openMenuIDsPath.slice(1);
+        const submenuIDs = openMenuIDsPathRef.current.slice(1);
 
         for (const [_, submenuID] of submenuIDs.entries()) {
             logger.debug(
@@ -548,7 +585,7 @@ const _DropdownMenu = memo(function DropdownMenu(
 
     }, [
         mainDropdownMenuEventEmitter,
-        openMenuIDsPath
+        openMenuIDsPathRef
     ]);
 
     const positionDropdownMenu = useCallback((
@@ -556,7 +593,7 @@ const _DropdownMenu = memo(function DropdownMenu(
 
         const performanceMarkDetail = {
             menuID: menuID,
-            openMenuIDsPath: openMenuIDsPath
+            openMenuIDsPath: openMenuIDsPathRef.current
         };
 
         performance.mark("position-dropdown-menu-start", {
@@ -961,12 +998,12 @@ const _DropdownMenu = memo(function DropdownMenu(
 
     },
         [
-            openMenuIDsPath,
+            openMenuIDsPathRef,
             requestRepositionSubmenus,
             menuID
         ]
         // [
-        //     "openMenuIDsPath",
+        //     "openMenuIDsPathRef",
         //     "requestRepositionSubmenus",
         //     "menuID"
         // ]
@@ -1077,11 +1114,24 @@ const _DropdownMenu = memo(function DropdownMenu(
             });
         });
 
-    }, [
-        isOpen,
-        setOpenMenuIDsPath,
-        setIsOpen
-    ]);
+    },
+        [
+            isOpen,
+            setOpenMenuIDsPath,
+            setIsOpen
+        ]
+        // [
+        //     "isOpen",
+        //     "setOpenMenuIDsPath",
+        //     "setIsOpen"
+        // ],
+        // (changes) => {
+        //     logger.debug(
+        //         "useCallbackDebug: openSubmenu: changes:\n",
+        //         changes
+        //     );
+        // }
+    );
 
     const closeSubmenu = useCallback((
         submenuID: string
@@ -1168,9 +1218,9 @@ const _DropdownMenu = memo(function DropdownMenu(
         dropdownMenuMeasuringContainerRef.current?.classList.add(
             "bd-dropdown-menu-measuring-container-show"
         );
-        menuItemsAlignmentRef.current = new Map<string, HorizontalEdge>([
-            [menuID, "right"]
-        ]);
+
+        menuItemsAlignmentRef.current.clear();
+        menuItemsAlignmentRef.current.set(menuID, "right");
 
         // if there is a pending request to open a submenu, then we should not
         // update the `openMenuIDsPath` until after we have handled the pending
@@ -1237,7 +1287,7 @@ const _DropdownMenu = memo(function DropdownMenu(
     });
 
     const handleClick = useCallback((
-        event: React.MouseEvent<HTMLDivElement, MouseEvent>
+        event: ReactMouseEvent<HTMLDivElement, MouseEvent>
     ): void => {
 
         logger.debug("handleClick; event.target:", event.target);
@@ -1284,6 +1334,7 @@ const _DropdownMenu = memo(function DropdownMenu(
             );
             return [];
         }
+        const openMenuIDsPath = openMenuIDsPathRef.current;
         const openSubmenuID = openMenuIDsPath[openMenuIDsPath.length - 1];
         if (openSubmenuID && openSubmenuID !== menuID) {
             const submenu = submenusPortalContainer.querySelector(
@@ -1306,7 +1357,7 @@ const _DropdownMenu = memo(function DropdownMenu(
 
         }
     }, [
-        openMenuIDsPath,
+        openMenuIDsPathRef,
         submenusPortalContainer,
         menuID
     ]);
@@ -1434,7 +1485,7 @@ const _DropdownMenu = memo(function DropdownMenu(
             return;
         }
 
-        const dropDownIsFocused =
+        const dropdownIsFocused =
             document.activeElement &&
             (
                 dropdown.contains(document.activeElement) ||
@@ -1446,7 +1497,7 @@ const _DropdownMenu = memo(function DropdownMenu(
             event.preventDefault();
             setIsOpen(false, event);
         }
-        else if (!dropDownIsFocused) {
+        else if (!dropdownIsFocused) {
             logger.debug(
                 "handleKeyDown: dropdown menu is not focused; ignoring"
             );
@@ -1617,12 +1668,12 @@ const _DropdownMenu = memo(function DropdownMenu(
         closeSubmenu,
         // return a copy of the openMenuIDsPath to prevent external mutation of
         // the internal state
-        getOpenMenuIDsPath: () => [...openMenuIDsPath],
+        getOpenMenuIDsPath: () => [...openMenuIDsPathRef.current],
         clearPendingOpenSubmenuRequest
     }), [
         openSubmenu,
         closeSubmenu,
-        openMenuIDsPath,
+        openMenuIDsPathRef,
         clearPendingOpenSubmenuRequest
     ]);
 
@@ -1677,7 +1728,7 @@ const _DropdownMenu = memo(function DropdownMenu(
         logger.debug(
             "useEffect: openMenuIDsPath changed; new path:", openMenuIDsPath
         );
-        onOpenMenusChangeEffectEvent(openMenuIDsPath);
+        onOpenMenusChangeEffectEvent([...openMenuIDsPath]);
     }, [
         openMenuIDsPath
     ]);
@@ -2005,8 +2056,10 @@ const _DropdownMenu = memo(function DropdownMenu(
             if (isOpen) {
                 window.openSubmenu = openSubmenu;
                 window.closeSubmenu = closeSubmenu;
-                window.getOpenMenuIDs = (): string[] => openMenuIDsPath;
-                window.getMenuItemTree = (): MenuItemNode => menuItemTreeRef.current;
+                window.getOpenMenuIDs = (): string[] =>
+                    [...openMenuIDsPathRef.current];
+                window.getMenuItemTree = (): MenuItemNode =>
+                    menuItemTreeRef.current;
                 window.buildMenuItemTree = buildMenuItemTree;
                 window.positionDropdownMenu = positionDropdownMenu;
             }
@@ -2042,7 +2095,7 @@ const _DropdownMenu = memo(function DropdownMenu(
         isOpen,
         closeSubmenu,
         openSubmenu,
-        openMenuIDsPath,
+        openMenuIDsPathRef,
         buildMenuItemTree,
         positionDropdownMenu,
         debugConfig.exposeDebugUtilitiesOnWindow
@@ -2082,7 +2135,8 @@ const _DropdownMenu = memo(function DropdownMenu(
             menuItemsAlignmentRef,
             mainDropdownMenuEventEmitter,
             openMenuIDsPath,
-            hoveredMenuItem,
+            openMenuIDsPathRef,
+            hoveredMenuItemRef,
             setHoveredMenuItem,
             scheduleDropdownMenuReposition,
             openSubmenu,
@@ -2096,7 +2150,7 @@ const _DropdownMenu = memo(function DropdownMenu(
             submenusPortalContainer,
             mainDropdownMenuEventEmitter,
             openMenuIDsPath,
-            hoveredMenuItem,
+            openMenuIDsPathRef,
             setHoveredMenuItem,
             scheduleDropdownMenuReposition,
             openSubmenu,
@@ -2147,8 +2201,8 @@ const _DropdownMenu = memo(function DropdownMenu(
                         {menuID}
                     </span>
                 )}
-                {/* the measuring container is necessary so that the width
-                    of the scroll bar can be measured */}
+                {/* the measuring container is necessary so that the width of
+                    the scroll bar can be measured */}
                 <div
                     className="bd-dropdown-menu-measuring-container"
                     ref={dropdownMenuMeasuringContainerRef}

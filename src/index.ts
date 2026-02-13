@@ -35,7 +35,7 @@ export {
 export {
     type DisclosureIndicatorContextType,
     DisclosureIndicatorContext
-} from "./model/DisclosureIndicatorContext";
+} from "./model/context/DisclosureIndicatorContext";
 
 export {
     type DebugConfig,

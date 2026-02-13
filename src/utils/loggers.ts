@@ -25,6 +25,10 @@ export type DropdownMenuLoggers<T extends DropdownMenuLogger = DropdownMenuLogge
     dropdownMenuCoreLogger: T;
     dropdownMenuScrollArrowLogger: T;
     customScrollbarLogger: T;
+    dropdownItemLabelLogger: T;
+    dropdownItemSubmenuLogger: T;
+    disclosureIndicatorLogger: T;
+    dropdownItemSlotProviderLogger: T;
 };
 
 function noop(): void {
@@ -37,11 +41,17 @@ const noopLogger: DropdownMenuLogger = new Proxy({} as DropdownMenuLogger, {
     }
 });
 
+// MARK: Loggers
+
 export let dropdownMenuLogger: DropdownMenuLogger = noopLogger;
 export let dropdownItemLogger: DropdownMenuLogger = noopLogger;
 export let dropdownMenuCoreLogger: DropdownMenuLogger = noopLogger;
 export let dropdownMenuScrollArrowLogger: DropdownMenuLogger = noopLogger;
 export let customScrollbarLogger: DropdownMenuLogger = noopLogger;
+export let dropdownItemLabelLogger: DropdownMenuLogger = noopLogger;
+export let dropdownItemSubmenuLogger: DropdownMenuLogger = noopLogger;
+export let disclosureIndicatorLogger: DropdownMenuLogger = noopLogger;
+export let dropdownItemSlotProviderLogger: DropdownMenuLogger = noopLogger;
 
 /**
  * The type for the `setLoggers` function, which can be used to set the loggers
@@ -81,7 +91,11 @@ export function setLoggers<
             dropdownItemLogger: dropdownItemLogger as T,
             dropdownMenuCoreLogger: dropdownMenuCoreLogger as T,
             dropdownMenuScrollArrowLogger: dropdownMenuScrollArrowLogger as T,
-            customScrollbarLogger: customScrollbarLogger as T
+            customScrollbarLogger: customScrollbarLogger as T,
+            dropdownItemLabelLogger: dropdownItemLabelLogger as T,
+            dropdownItemSubmenuLogger: dropdownItemSubmenuLogger as T,
+            disclosureIndicatorLogger: disclosureIndicatorLogger as T,
+            dropdownItemSlotProviderLogger: dropdownItemSlotProviderLogger as T
         })
         : loggers;
 
@@ -105,6 +119,51 @@ export function setLoggers<
     if (newLoggers.customScrollbarLogger) {
         customScrollbarLogger = newLoggers.customScrollbarLogger;
     }
+    if (newLoggers.dropdownItemLabelLogger) {
+        dropdownItemLabelLogger = newLoggers.dropdownItemLabelLogger;
+    }
+    if (newLoggers.dropdownItemSubmenuLogger) {
+        dropdownItemSubmenuLogger = newLoggers.dropdownItemSubmenuLogger;
+    }
+    if (newLoggers.disclosureIndicatorLogger) {
+        disclosureIndicatorLogger = newLoggers.disclosureIndicatorLogger;
+    }
+    if (newLoggers.dropdownItemSlotProviderLogger) {
+        dropdownItemSlotProviderLogger = newLoggers.dropdownItemSlotProviderLogger;
+    }
+}
+
+/**
+ * Gets the log message prefix for a logger based on its name. The prefix is the
+ * logger name without the "Logger" suffix and with the first letter
+ * capitalized. For example, for a logger named "dropdownMenuLogger", the prefix
+ * would be "DropdownMenu". If `wrapInBrackets` is `true`, the prefix is wrapped
+ * in square brackets. For example, "[DropdownMenu]".
+ *
+ * @param loggerName - The name of the logger.
+ * @param wrapInBrackets - Whether to wrap the prefix in square brackets.
+ * @returns The log message prefix for the logger.
+ *
+ */
+export function getLoggerPrefix(
+    loggerName: string,
+    wrapInBrackets: boolean
+): string {
+
+    const regex = /(.+)Logger/g;
+
+    const prefix = loggerName.replace(regex, (_match, group1: string) => {
+        // group1 is the first capturing group, which is the logger name without
+        // the "Logger" suffix
+        const normalizedGroup = group1.length > 0
+            ? group1[0]!.toUpperCase() + group1.slice(1)
+            : group1;
+        return wrapInBrackets
+            ? `[${normalizedGroup}]`
+            : normalizedGroup;
+    });
+
+    return prefix;
 }
 
 /**
@@ -120,16 +179,7 @@ function makeConsoleLogger(
     name: string
 ): DropdownMenuLogger {
 
-    const regex = /(.+)Logger/g;
-
-    const prefix = name.replace(regex, (_match, group1: string) => {
-        // group1 is the first capturing group, which is the logger name without
-        // the "Logger" suffix
-        const normalizedGroup = group1.length > 0
-            ? group1[0]!.toUpperCase() + group1.slice(1)
-            : group1;
-        return `[${normalizedGroup}]`;
-    });
+    const prefix = getLoggerPrefix(name, true);
 
     /* eslint-disable no-console */
     return {

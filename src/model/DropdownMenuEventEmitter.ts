@@ -1,6 +1,6 @@
 export enum DropdownMenuEventType {
     RepositionSubmenu = "reposition-submenu",
-    MouseMove = "mouse-move"
+    HoveredMenuItemChange = "hovered-menu-item-change"
 }
 
 export type DropdownMenuRepositionSubmenuEvent = {
@@ -8,17 +8,14 @@ export type DropdownMenuRepositionSubmenuEvent = {
     submenuID: string;
 };
 
-export type DropdownMenuMouseMoveEvent = {
-    type: DropdownMenuEventType.MouseMove;
-    event: MouseEvent;
+export type DropdownMenuHoveredMenuItemChangeEvent = {
+    type: DropdownMenuEventType.HoveredMenuItemChange;
+    hoveredMenuItem: string | null;
 };
-
-// more event types can be added as needed
 
 export type DropdownMenuEvent =
     | DropdownMenuRepositionSubmenuEvent
-    | DropdownMenuMouseMoveEvent;
-// more events can be added as needed
+    | DropdownMenuHoveredMenuItemChangeEvent;
 
 export type DropdownMenuEventListener<T extends DropdownMenuEvent> =
     (event: T) => void;

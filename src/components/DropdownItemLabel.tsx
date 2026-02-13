@@ -4,9 +4,9 @@ import {
 
 import {
     useDropdownItemSlotsContext
-} from "../model/DropdownItemSlotsContext";
+} from "../hooks/useDropdownItemSlotsContext";
 
-import { useSlot } from "../hooks/useSlot";
+import { dropdownItemLabelLogger as logger } from "../utils/loggers";
 
 /**
  * Props for the `DropdownItemLabel` component.
@@ -27,11 +27,12 @@ export type DropdownItemLabelProps = PropsWithChildren;
 export function DropdownItemLabel(
     { children }: DropdownItemLabelProps
 ): null {
-    const { setLabel } = useDropdownItemSlotsContext();
 
-    useSlot(
-        { setter: setLabel, value: children }
-    );
+    logger.debug("render; children:\n", children);
+
+    useDropdownItemSlotsContext({
+        setLabel: children
+    });
 
     return null;
 }

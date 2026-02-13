@@ -5,7 +5,7 @@ import {
 
 import {
     type CustomScrollbarHandle
-} from "../components/CustomScrollbar";
+} from "../../components/CustomScrollbar";
 
 export type DropdownSubmenuContextType = {
     readonly parentMenuIsOpen: boolean;
@@ -21,4 +21,7 @@ export const DropdownSubmenuContext = createContext<DropdownSubmenuContextType>(
     scrollbarHitbox: null
 });
 
-// export const DropdownSubmenuContext = createContext<DropdownSubmenuContextType>(null!);
+// export const DropdownSubmenuContext =
+//     createContext<DropdownSubmenuContextType>(null!);
+
+DropdownSubmenuContext.displayName = "DropdownSubmenuContext";

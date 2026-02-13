@@ -20,7 +20,8 @@ export function useCallbackDebug<
 >(
     fn: Fn,
     deps: T,
-    depNames?: readonly string[]
+    depNames: readonly string[],
+    onChange?: (info: DebugCallbackInfo<T>) => void
 ): DebugCallbackWrappedFn<Fn, T> {
 
     const prevDepsRef = useRef<T | null>(null);
@@ -55,6 +56,14 @@ export function useCallbackDebug<
     // attach debug metadata
     const wrapped = memoizedFn as DebugCallbackWrappedFn<Fn, T>;
     wrapped._debug = debugInfoRef.current ?? undefined;
+
+    if (
+        onChange &&
+        changed.length > 0 &&
+        debugInfoRef.current
+    ) {
+        onChange(debugInfoRef.current);
+    }
 
     return wrapped;
 }

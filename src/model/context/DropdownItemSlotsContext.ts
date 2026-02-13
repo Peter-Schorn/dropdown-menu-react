@@ -1,7 +1,6 @@
 import {
     type ReactNode,
-    createContext,
-    useContext
+    createContext
 } from "react";
 
 export type DropdownItemSlotsContextType = {
@@ -13,12 +12,4 @@ export type DropdownItemSlotsContextType = {
 export const DropdownItemSlotsContext =
     createContext<DropdownItemSlotsContextType | null>(null);
 
-export function useDropdownItemSlotsContext(): DropdownItemSlotsContextType {
-    const context = useContext(DropdownItemSlotsContext);
-    if (!context) {
-        throw new Error(
-            "DropdownItemSlotsContext must be used with a provider"
-        );
-    }
-    return context;
-}
+DropdownItemSlotsContext.displayName = "DropdownItemSlotsContext";

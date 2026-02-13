@@ -1,20 +1,22 @@
 import {
     type JSX,
     type RefObject,
+    type MouseEvent as ReactMouseEvent,
+    type PointerEvent as ReactPointerEvent,
     useCallback,
     useMemo,
     useRef,
-    useContext,
     useLayoutEffect,
-    useEffect
+    useEffect,
+    useContext
 } from "react";
 
-import { DropdownMenuContext } from "../model/DropdownMenuContext";
+import { DropdownMenuContext } from "../model/context/DropdownMenuContext";
 import type { DropdownMenuBeginContinuousScrolling } from "./DropdownMenuCore";
 
-import {
-    type VerticalEdge
-} from "../utils/MiscellaneousUtilities";
+import type {
+    VerticalEdge
+} from "../types/misc";
 
 import { dropdownMenuScrollArrowLogger as logger } from "../utils/loggers";
 
@@ -42,7 +44,8 @@ export function DropdownMenuScrollArrow(
     }: DropdownMenuScrollArrowProps
 ): JSX.Element {
 
-    logger.debug("render; edge:", edge);
+    // eslint-disable-next-line react-hooks/refs
+    logger.debug("render; edge:", edge, ref.current);
 
     const {
         ignoreClicksUntilNextPointerDownRef,
@@ -117,7 +120,7 @@ export function DropdownMenuScrollArrow(
 
 
     const handleScrollArrowClick = useCallback((
-        event: React.MouseEvent<HTMLDivElement, MouseEvent>
+        event: ReactMouseEvent<HTMLDivElement, MouseEvent>
     ): void => {
         logger.debug(`handleScrollArrowClick: edge: ${edge}`);
         event.stopPropagation();
@@ -125,7 +128,7 @@ export function DropdownMenuScrollArrow(
     }, [edge]);
 
     const handleScrollArrowPointerDown = useCallback((
-        event: React.PointerEvent<HTMLElement>
+        event: ReactPointerEvent<HTMLElement>
     ): void => {
         logger.debug(
             `handleScrollArrowPointerDown: edge: ${edge}; ` +
@@ -147,7 +150,7 @@ export function DropdownMenuScrollArrow(
     ]);
 
     const handleScrollArrowPointerUp = useCallback((
-        event: React.PointerEvent<HTMLElement>
+        event: ReactPointerEvent<HTMLElement>
     ): void => {
         logger.debug(
             `handleScrollArrowPointerUp: edge: ${edge}; ` +
@@ -172,7 +175,7 @@ export function DropdownMenuScrollArrow(
     ]);
 
     const handleScrollArrowPointerEnter = useCallback((
-        event: React.PointerEvent<HTMLElement>
+        event: ReactPointerEvent<HTMLElement>
     ): void => {
 
         if (!mouseHoverEvents) {
@@ -221,7 +224,7 @@ export function DropdownMenuScrollArrow(
     ]);
 
     const handleScrollArrowPointerLeave = useCallback((
-        event: React.PointerEvent<HTMLElement>
+        event: ReactPointerEvent<HTMLElement>
     ): void => {
 
         if (!mouseHoverEvents) {
@@ -250,7 +253,7 @@ export function DropdownMenuScrollArrow(
     ]);
 
     const handlePointerMove = useCallback((
-        event: React.PointerEvent<HTMLElement>
+        event: ReactPointerEvent<HTMLElement>
     ): void => {
 
         if (!mouseHoverEvents) {

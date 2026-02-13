@@ -15,6 +15,10 @@ export type DropdownMenuLoggers<T extends DropdownMenuLogger = DropdownMenuLogge
     dropdownMenuCoreLogger: T;
     dropdownMenuScrollArrowLogger: T;
     customScrollbarLogger: T;
+    dropdownItemLabelLogger: T;
+    dropdownItemSubmenuLogger: T;
+    disclosureIndicatorLogger: T;
+    dropdownItemSlotProviderLogger: T;
 };
 ```
 **References:** [DropdownMenuLogger](./dropdown-menu.dropdownmenulogger.md)

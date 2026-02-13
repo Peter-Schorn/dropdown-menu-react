@@ -1,7 +1,9 @@
 import log from "loglevel";
 
 import {
-    setLoggers
+    setLoggers,
+    getLoggerPrefix,
+    type DropdownMenuLoggers
 } from "./utils/loggers";
 
 // MARK: Log Levels:
@@ -31,22 +33,20 @@ export function enableLogLevelModuleLogging(): void {
 
     try {
 
-        setLoggers({
-            dropdownMenuLogger: log.getLogger(
-                "DropdownMenu"
-            ),
-            dropdownItemLogger: log.getLogger(
-                "DropdownItem"
-            ),
-            dropdownMenuCoreLogger: log.getLogger(
-                "DropdownMenuCore"
-            ),
-            dropdownMenuScrollArrowLogger: log.getLogger(
-                "DropdownMenuScrollArrow"
-            ),
-            customScrollbarLogger: log.getLogger(
-                "CustomScrollbar"
-            )
+        setLoggers((loggers) => {
+
+            for (
+                const name of Object.keys(loggers) as
+                (keyof DropdownMenuLoggers)[]
+            ) {
+                const prefix = getLoggerPrefix(name, false);
+
+                loggers[name] = log.getLogger(prefix);
+
+            }
+
+            return loggers;
+
         });
 
     } catch (error) {

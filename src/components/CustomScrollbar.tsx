@@ -3,6 +3,7 @@ import styles from "./CustomScrollbar.module.css";
 import {
     type JSX,
     type RefObject,
+    type MouseEvent as ReactMouseEvent,
     useEffect,
     useImperativeHandle,
     useRef,
@@ -695,7 +696,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
      * could close the dropdown menu).
      */
     const handleTrackClick = useCallback((
-        event: React.MouseEvent<HTMLDivElement>
+        event: ReactMouseEvent<HTMLDivElement>
     ): void => {
         event.nativeEvent.stopImmediatePropagation();
         event.stopPropagation();

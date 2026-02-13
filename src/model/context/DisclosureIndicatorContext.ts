@@ -17,7 +17,7 @@ export type DisclosureIndicatorContextType = {
      * A boolean value indicating whether the submenu associated with the
      * dropdown item is currently open or closed.
      */
-    submenuIsOpen: boolean;
+    readonly submenuIsOpen: boolean;
 };
 
 /**
@@ -34,3 +34,6 @@ export const DisclosureIndicatorContext =
     createContext<DisclosureIndicatorContextType>({
         submenuIsOpen: false
     });
+
+
+DisclosureIndicatorContext.displayName = "DisclosureIndicatorContext";

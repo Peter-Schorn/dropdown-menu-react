@@ -9,5 +9,5 @@ An event that could trigger a request for the dropdown menu to change its open s
 **Signature:**
 
 ```typescript
-export type OnRequestOpenChangeEvent = Event | React.SyntheticEvent;
+export type OnRequestOpenChangeEvent = Event | ReactSyntheticEvent;
 ```

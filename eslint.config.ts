@@ -68,6 +68,11 @@ export default defineConfig(
 
             "react-hooks/immutability": ["warn"],
 
+            "react/display-name": ["error", {
+                ignoreTranspilerName: false,
+                checkContextObjects: true,
+            }],
+
             // "react-hooks/exhaustive-deps": "off",
 
             "jsdoc/require-jsdoc": "off",
@@ -150,7 +155,14 @@ export default defineConfig(
 
             // probably should stay off
             "@typescript-eslint/restrict-template-expressions": "off",
-            "no-control-regex": "off"
+            "no-control-regex": "off",
+
+            // custom:
+
+            "no-restricted-syntax": ["error", {
+                "selector": "TSQualifiedName[left.name='React']",
+                "message": "Import React types instead of using the React namespace."
+            }]
         },
     },
     // client-side (browser) code - the core source code of the library

@@ -1,7 +1,13 @@
+import type {
+    ReactNode
+} from "react";
+
 import { flushSync } from "react-dom";
 
-export type HorizontalEdge = "left" | "right";
-export type VerticalEdge = "top" | "bottom";
+import {
+    subscribeToDebugConfig,
+    getDebugConfig
+ } from "./debugConfig";
 
 /**
  * Whether the primary input device is a touch screen.
@@ -35,7 +41,7 @@ export type ClampOptions = {
  * const clampedValue = clamp(10, { min: 0, max: 5 });
  * ```
  */
-export function clamp(value:  number, { min, max }: ClampOptions): number {
+export function clamp(value: number, { min, max }: ClampOptions): number {
     let resolvedMin: number;
     let resolvedMax: number;
 
@@ -185,3 +191,44 @@ export function objectsAreEqualShallow<T extends Record<string, unknown>>(
 
     return true;
 }
+
+export function assert(
+    condition: boolean,
+    message: string
+): asserts condition {
+    if (!condition) {
+        throw new Error(`Assertion failed: ${message}`);
+    }
+}
+
+export function summarizeReactChildren(children: ReactNode): unknown {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+    /* eslint-disable @typescript-eslint/no-unsafe-argument */
+    if (Array.isArray(children)) {
+        return children.map(summarizeReactChildren);
+    }
+
+    if (typeof children === "object" && children !== null) {
+        const el = children as any;
+
+        return {
+            type: el.type?.name ?? el.type,
+            key: el.key,
+            propKeys: el.props ? Object.keys(el.props) : null
+        };
+    }
+
+    return children;
+    /* eslint-enable */
+}
+
+subscribeToDebugConfig(() => {
+    if (getDebugConfig().exposeDebugUtilitiesOnWindow) {
+        window.summarizeReactChildren = summarizeReactChildren;
+    }
+    else {
+        delete window.summarizeReactChildren;
+    }
+});

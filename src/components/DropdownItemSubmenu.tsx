@@ -4,11 +4,9 @@ import {
 
 import {
     useDropdownItemSlotsContext
-} from "../model/DropdownItemSlotsContext";
+} from "../hooks/useDropdownItemSlotsContext";
 
-import {
-    useSlot
-} from "../hooks/useSlot";
+import { dropdownItemSubmenuLogger as logger } from "../utils/loggers";
 
 /**
  * Props for the {@link DropdownItemSubmenu} component.
@@ -46,15 +44,17 @@ export function DropdownItemSubmenu(
     }: DropdownItemSubmenuProps
 ): null {
 
-    const {
-        setSubmenu,
-        setSubmenuID
-    } = useDropdownItemSlotsContext();
-
-    useSlot(
-        { setter: setSubmenu, value: children },
-        submenuID ? { setter: setSubmenuID, value: submenuID } : null
+    logger.debug(
+        "render; children:\n",
+        children,
+        "\nsubmenuID:\n",
+        submenuID
     );
+
+    useDropdownItemSlotsContext({
+        setSubmenu: children,
+        setSubmenuID: submenuID
+    });
 
     return null;
 }

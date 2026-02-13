@@ -10,14 +10,19 @@ import {
     memo
 } from "react";
 
+import { useEffectEvent } from "../hooks/useEffectEvent";
+
 import { DropdownMenuScrollArrow } from "./DropdownMenuScrollArrow";
 
 import { dropdownMenuCoreLogger as logger } from "../utils/loggers";
 
 import { VelocityKickDetector } from "../model/VelocityKickDetector";
 
+import { useWhyObjectChanged } from "../hooks/useWhyObjectChanged";
+
+import type { VerticalEdge } from "../types/misc";
+
 import {
-    type VerticalEdge,
     flushSyncIf
 } from "../utils/MiscellaneousUtilities";
 
@@ -62,6 +67,22 @@ export const DropdownMenuCore = memo(function DropdownMenuCore(
         dropdownMenuContentRef,
         children
     } = props;
+
+    const propChanges = useWhyObjectChanged(
+        "DropdownMenuCore props",
+        props
+    );
+
+    logger.debug(
+        "render; dropdownMenuContentRef:\n",
+        // eslint-disable-next-line react-hooks/refs
+        dropdownMenuContentRef.current,
+        "\ndropdownMenuRef:\n",
+        // eslint-disable-next-line react-hooks/refs
+        dropdownMenuRef.current,
+        "\npropChanges:\n",
+        propChanges
+    );
 
     // const dropdownMenuContext = useContext(DropdownMenuContext);
 
@@ -205,8 +226,9 @@ export const DropdownMenuCore = memo(function DropdownMenuCore(
             `speed: ${speed}`
         );
 
-        // do not set isContinuouslyScrollingRef to false because we are about
-        // to set it to true again
+        // Do not set isContinuouslyScrollingRef to false because we are about
+        // to set it to true again. This call is necessary in case the menu was
+        // already scrolling at a different speed or in a different direction.
         endContinuousScrolling(false);
 
         isContinuouslyScrollingRef.current = true;
@@ -257,7 +279,7 @@ export const DropdownMenuCore = memo(function DropdownMenuCore(
 
     }, [endContinuousScrolling, dropdownMenuRef]);
 
-    const handleWheel = useCallback((
+    const handleWheel = useEffectEvent((
         event: WheelEvent
     ): void => {
 
@@ -363,9 +385,7 @@ export const DropdownMenuCore = memo(function DropdownMenuCore(
             );
         }
 
-    }, [
-        dropdownMenuRef
-    ]);
+    });
 
     useImperativeHandle(handle, (): DropdownMenuCoreHandle => ({
         endContinuousScrolling,
@@ -375,15 +395,24 @@ export const DropdownMenuCore = memo(function DropdownMenuCore(
         updateScrollProperties
     ]);
 
+    // MARK: Effect Events
 
-    // MARK: update scroll properties when the dropdown menu is scrolled
+    const updateScrollPropertiesEffectEvent = useEffectEvent(
+        updateScrollProperties
+    );
+
+    const endContinuousScrollingEffectEvent = useEffectEvent(
+        endContinuousScrolling
+    );
+
+    // MARK: useEffect: update scroll properties when the dropdown menu is scrolled
     useEffect(() => {
 
         function onScroll(): void {
             logger.debug(
                 "DropdownMenuCore: useEffect: scroll event"
             );
-            updateScrollProperties();
+            updateScrollPropertiesEffectEvent();
         }
 
         const dropdownMenu = dropdownMenuRef.current;
@@ -412,11 +441,10 @@ export const DropdownMenuCore = memo(function DropdownMenuCore(
 
     }, [
         isOpen,
-        dropdownMenuRef,
-        updateScrollProperties
+        dropdownMenuRef
     ]);
 
-    // MARK: handle wheel events for scrolling
+    // MARK: useEffect: handle wheel events for scrolling
     useEffect(() => {
 
         const dropdownMenu = dropdownMenuRef.current;
@@ -437,16 +465,17 @@ export const DropdownMenuCore = memo(function DropdownMenuCore(
             }
 
         }
-        else {
+
+        const velocityKickDetector = velocityKickDetectorRef.current;
+
+        return (): void => {
             // stop any continuous scrolling when the menu is closed
-            endContinuousScrolling();
+            endContinuousScrollingEffectEvent();
             isBlockingMomentumWheelEventsRef.current = false;
             clearTimeout(momentumScrollTimeoutIdRef.current);
             momentumScrollTimeoutIdRef.current = undefined;
-            velocityKickDetectorRef.current.reset();
-        }
+            velocityKickDetector.reset();
 
-        return (): void => {
             dropdownMenu?.removeEventListener(
                 "wheel", handleWheel
             );
@@ -454,9 +483,7 @@ export const DropdownMenuCore = memo(function DropdownMenuCore(
 
     }, [
         isOpen,
-        dropdownMenuRef,
-        endContinuousScrolling,
-        handleWheel
+        dropdownMenuRef
     ]);
 
     return (

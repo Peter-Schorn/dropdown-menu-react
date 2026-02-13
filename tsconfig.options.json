@@ -11,7 +11,9 @@
         "noImplicitOverride": true,
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true,
+        // both are already handled better by eslint
         "noUnusedLocals": false,
+        "noUnusedParameters": false,
         "forceConsistentCasingInFileNames": true,
         "noImplicitAny": true,
         // module behavior

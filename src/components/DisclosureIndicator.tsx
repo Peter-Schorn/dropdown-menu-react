@@ -7,7 +7,9 @@ import {
 
 import {
     DisclosureIndicatorContext
-} from "../model/DisclosureIndicatorContext";
+} from "../model/context/DisclosureIndicatorContext";
+
+import { disclosureIndicatorLogger as logger } from "../utils/loggers";
 
 /**
  * Props for the `DisclosureIndicator` component.
@@ -94,6 +96,10 @@ export function DisclosureIndicator(
     const defaultClassName = "bd-disclosure-indicator";
 
     const resolvedClassName = className ? className : defaultClassName;
+
+    logger.debug(
+        "DisclosureIndicator: render; submenuIsOpen: " + submenuIsOpen
+    );
 
     return (
         <span
