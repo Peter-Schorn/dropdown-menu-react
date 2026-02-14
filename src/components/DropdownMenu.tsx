@@ -16,7 +16,9 @@ import {
     useLayoutEffect,
 } from "react";
 
-import { createPortal, flushSync } from "react-dom";
+import {
+    createPortal
+} from "react-dom";
 
 import {
     CustomScrollbar,
@@ -41,6 +43,7 @@ import {
 import { MenuItemNode } from "../model/MenuItemNode";
 
 import {
+    type DropdownMenuRepositionSubmenuEventPhase,
     DropdownMenuEventEmitter,
     DropdownMenuEventType,
 } from "../model/DropdownMenuEventEmitter";
@@ -555,7 +558,9 @@ const _DropdownMenu = memo(function DropdownMenu(
      * to reposition itself should occur in the order of the depth of the
      * submenus in the menu item tree.
      */
-    const requestRepositionSubmenus = useCallback((): void => {
+    const requestRepositionSubmenus = useCallback((
+        phase: DropdownMenuRepositionSubmenuEventPhase
+    ): void => {
 
         if (openMenuIDsPathRef.current.length <= 1) {
             logger.debug(
@@ -578,7 +583,8 @@ const _DropdownMenu = memo(function DropdownMenu(
             mainDropdownMenuEventEmitter.emitEvent(
                 DropdownMenuEventType.RepositionSubmenu,
                 {
-                    submenuID
+                    submenuID,
+                    phase
                 }
             );
         }
@@ -589,6 +595,7 @@ const _DropdownMenu = memo(function DropdownMenu(
     ]);
 
     const positionDropdownMenu = useCallback((
+        phase: DropdownMenuRepositionSubmenuEventPhase
     ): void => {
 
         const performanceMarkDetail = {
@@ -994,7 +1001,7 @@ const _DropdownMenu = memo(function DropdownMenu(
             "position-dropdown-menu-end"
         );
 
-        requestRepositionSubmenus();
+        requestRepositionSubmenus(phase);
 
     },
         [
@@ -1009,7 +1016,9 @@ const _DropdownMenu = memo(function DropdownMenu(
         // ]
     );
 
-    const scheduleDropdownMenuReposition = useCallback((): void => {
+    const scheduleDropdownMenuReposition = useCallback((
+        phase: DropdownMenuRepositionSubmenuEventPhase
+    ): void => {
 
         logger.debug(
             "scheduleDropdownMenuReposition: scheduling reposition"
@@ -1027,7 +1036,7 @@ const _DropdownMenu = memo(function DropdownMenu(
             logger.debug(
                 "scheduleDropdownMenuReposition: executing scheduled reposition"
             );
-            positionDropdownMenu();
+            positionDropdownMenu(phase);
         });
     }, [positionDropdownMenu]);
 
@@ -1073,45 +1082,33 @@ const _DropdownMenu = memo(function DropdownMenu(
             return;
         }
 
-        // If one submenu (a) is already open and we are opening a different
-        // submenu (b) that is not a child of any currently open submenu, we
-        // need to close (a) and open (b) synchronously to avoid flicker where
-        // (a) stays open for a frame after (b) opens. This would happen without
-        // `flushSync` because opening b in response to a user action (e.g.
-        // click, keyboard event) is synchronous (at least once the event for
-        // the user action has been dispatched), but closing (a) in response to
-        // the `openMenuIDsPath` state change would be asynchronous.
-        flushSync(() => {
-            setOpenMenuIDsPath((prevIDs) => {
+        setOpenMenuIDsPath((prevIDs) => {
 
-                if (prevIDs[prevIDs.length - 1] === submenuID) {
-                    logger.debug(
-                        `openSubmenu: submenu with ID ${submenuID} is already ` +
-                        "open as the last submenu in the path; not opening " +
-                        "again"
-                    );
-                    return prevIDs;
-                }
-
-                // the submenuID that we want to open may be a non-direct child
-                // of one of the currently open submenus, meaning we also have
-                // to add all of the ancestors of that submenu to the open
-                // submenu IDs
-                const newIDs = menuItemTreeRef.current.pathToChild(submenuID);
-                if (newIDs.length === 0) {
-                    logger.error(
-                        `openSubmenu: submenu with ID ${submenuID} not found ` +
-                        "in menu item tree:\n" +
-                        `${menuItemTreeRef.current.toTreeString()}`
-                    );
-                    return prevIDs;
-                }
-
+            if (prevIDs[prevIDs.length - 1] === submenuID) {
                 logger.debug(
-                    `openSubmenu: newIDs: ${newIDs}`
+                    `openSubmenu: submenu with ID ${submenuID} is already ` +
+                    "open as the last submenu in the path; not opening again"
                 );
-                return newIDs;
-            });
+                return prevIDs;
+            }
+
+            // the submenuID that we want to open may be a non-direct child of
+            // one of the currently open submenus, meaning we also have to add
+            // all of the ancestors of that submenu to the open submenu IDs
+            const newIDs = menuItemTreeRef.current.pathToChild(submenuID);
+            if (newIDs.length === 0) {
+                logger.error(
+                    `openSubmenu: submenu with ID ${submenuID} not found in ` +
+                    "menu item tree:\n" +
+                    `${menuItemTreeRef.current.toTreeString()}`
+                );
+                return prevIDs;
+            }
+
+            logger.debug(
+                `openSubmenu: newIDs: ${newIDs}`
+            );
+            return newIDs;
         });
 
     },
@@ -1229,7 +1226,7 @@ const _DropdownMenu = memo(function DropdownMenu(
             setOpenMenuIDsPath([menuID]);
         }
 
-        positionDropdownMenu();
+        positionDropdownMenu("initial");
 
         if (pendingOpenSubmenuIDRef.current) {
             openSubmenu(pendingOpenSubmenuIDRef.current);
@@ -1401,8 +1398,9 @@ const _DropdownMenu = memo(function DropdownMenu(
             return false;
         }
 
-        // the menu may have just opened and may be positioned outside the
-        // viewport, so prevent scrolling when focusing
+        // The menu may have just opened and may be positioned outside the
+        // viewport, so prevent scrolling when focusing. Also, menus are already
+        // always positioned inside the visual viewport.
         firstSubmenuItem.focus({ preventScroll: true });
         logger.debug(
             "focusFirstSubmenuItem: focused first submenu item with ID " +
@@ -1848,7 +1846,7 @@ const _DropdownMenu = memo(function DropdownMenu(
                 `event.type: ${thisName}.${event.type}; scheduling dropdown ` +
                 "menu reposition"
             );
-            scheduleDropdownMenuRepositionEffectEvent();
+            scheduleDropdownMenuRepositionEffectEvent("reposition");
         }
 
         if (isOpen) {
@@ -1966,7 +1964,7 @@ const _DropdownMenu = memo(function DropdownMenu(
                     "repositioning dropdown menu"
                 );
 
-                scheduleDropdownMenuRepositionEffectEvent();
+                scheduleDropdownMenuRepositionEffectEvent("reposition");
             }
 
         });
@@ -2061,7 +2059,11 @@ const _DropdownMenu = memo(function DropdownMenu(
                 window.getMenuItemTree = (): MenuItemNode =>
                     menuItemTreeRef.current;
                 window.buildMenuItemTree = buildMenuItemTree;
-                window.positionDropdownMenu = positionDropdownMenu;
+                window.positionDropdownMenu = (
+                    phase?: DropdownMenuRepositionSubmenuEventPhase
+                ): void => {
+                    positionDropdownMenu(phase ?? "reposition");
+                };
             }
             else {
                 const error = Error("no dropdown menu is open");

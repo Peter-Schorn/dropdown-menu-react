@@ -7,7 +7,11 @@ import { flushSync } from "react-dom";
 import {
     subscribeToDebugConfig,
     getDebugConfig
- } from "./debugConfig";
+} from "./debugConfig";
+
+import type {
+    UpdateState
+} from "../types/misc";
 
 /**
  * Whether the primary input device is a touch screen.
@@ -232,3 +236,26 @@ subscribeToDebugConfig(() => {
         delete window.summarizeReactChildren;
     }
 });
+
+/**
+ * Gets the next state value based on the given update, which can be either a
+ * new state value or a function that takes the previous state and returns the
+ * new state value.
+ *
+ * @param update - The new state value or a function that returns the new state
+ * value based on the previous state.
+ * @param prevState - The previous state value.
+ * @returns The next state value.
+ */
+export function getNextState<T>(
+    update: UpdateState<T>,
+    prevState: T
+): T {
+
+    if (typeof update === "function") {
+        return (update as (prevValue: T) => T)(prevState);
+    }
+    else {
+        return update;
+    }
+}

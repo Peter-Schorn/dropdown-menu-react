@@ -3,9 +3,27 @@ export enum DropdownMenuEventType {
     HoveredMenuItemChange = "hovered-menu-item-change"
 }
 
+/**
+ * The phase of the repositioning process for a submenu.
+ * - "initial": The initial phase when the submenu is first opened and
+ *   positioned. When dropdown menus are opened, they must be positioned in
+ *   order based on their depth in the menu hierarchy. Therefore, a
+ *   `DropdownMenuRepositionSubmenuEvent` with the "initial" phase is emitted
+ *   for each submenu in order of its depth every time a submenu is opened.
+ *   However, some menus may have already been opened and positioned, in which
+ *   case they should ignore the "initial" phase and not reposition.
+ * - "reposition": The phase when the submenu is being repositioned due to
+ *   changes to the visual viewport or other factors that affect the layout of
+ *   the menus.
+ */
+export type DropdownMenuRepositionSubmenuEventPhase =
+    | "initial"
+    | "reposition";
+
 export type DropdownMenuRepositionSubmenuEvent = {
     type: DropdownMenuEventType.RepositionSubmenu;
     submenuID: string;
+    phase: DropdownMenuRepositionSubmenuEventPhase;
 };
 
 export type DropdownMenuHoveredMenuItemChangeEvent = {

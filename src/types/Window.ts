@@ -1,5 +1,8 @@
 import type { MenuItemNode } from "../model/MenuItemNode";
 import type { ReactNode } from "react";
+import type {
+    DropdownMenuRepositionSubmenuEventPhase
+} from "../model/DropdownMenuEventEmitter";
 
 declare global {
     interface Window {
@@ -9,7 +12,9 @@ declare global {
         getOpenMenuIDs?: () => string[];
         getMenuItemTree?: () => MenuItemNode;
         buildMenuItemTree?: () => void;
-        positionDropdownMenu?: () => void;
+        positionDropdownMenu?: (
+            phase?: DropdownMenuRepositionSubmenuEventPhase
+        ) => void;
 
         summarizeReactChildren?: (children: ReactNode) => unknown;
     }

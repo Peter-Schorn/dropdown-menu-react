@@ -25,3 +25,5 @@ dist-ssr
 
 # API Extractor
 /temp
+
+src-gen/**

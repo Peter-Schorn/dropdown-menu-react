@@ -47,3 +47,10 @@ export type ReadonlyIfArrayish<T> = T extends unknown[]
  */
 export type ReadonlyIfArrayishInit<T> =
     ReadonlyIfArrayish<T> | (() => ReadonlyIfArrayish<T>);
+
+/**
+ * A type representing either a value of type `T` or a function that takes the
+ * previous value of type `T` and returns a new value of type `T`. This is
+ * useful for state updater functions.
+ */
+export type UpdateState<T> = T | ((prevValue: T) => T);

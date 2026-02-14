@@ -37,11 +37,16 @@ export default defineConfig((config) => {
             },
         },
 
+        define: {
+            __DEV__: debugMode
+        },
+
         plugins: [
             react(),
             typedCssModules({
                 include: [
                     "**/*.module.css",
+                    "index.css"
                 ],
                 rootDir: "src-gen",
                 srcDir: "src",

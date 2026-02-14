@@ -2,6 +2,14 @@ import { JSDOM } from "jsdom";
 import { createRoot } from "react-dom/client";
 
 import { configurePolyfills } from "./configurePolyfills.js";
+import { assert } from "./utils.js";
+
+// ensure the library is not leaking the global __DEV__ declaration
+assert(
+    // @ts-expect-error
+    typeof ___DEV___ === "undefined",
+    "Expected ___DEV___ to be undefined"
+);
 
 // ---- setup DOM ----
 const dom = new JSDOM(

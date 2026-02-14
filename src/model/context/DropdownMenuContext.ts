@@ -11,11 +11,14 @@ import {
 
 import { MenuItemNode } from "../MenuItemNode";
 
-import { DropdownMenuEventEmitter } from "../DropdownMenuEventEmitter";
+import {
+    type DropdownMenuRepositionSubmenuEventPhase,
+    DropdownMenuEventEmitter
+} from "../DropdownMenuEventEmitter";
 
 import {
     type HorizontalEdge
- } from "../../types/misc";
+} from "../../types/misc";
 
 export type DropdownMenuContextType = {
     /**
@@ -32,7 +35,9 @@ export type DropdownMenuContextType = {
     readonly openMenuIDsPathRef: RefObject<readonly string[]>;
     readonly hoveredMenuItemRef: RefObject<string | null>;
     setHoveredMenuItem: Dispatch<SetStateAction<string | null>>;
-    scheduleDropdownMenuReposition: () => void;
+    scheduleDropdownMenuReposition: (
+        phase: DropdownMenuRepositionSubmenuEventPhase
+    ) => void;
     openSubmenu: (submenuID: string) => void;
     closeSubmenu: (submenuID: string) => void;
 
@@ -58,7 +63,7 @@ export type DropdownMenuContextType = {
 export const DropdownMenuContext = createContext<DropdownMenuContextType>({
     isOpen: false,
     submenusPortalContainer: null,
-    menuItemTreeRef: { current: new MenuItemNode({ id: ""}) },
+    menuItemTreeRef: { current: new MenuItemNode({ id: "" }) },
     menuItemsAlignmentRef: { current: new Map<string, HorizontalEdge>() },
     mainDropdownMenuEventEmitter: new DropdownMenuEventEmitter(),
     openMenuIDsPath: [],

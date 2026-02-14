@@ -329,6 +329,14 @@ export class MenuItemNode {
         return pod;
     }
 
+    length(): number {
+        let count = 1;
+        for (const child of this.children) {
+            count += child.length();
+        }
+        return count;
+    }
+
     toTreeString(): string {
         const lines: string[] = [];
 
@@ -362,14 +370,6 @@ export class MenuItemNode {
         }
         buildLines(this, "");
         return lines.join("\n");
-    }
-
-    length(): number {
-        let count = 1;
-        for (const child of this.children) {
-            count += child.length();
-        }
-        return count;
     }
 
 
