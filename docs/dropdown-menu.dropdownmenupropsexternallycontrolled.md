@@ -11,8 +11,8 @@ Props for the `DropdownMenu` component when the open state is controlled externa
 ```typescript
 export type DropdownMenuPropsExternallyControlled = DropdownMenuPropsBase & {
     isOpen: boolean;
-    onRequestOpenChange: (open: boolean, event?: OnRequestOpenChangeEvent) => void;
+    onRequestOpenChange: (options: OnRequestOpenChangeOptions) => void;
 };
 ```
-**References:** [DropdownMenuPropsBase](./dropdown-menu.dropdownmenupropsbase.md)<!-- -->, [OnRequestOpenChangeEvent](./dropdown-menu.onrequestopenchangeevent.md)
+**References:** [DropdownMenuPropsBase](./dropdown-menu.dropdownmenupropsbase.md)<!-- -->, [OnRequestOpenChangeOptions](./dropdown-menu.onrequestopenchangeoptions.md)
 

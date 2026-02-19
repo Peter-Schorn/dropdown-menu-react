@@ -115,7 +115,7 @@ export type DropdownMenuPropsBase = PropsWithChildren<{
 // @public
 export type DropdownMenuPropsExternallyControlled = DropdownMenuPropsBase & {
     isOpen: boolean;
-    onRequestOpenChange: (open: boolean, event?: OnRequestOpenChangeEvent) => void;
+    onRequestOpenChange: (options: OnRequestOpenChangeOptions) => void;
 };
 
 // @public
@@ -126,6 +126,20 @@ export type DropdownMenuPropsInternallyControlled = DropdownMenuPropsBase & {
 
 // @public
 export type OnRequestOpenChangeEvent = Event | SyntheticEvent;
+
+// @public (undocumented)
+export type OnRequestOpenChangeOptions = OnRequestOpenChangeOptionsBase & {
+    open: boolean;
+};
+
+// @public (undocumented)
+export type OnRequestOpenChangeOptionsBase = {
+    reason: OnRequestOpenChangeReason;
+    event?: OnRequestOpenChangeEvent;
+};
+
+// @public (undocumented)
+export type OnRequestOpenChangeReason = "clickDropdown" | "clickOutside" | "escapeKey" | "openSubmenu" | "closeSubmenu";
 
 // @public
 export function setConsoleLoggers(): void;

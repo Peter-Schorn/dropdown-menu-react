@@ -352,6 +352,33 @@ An event that could trigger a request for the dropdown menu to change its open s
 </td></tr>
 <tr><td>
 
+[OnRequestOpenChangeOptions](./dropdown-menu.onrequestopenchangeoptions.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[OnRequestOpenChangeOptionsBase](./dropdown-menu.onrequestopenchangeoptionsbase.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[OnRequestOpenChangeReason](./dropdown-menu.onrequestopenchangereason.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
 [SetLoggers](./dropdown-menu.setloggers.md)
 
 
