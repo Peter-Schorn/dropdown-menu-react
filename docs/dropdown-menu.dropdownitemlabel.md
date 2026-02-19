@@ -9,7 +9,7 @@ A dropdown item label component that is used to set the label of a dropdown item
 **Signature:**
 
 ```typescript
-export declare function DropdownItemLabel(input: DropdownItemLabelProps): null;
+export declare function DropdownItemLabel(input: DropdownItemLabelProps): ReactNode;
 ```
 
 ## Parameters
@@ -62,5 +62,5 @@ input
 
 **Returns:**
 
-null
+ReactNode
 

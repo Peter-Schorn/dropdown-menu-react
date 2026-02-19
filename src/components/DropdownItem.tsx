@@ -755,6 +755,63 @@ const _DropdownItem = memo(function DropdownItem(
 
     });
 
+    /**
+     * After this submenu opens and is positioned, if there is a pending focus
+     * submenu ID in the store that matches one of the direct children of this
+     * submenu, focus that submenu item. This is used to focus the first item in
+     * a submenu when opening it via keyboard events.
+     */
+    const focusSubmenuItemIfNeeded = useEffectEvent((): void => {
+        const pendingFocusSubmenuID =
+            dropdownMenuStoreContext.getState().pendingFocusSubmenuID;
+
+        if (!pendingFocusSubmenuID) {
+            return;
+        }
+
+        /**
+         * The node for this menu item.
+         */
+        const submenuNode = menuItemTreeRef.current.getNodeByID(submenuID);
+
+        if (!submenuNode) {
+            logger.error(
+                "positionSubmenu: could not find menu item tree node for " +
+                `submenu ID ${submenuID}; menuItemTree:\n` +
+                `${menuItemTreeRef.current.toTreeString()}`
+            );
+            return;
+        }
+
+        // iterate over only the direct children of this menu item and
+        // focus the first one that matches the pendingFocusSubmenuID,
+        // if any
+        for (const childNode of submenuNode.children) {
+            if (childNode.id === pendingFocusSubmenuID) {
+
+                const focusTarget = submenusPortalContainer?.querySelector(
+                    `.bd-dropdown-item-container[data-submenu-id='${childNode.id}']`
+                );
+
+                if (focusTarget instanceof HTMLElement) {
+                    focusTarget.focus();
+                    dropdownMenuStoreContext.getState()
+                        .setPendingFocusSubmenuID(null);
+                }
+                else {
+                    logger.error(
+                        "positionSubmenu: could not find focus target " +
+                        `for pendingFocusSubmenuID ${pendingFocusSubmenuID}; ` +
+                        "expected to find element with selector " +
+                        `.bd-dropdown-item-container[data-menu-item-id='${childNode.id}']`
+                    );
+                }
+                break;
+            }
+        }
+
+    });
+
     const getPreferredEdge = useCallback((): HorizontalEdge => {
 
         const menuItemTree = menuItemTreeRef.current;
@@ -1526,6 +1583,10 @@ const _DropdownItem = memo(function DropdownItem(
 
         didPerformInitialPositionRef.current = true;
 
+        if (phase === "initial") {
+            focusSubmenuItemIfNeeded();
+        }
+
         logger.debug(
             "------ positionSubmenu: end ------ " +
             `for dropdown item with submenu ID ${submenuID}`
@@ -2252,18 +2313,6 @@ const _DropdownItem = memo(function DropdownItem(
         const dropdownItemContainer = dropdownItemContainerRef.current;
 
         if (parentMenuIsOpen) {
-
-            const pendingFocusSubmenuID =
-                dropdownMenuStoreContext.getState().pendingFocusSubmenuID;
-
-            if (pendingFocusSubmenuID === submenuID) {
-                // The menu may have just opened and may be positioned outside
-                // the viewport, so prevent scrolling when focusing. Also, menus
-                // are already always positioned inside the visual viewport.
-                dropdownItemContainer?.focus({ preventScroll: true });
-                dropdownMenuStoreContext.getState()
-                    .setPendingFocusSubmenuID(null);
-            }
 
             // update submenu open/closed state based on whether pointer is
             // still logically within the dropdown item container, including

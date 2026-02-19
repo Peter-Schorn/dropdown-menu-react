@@ -300,7 +300,7 @@ const _DropdownMenu = memo(function DropdownMenu(
     props: DropdownMenuProps
 ): JSX.Element {
 
-    logger.debug("DropdownMenu: render");
+    logger.debug("render");
 
     const debugConfig = useDebugConfig();
     // const debugConfig = defaultDebugConfig;
@@ -533,18 +533,21 @@ const _DropdownMenu = memo(function DropdownMenu(
             return node;
         }
 
-        const submenu = submenusPortalContainer.querySelector<HTMLElement>(
+        const submenu = submenusPortalContainer.querySelector(
             `.bd-dropdown-submenu[data-submenu-id="${submenuID}"]`
         );
         if (!submenu) {
             return node;
         }
 
-        const submenuItems = submenu.querySelectorAll<HTMLElement>(
+        const submenuItems = submenu.querySelectorAll(
             ".bd-dropdown-item-container"
         );
 
         for (const menuItem of submenuItems) {
+            if (!(menuItem instanceof HTMLElement)) {
+                continue;
+            }
             const submenuID = menuItem.dataset.submenuId;
             if (!submenuID) {
                 // no submenu;
@@ -576,11 +579,14 @@ const _DropdownMenu = memo(function DropdownMenu(
             id: menuID
         });
 
-        const topLevelMenuItems = dropdownMenu.querySelectorAll<HTMLElement>(
+        const topLevelMenuItems = dropdownMenu.querySelectorAll(
             ".bd-dropdown-item-container"
         );
 
         for (const menuItem of topLevelMenuItems) {
+            if (!(menuItem instanceof HTMLElement)) {
+                continue;
+            }
             const submenuID = menuItem.dataset.submenuId;
             if (!submenuID) {
                 continue;
@@ -1403,10 +1409,10 @@ const _DropdownMenu = memo(function DropdownMenu(
      */
     const getCurrentMenuDropdownItems = useCallback((): HTMLElement[] => {
 
-        const dropdownMenu = dropdownMenuRef.current;
-        if (!dropdownMenu || !submenusPortalContainer) {
+        const dropdownMenuContent = dropdownMenuContentRef.current;
+        if (!dropdownMenuContent || !submenusPortalContainer) {
             logger.warn(
-                "getAllDropdownItems: dropdownMenu or " +
+                "getAllDropdownItems: dropdownMenuContent or " +
                 "submenusPortalContainer is null"
             );
             return [];
@@ -1419,18 +1425,21 @@ const _DropdownMenu = memo(function DropdownMenu(
             );
             if (!submenu) {
                 logger.debug(
-                    `getAllDropdownItems: submenu with ID ${openSubmenuID} not found`
+                    `getAllDropdownItems: submenu with ID ${openSubmenuID} ` +
+                    "not found"
                 );
                 return [];
             }
             return Array.from(
                 submenu.querySelectorAll(".bd-dropdown-item-container")
-            );
+            ).filter(e => e instanceof HTMLElement);
         }
         else {
             return Array.from(
-                dropdownMenu.querySelectorAll(".bd-dropdown-item-container")
-            );
+                dropdownMenuContent.querySelectorAll(
+                    ".bd-dropdown-item-container"
+                )
+            ).filter(e => e instanceof HTMLElement);
 
         }
     }, [
@@ -1524,12 +1533,12 @@ const _DropdownMenu = memo(function DropdownMenu(
 
         // the submenusPortalContainer does not contain the main dropdown menu
         // so we have to check both it and the main dropdown menu
-        const dropdownItem = dropdownMenu.querySelector<HTMLElement>(selector)
-            ?? submenusPortalContainer.querySelector<HTMLElement>(
+        const dropdownItem = dropdownMenu.querySelector(selector)
+            ?? submenusPortalContainer.querySelector(
                 selector
             );
 
-        if (!dropdownItem) {
+        if (!(dropdownItem instanceof HTMLElement)) {
             logger.debug(
                 "focusSubmenuDropdownItem: dropdown item with submenu ID " +
                 `${submenuID} not found`

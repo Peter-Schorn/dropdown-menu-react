@@ -48,7 +48,7 @@ export function DropdownDivider(): JSX.Element;
 export const DropdownItem: (props: DropdownItemProps) => ReactNode;
 
 // @public
-export function DropdownItemLabel(input: DropdownItemLabelProps): null;
+export function DropdownItemLabel(input: DropdownItemLabelProps): ReactNode;
 
 // @public
 export type DropdownItemLabelProps = PropsWithChildren;
@@ -59,7 +59,7 @@ export type DropdownItemProps = PropsWithChildren & {
 };
 
 // @public
-export function DropdownItemSubmenu(input: DropdownItemSubmenuProps): null;
+export function DropdownItemSubmenu(input: DropdownItemSubmenuProps): ReactNode;
 
 // @public
 export type DropdownItemSubmenuProps = PropsWithChildren<{
