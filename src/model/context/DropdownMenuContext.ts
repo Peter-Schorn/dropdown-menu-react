@@ -1,6 +1,4 @@
 import {
-    type Dispatch,
-    type SetStateAction,
     type RefObject,
     createContext
 } from "react";
@@ -21,25 +19,10 @@ import {
 } from "../../types/misc";
 
 export type DropdownMenuContextType = {
-    /**
-     * Whether or not the main dropdown menu is open.
-     */
-    readonly isOpen: boolean;
-
-    readonly submenusPortalContainer: HTMLDivElement | null;
-
     readonly menuItemTreeRef: RefObject<MenuItemNode>;
     readonly menuItemsAlignmentRef: RefObject<Map<string, HorizontalEdge>>;
     readonly mainDropdownMenuEventEmitter: DropdownMenuEventEmitter;
-    readonly openMenuIDsPath: readonly string[];
-    readonly openMenuIDsPathRef: RefObject<readonly string[]>;
     readonly hoveredMenuItemRef: RefObject<string | null>;
-    setHoveredMenuItem: Dispatch<SetStateAction<string | null>>;
-    scheduleDropdownMenuReposition: (
-        phase: DropdownMenuRepositionSubmenuEventPhase
-    ) => void;
-    openSubmenu: (submenuID: string) => void;
-    closeSubmenu: (submenuID: string) => void;
 
     /**
      * When the scroll arrow disappears while the pointer is down, then when the
@@ -50,25 +33,26 @@ export type DropdownMenuContextType = {
      */
     ignoreClicksUntilNextPointerDownRef: RefObject<boolean>;
 
-    /**
-     * If false, mouse mouse enter and leave events do not cause the dropdown
-     * menus to open or close or cause the menu to scroll when hovering over
-     * scroll arrows. They still affect the appearance of the menu items.
-     */
-    mouseHoverEvents: boolean;
+    mouseHoverEventsRef: RefObject<boolean>;
+    closeOnClickLeafItemRef: RefObject<boolean>;
 
-    closeOnClickLeafItem: boolean;
+    setHoveredMenuItem: (menuIemID: string | null) => void;
+    scheduleDropdownMenuReposition: (
+        phase: DropdownMenuRepositionSubmenuEventPhase
+    ) => void;
+    openSubmenu: (submenuID: string) => void;
+    closeSubmenu: (submenuID: string) => void;
+
 };
 
-export const DropdownMenuContext = createContext<DropdownMenuContextType>({
-    isOpen: false,
-    submenusPortalContainer: null,
+export const dropdownMenuContextDefaultValue: DropdownMenuContextType = {
     menuItemTreeRef: { current: new MenuItemNode({ id: "" }) },
     menuItemsAlignmentRef: { current: new Map<string, HorizontalEdge>() },
     mainDropdownMenuEventEmitter: new DropdownMenuEventEmitter(),
-    openMenuIDsPath: [],
-    openMenuIDsPathRef: { current: [] },
     hoveredMenuItemRef: { current: null },
+    ignoreClicksUntilNextPointerDownRef: { current: false },
+    mouseHoverEventsRef: { current: true },
+    closeOnClickLeafItemRef: { current: true },
     setHoveredMenuItem: () => {
         // default implementation does nothing
     },
@@ -80,10 +64,11 @@ export const DropdownMenuContext = createContext<DropdownMenuContextType>({
     },
     closeSubmenu: () => {
         // default implementation does nothing
-    },
-    ignoreClicksUntilNextPointerDownRef: { current: false },
-    mouseHoverEvents: true,
-    closeOnClickLeafItem: true
-});
+    }
+};
+
+export const DropdownMenuContext = createContext<DropdownMenuContextType>(
+    dropdownMenuContextDefaultValue
+);
 
 DropdownMenuContext.displayName = "DropdownMenuContext";

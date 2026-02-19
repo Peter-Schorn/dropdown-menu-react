@@ -17,11 +17,30 @@ import {
     createPortal
 } from "react-dom";
 
-import { DropdownMenuContext } from "../model/context/DropdownMenuContext";
+import {
+    useStore
+} from "zustand";
+
+import {
+    DropdownMenuContext
+    // dropdownMenuContextDefaultValue
+} from "../model/context/DropdownMenuContext";
+
+import {
+    useDropdownMenuStoreContext,
+    // mockDropdownMenuStoreContextValue
+} from "../model/store/DropdownMenuStore";
+
+import {
+    DropdownSubmenuStoreContext,
+    useCreateDropdownSubmenuStore,
+    useDropdownSubmenuStoreContext
+} from "../model/store/DropdownSubmenuStore";
 
 import {
     type DropdownSubmenuContextType,
     DropdownSubmenuContext
+    // dropdownSubmenuContextDefaultValue
 } from "../model/context/DropdownSubmenuContext";
 
 import {
@@ -61,13 +80,15 @@ import { useEffectEvent } from "../hooks/useEffectEvent";
 //     useCallbackDebug
 // } from "../hooks/useCallbackDebug";
 
-// import { useWhyObjectChanged } from "../hooks/useWhyObjectChanged";
+import { useWhyObjectChanged } from "../hooks/useWhyObjectChanged";
 
 import {
     DROPDOWN_IDEAL_MIN_WIDTH
 } from "../utils/constants";
 
 import { useDebugConfig } from "../hooks/useDebugConfig";
+
+// import { defaultDebugConfig } from "../utils/debugConfig";
 
 import type { HorizontalEdge } from "../types/misc";
 
@@ -102,78 +123,157 @@ const _DropdownItem = memo(function DropdownItem(
     // const POINTER_ENTER_EXIT_DELAY_MS = 1_000;
 
     const debugConfig = useDebugConfig();
+    // const debugConfig = defaultDebugConfig;
 
     const {
         onClick,
         children
     } = props;
 
-    // const propsChanges = useWhyObjectChanged(
-    //     "DropdownItem props",
-    //     props
-    // );
-
-    // const dropdownMenuContext = useContextUCS(DropdownMenuContext);
     const dropdownMenuContext = useContext(DropdownMenuContext);
+    // const dropdownMenuContext = dropdownMenuContextDefaultValue;
 
     // need to use individual properties of the context in dependency arrays
     // to avoid unnecessary re-renders
     const {
-        // isOpen: dropdownMenuIsOpen,
-        submenusPortalContainer,
         menuItemTreeRef,
         menuItemsAlignmentRef,
         mainDropdownMenuEventEmitter,
+        hoveredMenuItemRef,
+        ignoreClicksUntilNextPointerDownRef,
+        mouseHoverEventsRef,
+        closeOnClickLeafItemRef,
         scheduleDropdownMenuReposition,
         openSubmenu: contextOpenSubmenu,
         closeSubmenu: contextCloseSubmenu,
-        openMenuIDsPath,
-        openMenuIDsPathRef,
-        hoveredMenuItemRef,
         setHoveredMenuItem,
-        ignoreClicksUntilNextPointerDownRef,
-        mouseHoverEvents,
-        closeOnClickLeafItem,
-        // } = useContextUCS(DropdownMenuContext);
     } = dropdownMenuContext;
 
-    // const dropdownMenuContextChanges = useWhyObjectChanged(
-    //     "DropdownMenuContext",
-    //     dropdownMenuContext
-    // );
+    /**
+     * The store for the entire dropdown menu, which is provided via context at
+     * the top level of the dropdown menu.
+     */
+    const dropdownMenuStoreContext = useDropdownMenuStoreContext();
+    // const dropdownMenuStoreContext = mockDropdownMenuStoreContextValue;
 
-    const dropdownSubmenuContext = useContext(DropdownSubmenuContext);
+    const submenusPortalContainer = useStore(
+        dropdownMenuStoreContext,
+        (state) => state.submenusPortalContainer
+    );
+
+    /**
+     * The store for this submenu, which will be provided via context to child
+     * submenus.
+     */
+    const dropdownSubmenuStore = useCreateDropdownSubmenuStore();
+    // const dropdownSubmenuStore = dropdownSubmenuContextDefaultValue;
+
+    const scrollbarHitbox = useStore(
+        dropdownSubmenuStore,
+        (state) => state.scrollbarHitbox
+    );
+
+    const setScrollbarHitbox = useStore(
+        dropdownSubmenuStore,
+        (state) => state.setScrollbarHitbox
+    );
+
+    /**
+     * The submenu context from the parent submenu.
+     */
+    const dropdownParentSubmenuContext = useContext(DropdownSubmenuContext);
+    // const dropdownParentSubmenuContext = dropdownSubmenuContextDefaultValue;
 
     const {
-        parentMenuIsOpen,
         parentDropdownMenuMeasuringContainerRef,
-        // customScrollbarRef: parentCustomScrollbarRef,
-        scrollbarHitbox: parentScrollbarHitbox,
-        // } = useContext(DropdownSubmenuContext);
-    } = dropdownSubmenuContext;
+    } = dropdownParentSubmenuContext;
+
+    /**
+     * The submenu store from the parent submenu.
+     */
+    const dropdownParentSubmenuStoreContext = useDropdownSubmenuStoreContext();
+
+    const parentScrollbarHitbox = useStore(
+        dropdownParentSubmenuStoreContext,
+        (state) => state.scrollbarHitbox
+    );
 
     // const parentMenuIsOpen = true;
     // const parentDropdownMenuMeasuringContainerRef = useRef<HTMLDivElement>(null);
     // const parentScrollbarHitbox = null as HTMLDivElement | null;
 
-    // const submenuContextChanges = useWhyObjectChanged(
-    //     "DropdownSubmenuContext",
-    //     dropdownSubmenuContext
-    // );
-
     const [label, setLabel] = useState<ReactNode | null>(null);
     const [submenu, setSubmenu] = useState<ReactNode | null>(null);
-
-    const [zIndex, _setZIndex] = useState(10);
-
-    const [
-        scrollbarHitbox,
-        setScrollbarHitbox
-    ] = useState<HTMLDivElement | null>(null);
 
     const isSubmenu = useMemo((): boolean => {
         return submenu !== null && submenu !== undefined;
     }, [submenu]);
+
+    /**
+     * An internally generated unique identifier for this submenu. Used if no
+     * external submenu ID is provided via the `DropdownItemSubmenu` slot
+     * component.
+     */
+    const submenuIDDefault = useMemo<string>(
+        () => crypto.randomUUID(),
+        []
+    );
+
+    // The setter for this state is exposed via context to the
+    // `DropdownItemSubmenu` slot component so external code can set the submenu
+    // ID. If not set externally (`null`), we use our internally generated ID
+    // (`submenuIDDefault`).
+    const [submenuIDExternal, setSubmenuID] = useState<string | null>(
+        submenuIDDefault
+    );
+
+    /** A unique identifier for this submenu. */
+    const submenuID = submenuIDExternal ?? submenuIDDefault;
+
+    /**
+     * Whether or not the submenu of this dropdown item is currently open.
+     * Derived from whether this submenu's ID is in the `openMenuIDsPath` from
+     * the store, which is the source of truth for which menus are open.
+     */
+    const submenuIsOpen: boolean = useStore(
+        dropdownMenuStoreContext,
+        (state) => {
+            return isSubmenu && state.openMenuIDsPath.includes(submenuID);
+        }
+    );
+    // const submenuIsOpen = false;
+
+    const parentMenuIsOpen: boolean = useStore(
+        dropdownMenuStoreContext,
+        (state) => {
+            const parentMenuID = menuItemTreeRef.current.parentOf(submenuID)?.id;
+            if (!parentMenuID) {
+                logger.debug(
+                    "parentMenuIsOpen: could not find parent menu ID for submenu " +
+                    `with ID ${submenuID}; returning false`
+                );
+                return false;
+            }
+            return state.openMenuIDsPath.includes(parentMenuID);
+        }
+    );
+
+    const zIndex = useStore(
+        dropdownMenuStoreContext,
+        (state) => {
+            if (submenuIsOpen) {
+                const openMenuIds = state.openMenuIDsPath;
+                const index = openMenuIds.indexOf(submenuID);
+                const zIndex = 10 + index * 2;
+                return zIndex;
+            }
+            else {
+                // default z-index for closed submenu
+                return 10;
+            }
+        }
+    );
+    // const zIndex = 10;
 
     const dropdownMenuMeasuringContainerRef = useRef<HTMLDivElement>(null);
     const dropdownMenuRef = useRef<HTMLDivElement>(null);
@@ -212,34 +312,6 @@ const _DropdownItem = memo(function DropdownItem(
      * opens.
      */
     const parentMenuScrollTopAtOpenRef = useRef<number>(0);
-
-    /**
-     * An internally generated unique identifier for this submenu. Used if no
-     * external submenu ID is provided via the `DropdownItemSubmenu` slot
-     * component.
-     */
-    const submenuIDDefault = useMemo<string>(
-        () => crypto.randomUUID(),
-        []
-    );
-
-    // The setter for this state is exposed via context to the
-    // `DropdownItemSubmenu` slot component so external code can set the submenu
-    // ID. If not set externally (`null`), we use our internally generated ID
-    // (`submenuIDDefault`).
-    const [submenuIDExternal, setSubmenuID] = useState<string | null>(
-        submenuIDDefault
-    );
-
-    /** A unique identifier for this submenu. */
-    const submenuID = submenuIDExternal ?? submenuIDDefault;
-
-    /**
-     * Whether or not the submenu of this dropdown item is currently open.
-     * Derived from whether this submenu's ID is in the `openMenuIDsPath` from
-     * context, which is the source of truth for which menus are open.
-     */
-    const submenuIsOpen = isSubmenu && openMenuIDsPath.includes(submenuID);
 
     /**
      * Whether or not all of the imperative code for opening/closing the submenu
@@ -290,33 +362,173 @@ const _DropdownItem = memo(function DropdownItem(
      */
     const didPerformInitialPositionRef = useRef(false);
 
-    logger.debug(
-        `render: submenuID: ${submenuID};`
-        // "\ndropdownMenuContextChanges:\n",
-        // dropdownMenuContextChanges,
-        // "\nsubmenuContextChanges:\n",
-        // submenuContextChanges,
-        // "\npropsChanges:\n",
-        // propsChanges,
-        // "\nisHoveredMenuItem changes:\n",
-        // hoveredMenuItemChanges
-    );
+    if (__DEV__) {
 
-    const setZIndex = useCallback((
-        zIndex: number
-    ): void => {
-        _setZIndex(zIndex);
-        const dropdownMenuMeasuringContainer =
-            dropdownMenuMeasuringContainerRef.current;
+        const changeMessages: unknown[] = [];
 
-        if (dropdownMenuMeasuringContainer) {
-            // set the z-index directly here to avoid issues with asynchronous
-            // state updates causing the z-index to be applied too late and the
-            // menu to briefly flash in behind other elements before being moved
-            // in front of them
-            dropdownMenuMeasuringContainer.style.zIndex = String(zIndex);
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const propsChanges = useWhyObjectChanged(
+            "DropdownItem props",
+            props
+        );
+
+        if (propsChanges.hasChanges) {
+            changeMessages.push(
+                "\ndropdownMenuContextChanges:\n",
+                propsChanges
+            );
         }
-    }, []);
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const debugConfigChanges = useWhyObjectChanged(
+            "debugConfig",
+            debugConfig
+        );
+
+        if (debugConfigChanges.hasChanges) {
+            changeMessages.push(
+                "\ndebugConfigChanges:\n",
+                debugConfigChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const dropdownMenuContextChanges = useWhyObjectChanged(
+            "DropdownMenuContext",
+            dropdownMenuContext
+        );
+
+        if (dropdownMenuContextChanges.hasChanges) {
+            changeMessages.push(
+                "\ndropdownMenuContextChanges:\n",
+                dropdownMenuContextChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const submenuContextChanges = useWhyObjectChanged(
+            "DropdownSubmenuContext",
+            dropdownParentSubmenuContext
+        );
+
+        if (submenuContextChanges.hasChanges) {
+            changeMessages.push(
+                "\nsubmenuContextChanges:\n",
+                submenuContextChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const submenuIsOpenChanges = useWhyObjectChanged(
+            "submenuIsOpen",
+            submenuIsOpen
+        );
+
+        if (submenuIsOpenChanges.hasChanges) {
+            changeMessages.push(
+                "\nsubmenuIsOpenChanges:\n",
+                submenuIsOpenChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const dropdownMenuStoreContextChanges = useWhyObjectChanged(
+            "dropdownMenuStoreContext",
+            dropdownMenuStoreContext
+        );
+
+        if (dropdownMenuStoreContextChanges.hasChanges) {
+            changeMessages.push(
+                "\ndropdownMenuStoreContextChanges:\n",
+                dropdownMenuStoreContextChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const zIndexChanges = useWhyObjectChanged(
+            "zIndex",
+            zIndex
+        );
+
+        if (zIndexChanges.hasChanges) {
+            changeMessages.push(
+                "\nzIndexChanges:\n",
+                zIndexChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const labelChanges = useWhyObjectChanged(
+            "label",
+            label
+        );
+
+        if (labelChanges.hasChanges) {
+            changeMessages.push(
+                "\nlabelChanges:\n",
+                labelChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const submenuChanges = useWhyObjectChanged(
+            "submenu",
+            submenu
+        );
+
+        if (submenuChanges.hasChanges) {
+            changeMessages.push(
+                "\nsubmenuChanges:\n",
+                submenuChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const scrollbarHitboxChanges = useWhyObjectChanged(
+            "scrollbarHitbox",
+            scrollbarHitbox
+        );
+
+        if (scrollbarHitboxChanges.hasChanges) {
+            changeMessages.push(
+                "\nscrollbarHitboxChanges:\n",
+                scrollbarHitboxChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const parentMenuIsOpenChanges = useWhyObjectChanged(
+            "parentMenuIsOpen",
+            parentMenuIsOpen
+        );
+
+        if (parentMenuIsOpenChanges.hasChanges) {
+            changeMessages.push(
+                "\nparentMenuIsOpenChanges:\n",
+                parentMenuIsOpenChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const parentScrollbarHitboxChanges = useWhyObjectChanged(
+            "parentScrollbarHitbox",
+            parentScrollbarHitbox
+        );
+
+        if (parentScrollbarHitboxChanges.hasChanges) {
+            changeMessages.push(
+                "\nparentScrollbarHitboxChanges:\n",
+                parentScrollbarHitboxChanges
+            );
+        }
+
+        logger.debug(
+            `render: submenuID: ${submenuID}; ` +
+            `submenuIsOpen: ${submenuIsOpen}; ` +
+            `parentMenuIsOpen: ${parentMenuIsOpen};`,
+            ...changeMessages
+        );
+    }
 
     const setDropdownItemSecondaryFocus = useCallback((
         isSecondaryFocused: boolean
@@ -359,21 +571,10 @@ const _DropdownItem = memo(function DropdownItem(
      * hovered.
      */
     const unsetHoveredMenuItem = useEffectEvent((): void => {
-        setHoveredMenuItem(item => {
-            // logger.debug(
-            //     "unsetHoveredMenuItem: " +
-            //     `item: ${item}; submenuID: ${submenuID}; ` +
-            //     `hoveredMenuItem: ${hoveredMenuItem}; ` +
-            //     `item === submenuID: ${item === submenuID}`
-            // );
-
-            // only clear hover if this item is currently hovered
-            if (item === submenuID) {
-                return null;
-            }
-            // if some other item is hovered, do nothing
-            return item;
-        });
+        // only clear hover if this item is currently hovered
+        if (hoveredMenuItemRef.current === submenuID) {
+            setHoveredMenuItem(null);
+        }
         setDropdownItemIsHovered(false);
     });
 
@@ -475,15 +676,18 @@ const _DropdownItem = memo(function DropdownItem(
             return true;
         }
 
+        const openMenuIDsPath =
+            dropdownMenuStoreContext.getState().openMenuIDsPath;
+
         // check if the event is within any of the portaled submenu DOM elements
         // that are open and are children of this dropdown item
-        const currentMenuIndex = openMenuIDsPathRef.current.indexOf(submenuID);
+        const currentMenuIndex = openMenuIDsPath.indexOf(submenuID);
         if (currentMenuIndex < 0) {
             // this submenu is not in the `openMenuIDsPath`, so it is not open
             // in the first place
             return false;
         }
-        const openSubmenus = openMenuIDsPathRef.current.slice(currentMenuIndex);
+        const openSubmenus = openMenuIDsPath.slice(currentMenuIndex);
 
         for (const submenu of openSubmenus) {
             const submenuDropdownMenuMeasuringContainer =
@@ -512,7 +716,7 @@ const _DropdownItem = memo(function DropdownItem(
         return false;
     }, [
         eventWithinDropdownItemContainerRect,
-        openMenuIDsPathRef,
+        dropdownMenuStoreContext,
         submenuID
     ]);
 
@@ -1387,7 +1591,7 @@ const _DropdownItem = memo(function DropdownItem(
 
         setDropdownItemSecondaryFocus(false);
 
-        setZIndex(10); // reset z-index to default
+        // setZIndex(10); // reset z-index to default
 
         menuItemsAlignmentRef.current.delete(
             submenuID
@@ -1469,31 +1673,6 @@ const _DropdownItem = memo(function DropdownItem(
             block: "nearest",
             inline: "nearest"
         });
-
-        const depth = menuItemTreeRef.current.depthOfChild(
-            submenuID
-        );
-
-        // ensure `depth` is non-null and not 0
-        if (depth) {
-            // multiply depth by 2 because scroll bar hitbox is equal to menu
-            // depth + 1
-            const zIndex = 10 + depth * 2;
-
-            setZIndex(zIndex);
-
-            logger.debug(
-                `openSubmenu: submenu with ID ${submenuID} has depth ` +
-                `${depth}; setting z-index to ${zIndex}`
-            );
-        }
-        else {
-            setZIndex(10);
-            logger.error(
-                "openSubmenu: could not get depth of submenu with ID " +
-                `${submenuID}`
-            );
-        }
 
         const parentMenuMeasuringContainerRect =
             parentMenuMeasuringContainer.getBoundingClientRect();
@@ -1607,7 +1786,7 @@ const _DropdownItem = memo(function DropdownItem(
                 );
             }
 
-            if (!closeOnClickLeafItem) {
+            if (!closeOnClickLeafItemRef.current) {
                 // if the client has specified that clicking on a leaf item
                 // should not close the entire dropdown menu, then stop
                 // propagation to prevent the main dropdown menu's click handler
@@ -1668,7 +1847,7 @@ const _DropdownItem = memo(function DropdownItem(
             // if the parent has no scrollbar hitbox, then a pointerleave event
             // always means that the pointer has logically left the dropdown
             // item container
-            scrollbarHitbox &&
+            parentScrollbarHitbox &&
             event?.relatedTarget instanceof HTMLElement &&
             event.relatedTarget.hasAttribute("data-scrollbar-hitbox") &&
             eventWithinDropdownItemContainerRect(event)
@@ -1728,7 +1907,7 @@ const _DropdownItem = memo(function DropdownItem(
 
         pointerIsOverDropdownItemContainerComponentTreeRef.current = true;
 
-        if (!mouseHoverEvents) {
+        if (!mouseHoverEventsRef.current) {
             return;
         }
 
@@ -1758,11 +1937,11 @@ const _DropdownItem = memo(function DropdownItem(
         }, POINTER_ENTER_EXIT_DELAY_MS);
 
     }, [
-        mouseHoverEvents,
         isSubmenu,
         submenuIsOpen,
         contextOpenSubmenu,
-        submenuID
+        submenuID,
+        mouseHoverEventsRef
     ]);
 
     /**
@@ -1801,7 +1980,7 @@ const _DropdownItem = memo(function DropdownItem(
 
         pointerIsOverDropdownItemContainerComponentTreeRef.current = false;
 
-        if (!mouseHoverEvents) {
+        if (!mouseHoverEventsRef.current) {
             return;
         }
 
@@ -1865,12 +2044,12 @@ const _DropdownItem = memo(function DropdownItem(
 
     }, [
         contextCloseSubmenu,
-        mouseHoverEvents,
         isSubmenu,
         submenuIsOpen,
         eventWithinDropdownItemContainerComponentTreeRects,
         submenuID,
-        parentScrollbarHitbox
+        parentScrollbarHitbox,
+        mouseHoverEventsRef
     ]);
 
     /**
@@ -2074,6 +2253,18 @@ const _DropdownItem = memo(function DropdownItem(
 
         if (parentMenuIsOpen) {
 
+            const pendingFocusSubmenuID =
+                dropdownMenuStoreContext.getState().pendingFocusSubmenuID;
+
+            if (pendingFocusSubmenuID === submenuID) {
+                // The menu may have just opened and may be positioned outside
+                // the viewport, so prevent scrolling when focusing. Also, menus
+                // are already always positioned inside the visual viewport.
+                dropdownItemContainer?.focus({ preventScroll: true });
+                dropdownMenuStoreContext.getState()
+                    .setPendingFocusSubmenuID(null);
+            }
+
             // update submenu open/closed state based on whether pointer is
             // still logically within the dropdown item container, including
             // portaled child submenus (even if it is physically outside due to
@@ -2162,12 +2353,14 @@ const _DropdownItem = memo(function DropdownItem(
         [
             parentMenuIsOpen,
             submenuID,
-            parentScrollbarHitbox
+            parentScrollbarHitbox,
+            dropdownMenuStoreContext
         ],
         // [
         //     "parentMenuIsOpen",
         //     "submenuID",
-        //     "parentScrollbarHitbox"
+        //     "parentScrollbarHitbox",
+        //     "dropdownMenuStoreContext"
         // ]
     );
 
@@ -2291,7 +2484,9 @@ const _DropdownItem = memo(function DropdownItem(
             event: DropdownMenuRepositionSubmenuEvent
         ): void {
             if (event.submenuID === submenuID) {
-                if (openMenuIDsPathRef.current.includes(submenuID)) {
+                const openMenuIDsPath =
+                    dropdownMenuStoreContext.getState().openMenuIDsPath;
+                if (openMenuIDsPath.includes(submenuID)) {
                     logger.debug(
                         "handleRepositionSubmenu: received " +
                         "DropdownMenuRepositionSubmenuEvent for dropdown " +
@@ -2344,7 +2539,7 @@ const _DropdownItem = memo(function DropdownItem(
 
     }, [
         mainDropdownMenuEventEmitter,
-        openMenuIDsPathRef,
+        dropdownMenuStoreContext,
         submenuID
     ]);
 
@@ -2383,19 +2578,12 @@ const _DropdownItem = memo(function DropdownItem(
         };
     }, [submenuID]);
 
-
     const dropdownSubmenuContextValue = useMemo(
         (): DropdownSubmenuContextType => ({
-            parentMenuIsOpen: submenuIsOpen,
             parentDropdownMenuMeasuringContainerRef:
-                dropdownMenuMeasuringContainerRef,
-            customScrollbarRef,
-            scrollbarHitbox
+                dropdownMenuMeasuringContainerRef
         }),
-        [
-            submenuIsOpen,
-            scrollbarHitbox
-        ]
+        []
     );
 
     const dropdownItemSlotsContextValue = useMemo(
@@ -2481,6 +2669,9 @@ const _DropdownItem = memo(function DropdownItem(
                         role="menu"
                         id={submenuID}
                         data-submenu-id={submenuID}
+                        style={{
+                            zIndex
+                        }}
                     >
                         <div
                             className="bd-dropdown-menu bd-dropdown-submenu"
@@ -2497,7 +2688,11 @@ const _DropdownItem = memo(function DropdownItem(
                                 <DropdownSubmenuContext.Provider
                                     value={dropdownSubmenuContextValue}
                                 >
-                                    {submenu}
+                                    <DropdownSubmenuStoreContext.Provider
+                                        value={dropdownSubmenuStore}
+                                    >
+                                        {submenu}
+                                    </DropdownSubmenuStoreContext.Provider>
                                 </DropdownSubmenuContext.Provider>
                             </DropdownMenuCore>
                         </div>
@@ -2520,6 +2715,18 @@ const _DropdownItem = memo(function DropdownItem(
             </button>
         </DropdownItemSlotsContext.Provider>
     );
+}, (prev, next) => {
+
+    const areEqual = Object.is(prev, next);
+
+    logger.debug(
+        `DropdownItem props comparison: areEqual: ${areEqual};prev:\n`,
+        prev,
+        "\nnext:\n",
+        next
+    );
+
+    return areEqual;
 });
 
 // use any to exclude from the generated .d.ts file

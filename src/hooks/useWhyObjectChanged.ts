@@ -1,4 +1,6 @@
-import { useEffect, useRef } from "react";
+import {
+    useRef
+} from "react";
 
 export type ObjectChange = {
     previous: unknown;
@@ -67,6 +69,12 @@ function getChanges(
     return changes;
 }
 
+/**
+ * A hook that compares the previous and current value of an object and returns
+ * information about which keys have changed and what the previous and current
+ * values are for those keys. This is useful for debugging why a component
+ * rerendered and .
+ */
 export function useWhyObjectChanged<T>(
     label: string,
     object: T
@@ -75,28 +83,31 @@ export function useWhyObjectChanged<T>(
     const previousRef = useRef<T | undefined>(undefined);
 
     // eslint-disable-next-line react-hooks/refs
-    const changes = previousRef.current === undefined
+    const previous = previousRef.current;
+
+    const objectsAreSame = Object.is(previous, object);
+
+    // eslint-disable-next-line react-hooks/refs
+    const changes = previous === undefined
         ? {}
-        // eslint-disable-next-line react-hooks/refs
-        : getChanges(previousRef.current, object);
+        : getChanges(previous, object);
 
     const changedKeys = Object.keys(changes);
 
-    // eslint-disable-next-line react-hooks/refs
-    const objectsAreSame = Object.is(previousRef.current, object);
 
-    useEffect(() => {
-        previousRef.current = object;
-    });
-
-    return {
+    const changeInfo: ObjectChangeInfo = {
         name: label,
         hasChanges: changedKeys.length > 0 || !objectsAreSame,
         changedKeys,
         changes,
-        // eslint-disable-next-line react-hooks/refs
-        previous: previousRef.current,
+        previous: previous,
         current: object,
         objectsAreSame
     };
+
+    // eslint-disable-next-line react-hooks/refs
+    previousRef.current = object;
+
+    return changeInfo;
+
 }

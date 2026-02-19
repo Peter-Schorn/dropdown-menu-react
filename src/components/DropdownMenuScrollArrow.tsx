@@ -48,8 +48,8 @@ export function DropdownMenuScrollArrow(
     logger.debug("render; edge:", edge, ref.current);
 
     const {
-        ignoreClicksUntilNextPointerDownRef,
-        mouseHoverEvents
+        mouseHoverEventsRef,
+        ignoreClicksUntilNextPointerDownRef
     } = useContext(DropdownMenuContext);
 
     const scrollArrowContainerRef = useRef<HTMLDivElement | null>(null);
@@ -178,7 +178,7 @@ export function DropdownMenuScrollArrow(
         event: ReactPointerEvent<HTMLElement>
     ): void => {
 
-        if (!mouseHoverEvents) {
+        if (!mouseHoverEventsRef.current) {
             return;
         }
 
@@ -220,14 +220,14 @@ export function DropdownMenuScrollArrow(
         edge,
         shouldIgnorePointerEvents,
         pointerIsOverRef,
-        mouseHoverEvents
+        mouseHoverEventsRef
     ]);
 
     const handleScrollArrowPointerLeave = useCallback((
         event: ReactPointerEvent<HTMLElement>
     ): void => {
 
-        if (!mouseHoverEvents) {
+        if (!mouseHoverEventsRef.current) {
             return;
         }
 
@@ -249,14 +249,14 @@ export function DropdownMenuScrollArrow(
         edge,
         endContinuousScrolling,
         pointerIsOverRef,
-        mouseHoverEvents
+        mouseHoverEventsRef
     ]);
 
     const handlePointerMove = useCallback((
         event: ReactPointerEvent<HTMLElement>
     ): void => {
 
-        if (!mouseHoverEvents) {
+        if (!mouseHoverEventsRef.current) {
             return;
         }
 
@@ -288,10 +288,9 @@ export function DropdownMenuScrollArrow(
     }, [
         beginContinuousScrolling,
         edge,
-        // pointerIsOver,
         shouldIgnorePointerEvents,
         isContinuouslyScrollingRef,
-        mouseHoverEvents
+        mouseHoverEventsRef
     ]);
 
     useEffect(() => {
@@ -372,6 +371,7 @@ export function DropdownMenuScrollArrow(
             <div
                 className="bd-dropdown-scroll-arrow-container"
                 ref={scrollArrowContainerRef}
+                data-position={edge}
             >
                 <button
                     className="bd-dropdown-scroll-arrow"

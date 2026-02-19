@@ -2,6 +2,8 @@ import {
     type RefObject
 } from "react";
 
+import type { StoreApi } from "zustand";
+
 export type HorizontalEdge = "left" | "right";
 export type VerticalEdge = "top" | "bottom";
 
@@ -54,3 +56,11 @@ export type ReadonlyIfArrayishInit<T> =
  * useful for state updater functions.
  */
 export type UpdateState<T> = T | ((prevValue: T) => T);
+
+/**
+ * A type that represents a Zustand store API without the `setState` method.
+ * This is useful for passing the store API to components that should not have
+ * the ability to directly set the state.
+ */
+export type StoreApiWithoutSetState<T> =
+    Omit<StoreApi<T>, "setState">;

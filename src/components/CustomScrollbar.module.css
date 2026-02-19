@@ -1,6 +1,8 @@
 .scrollbarTrack {
     --width: 11px;
 
+    box-sizing: border-box;
+
     display: none;
 
     /* prevent weirdness where it gets clipped by the scroll arrows */
@@ -42,6 +44,8 @@
 .scrollbarThumb {
     --hover-color: #7d7d7d;
 
+    box-sizing: border-box;
+
     background-color: #c2c2c2;
     /* make as large as possible to create capsule shape */
     border-radius: 1000px;
@@ -61,6 +65,8 @@
 .scrollbarHitbox {
     display: block;
     position: fixed;
+
+    box-sizing: border-box;
 
     /* prevent touch events on mobile */
     touch-action: none;

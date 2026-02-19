@@ -2,6 +2,9 @@ import "./index.css";
 
 export {
     type OnRequestOpenChangeEvent,
+    type OnRequestOpenChangeReason,
+    type OnRequestOpenChangeOptions,
+    type OnRequestOpenChangeOptionsBase,
     type DropdownMenuHandle,
     type DropdownMenuProps,
     type DropdownMenuPropsBase,

@@ -202,6 +202,12 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
         debugConfig.mouseExpandedHitbox
     ]);
 
+    logger.debug(
+        "render: " +
+        `isVisible: ${isVisible}; ` +
+        `expandedScrollbarHitboxEnabled: ${expandedScrollbarHitboxEnabled}`
+    );
+
     const getExpandedHitbox = useCallback((
         rect: DOMRect,
         padding: number

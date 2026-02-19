@@ -68,23 +68,24 @@ export const DropdownMenuCore = memo(function DropdownMenuCore(
         children
     } = props;
 
-    const propChanges = useWhyObjectChanged(
-        "DropdownMenuCore props",
-        props
-    );
 
-    logger.debug(
-        "render; dropdownMenuContentRef:\n",
-        // eslint-disable-next-line react-hooks/refs
-        dropdownMenuContentRef.current,
-        "\ndropdownMenuRef:\n",
-        // eslint-disable-next-line react-hooks/refs
-        dropdownMenuRef.current,
-        "\npropChanges:\n",
-        propChanges
-    );
+    if (__DEV__) {
 
-    // const dropdownMenuContext = useContext(DropdownMenuContext);
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const propChanges = useWhyObjectChanged(
+            "DropdownMenuCore props",
+            props
+        );
+
+        logger.debug(
+            "render; dropdownMenuContentRef:\n",
+            dropdownMenuContentRef.current,
+            "\ndropdownMenuRef:\n",
+            dropdownMenuRef.current,
+            "\npropChanges:\n",
+            propChanges
+        );
+    }
 
     const scrollArrowUpRef = useRef<HTMLButtonElement>(null);
     const scrollArrowDownRef = useRef<HTMLButtonElement>(null);
@@ -203,7 +204,7 @@ export const DropdownMenuCore = memo(function DropdownMenuCore(
     const endContinuousScrolling = useCallback((
         updateIsContinuouslyScrollingRef = true
     ): void => {
-        logger.info(
+        logger.debug(
             "endContinuousScrolling: " +
             "updateIsContinuouslyScrollingRef: " +
             `${updateIsContinuouslyScrollingRef}`

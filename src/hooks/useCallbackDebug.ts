@@ -4,14 +4,14 @@ export type DebugCallbackInfo<T extends readonly unknown[]> = {
     prevDeps: T | null;
     nextDeps: T;
     changed: number[];
-    changedNames?: string[];
+    changedNames: string[];
 };
 
 export type DebugCallbackWrappedFn<
     Fn extends (...args: never[]) => unknown,
     T extends readonly unknown[]
 > = Fn & {
-    _debug?: DebugCallbackInfo<T>;
+    _debug: DebugCallbackInfo<T> | null;
 };
 
 export function useCallbackDebug<
@@ -48,14 +48,14 @@ export function useCallbackDebug<
         changedNames:
             depNames && changed.length > 0
                 ? changed.map(i => depNames[i] ?? `#${i}`)
-                : undefined
+                : []
     };
 
     prevDepsRef.current = deps;
 
     // attach debug metadata
     const wrapped = memoizedFn as DebugCallbackWrappedFn<Fn, T>;
-    wrapped._debug = debugInfoRef.current ?? undefined;
+    wrapped._debug = debugInfoRef.current;
 
     if (
         onChange &&
