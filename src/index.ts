@@ -50,6 +50,8 @@ export {
     type DropdownMenuLogger,
     type DropdownMenuLoggers,
     type SetLoggers,
+    noopLogger,
     setLoggers,
-    setConsoleLoggers
+    setConsoleLoggers,
+    disableLoggers
 } from "./utils/loggers";

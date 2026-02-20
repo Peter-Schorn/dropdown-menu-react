@@ -35,6 +35,7 @@ export type DropdownMenuContextType = {
 
     mouseHoverEventsRef: RefObject<boolean>;
     closeOnClickLeafItemRef: RefObject<boolean>;
+    pointerEnterExitDelayMSRef: RefObject<number>;
 
     setHoveredMenuItem: (menuIemID: string | null) => void;
     scheduleDropdownMenuReposition: (
@@ -53,6 +54,7 @@ export const dropdownMenuContextDefaultValue: DropdownMenuContextType = {
     ignoreClicksUntilNextPointerDownRef: { current: false },
     mouseHoverEventsRef: { current: true },
     closeOnClickLeafItemRef: { current: true },
+    pointerEnterExitDelayMSRef: { current: 200 },
     setHoveredMenuItem: () => {
         // default implementation does nothing
     },

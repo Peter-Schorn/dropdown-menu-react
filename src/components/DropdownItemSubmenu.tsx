@@ -51,10 +51,15 @@ export function DropdownItemSubmenu(
         submenuID
     );
 
-    useDropdownItemSlotsContext({
-        setSubmenu: children,
-        setSubmenuID: submenuID
+    const slotsRef = useDropdownItemSlotsContext({
+        componentName: "DropdownItemSubmenu"
     });
+
+    // eslint-disable-next-line react-hooks/refs
+    slotsRef.current.submenu = children;
+
+    // eslint-disable-next-line react-hooks/refs
+    slotsRef.current.submenuID = submenuID;
 
     return null;
 }

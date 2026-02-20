@@ -4,6 +4,8 @@
 
 ## OnRequestOpenChangeOptionsBase type
 
+The base options for a request to change the open state of the dropdown menu. Excludes the `open` property. See [OnRequestOpenChangeOptions](./dropdown-menu.onrequestopenchangeoptions.md) for the full options object.
+
 **Signature:**
 
 ```typescript

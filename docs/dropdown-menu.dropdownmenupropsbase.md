@@ -11,11 +11,12 @@ The base props for the [DropdownMenu()](./dropdown-menu.dropdownmenu.md) compone
 ```typescript
 export type DropdownMenuPropsBase = PropsWithChildren<{
     handle?: ReactRef<DropdownMenuHandle>;
+    onOpenMenusChange?: (openMenuIDsPath: string[]) => void;
     closeOnClickOutside?: boolean;
     closeOnClickLeafItem?: boolean;
     mouseHoverEvents?: boolean;
     enableKeyEvents?: boolean;
-    onOpenMenusChange?: (openMenuIDsPath: string[]) => void;
+    pointerEnterExitDelayMS?: number;
 }>;
 ```
 **References:** [DropdownMenuHandle](./dropdown-menu.dropdownmenuhandle.md)

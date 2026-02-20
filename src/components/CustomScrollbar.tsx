@@ -18,6 +18,8 @@ import {
     flushSync
 } from "react-dom";
 
+import { useEffectEvent } from "../hooks/useEffectEvent";
+
 import {
     HitboxTestableEvent
 } from "../model/HitboxTestableEvent";
@@ -433,7 +435,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
 
     }, [updateGeometry]);
 
-    const onDrag = useCallback((event: PointerEvent): void => {
+    const onDrag = useEffectEvent((event: PointerEvent): void => {
 
         logger.debug(
             `onDrag: isDraggingRef: ${isDraggingRef.current}; ` +
@@ -490,9 +492,9 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
 
         scrollContainer.scrollTop = nextScrollTop;
 
-    }, [scrollContainerRef]);
+    });
 
-    const endDrag = useCallback((
+    const endDrag = useEffectEvent((
         event?: PointerEvent
     ): void => {
 
@@ -527,9 +529,9 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
         window.removeEventListener("pointerup", endDrag);
         window.removeEventListener("pointercancel", endDrag);
 
-    }, [onDrag]);
+    });
 
-    const beginDrag = useCallback((
+    const beginDrag = useEffectEvent((
         event: HitboxTestableEvent
     ): void => {
 
@@ -636,14 +638,14 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
         window.addEventListener("pointercancel", endDrag);
 
 
-    }, [endDrag, onDrag, scrollContainerRef]);
+    });
 
     /**
      * Handles pointer down and touch start event that occur on the scrollbar
      * track, and determines whether to begin scroll bar thumb reposition/drag
      * operations.
      */
-    const handleHitboxTestableEvent = useCallback((
+    const handleHitboxTestableEvent = useEffectEvent((
         event: HitboxTestableEvent
     ): void => {
 
@@ -667,9 +669,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
             event
         );
 
-    }, [
-        beginDrag
-    ]);
+    });
 
     // MARK: - Pointer Events -
 
@@ -679,7 +679,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
      * closing the dropdown menu or otherwise interfering with the drag
      * operation.
      */
-    const onClickWindow = useCallback((
+    const onClickWindow = useEffectEvent((
         event: MouseEvent
     ): void => {
 
@@ -694,7 +694,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
             event.preventDefault();
         }
 
-    }, []);
+    });
 
     /**
      * Handles clicks on the scrollbar track to prevent them from propagating
@@ -714,7 +714,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
      * scrollbar thumb. When not using the expanded scrollbar hitbox, this
      * method is not used; we rely on CSS :hover styles instead.
      */
-    const handleScrollbarPointerMove = useCallback((
+    const handleScrollbarPointerMove = useEffectEvent((
         event: PointerEvent
     ): void => {
 
@@ -743,13 +743,13 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
             scrollbarThumb.style.backgroundColor = "";
         }
 
-    }, []);
+    });
 
     /**
      * Handles pointer down events on the scrollbar hitbox to begin drag
      * operations.
      */
-    const handleScrollbarHitboxPointerDown = useCallback((
+    const handleScrollbarHitboxPointerDown = useEffectEvent((
         event: PointerEvent
     ): void => {
 
@@ -772,7 +772,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
         handleHitboxTestableEvent(hitboxEvent);
 
 
-    }, [handleHitboxTestableEvent]);
+    });
 
     // MARK: - Touch Events -
 
@@ -780,7 +780,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
      * Handles touch start events on the scrollbar hitbox to prevent touch
      * scrolling or other browser-default behavior.
      */
-    const handleScrollbarHitboxTouchStart = useCallback((
+    const handleScrollbarHitboxTouchStart = useEffectEvent((
         event: TouchEvent
     ): void => {
 
@@ -816,16 +816,14 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
 
         handleHitboxTestableEvent(hitboxEvent);
 
-    }, [
-        handleHitboxTestableEvent
-    ]);
+    });
 
     /**
      * Handles touch move events anywhere on the window to prevent touch
      * scrolling or other browser-default behavior while dragging the scrollbar
      * thumb.
      */
-    const handleWindowTouchMove = useCallback((
+    const handleWindowTouchMove = useEffectEvent((
         event: TouchEvent
     ): void => {
 
@@ -837,11 +835,11 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
             event.preventDefault();
         }
 
-    }, []);
+    });
 
     // MARK: - Wheel Events -
 
-    const handleScrollbarHitboxWheel = useCallback((
+    const handleScrollbarHitboxWheel = useEffectEvent((
         event: WheelEvent
     ): void => {
 
@@ -898,11 +896,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
                 "handleWheel: wheel event outside scroll container wrapper"
             );
         }
-    }, [
-        scrollContainerWrapperRef,
-        scrollContainerRef,
-        expandedScrollbarHitboxEnabled
-    ]);
+    });
 
     // MARK: useImperativeHandle: Expose scheduleGeometryUpdate method
     useImperativeHandle(handle, (): CustomScrollbarHandle => ({
@@ -912,6 +906,12 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
         scheduleGeometryUpdate,
         repositionScrollbarHitbox
     ]);
+
+    // MARK: Effect Events
+
+    const scheduleGeometryUpdateEffectEvent = useEffectEvent(
+        scheduleGeometryUpdate
+    );
 
     // MARK: useLayoutEffect: Setup scroll listener
     useLayoutEffect(() => {
@@ -929,7 +929,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
         }
 
         function onScroll(): void {
-            scheduleGeometryUpdate({
+            scheduleGeometryUpdateEffectEvent({
                 batchToAnimationFrame: true,
                 // merely scrolling does not change the position of the
                 // scrollbar hitbox
@@ -954,7 +954,9 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
         }
 
         if (isVisible) {
-            scheduleGeometryUpdate({ batchToAnimationFrame: false });
+            scheduleGeometryUpdateEffectEvent({
+                batchToAnimationFrame: false
+            });
             scrollContainer.addEventListener("scroll", onScroll);
         }
 
@@ -964,7 +966,6 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
 
     }, [
         scrollContainerRef,
-        scheduleGeometryUpdate,
         isVisible,
         scrollbarHitbox,
         debugConfig.showScrollScrollbarHitboxes
@@ -1074,13 +1075,6 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
 
     }, [
         isVisible,
-        onClickWindow,
-        handleScrollbarPointerMove,
-        handleScrollbarHitboxPointerDown,
-        handleScrollbarHitboxTouchStart,
-        handleScrollbarHitboxWheel,
-        handleWindowTouchMove,
-        endDrag,
         scrollbarHitbox,
         expandedScrollbarHitboxEnabled
     ]);

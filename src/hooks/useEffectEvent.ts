@@ -1,6 +1,7 @@
 import {
     useRef,
-    useInsertionEffect
+    useInsertionEffect,
+    useCallback
 } from "react";
 
 /**
@@ -9,11 +10,17 @@ import {
  * reference for memoized components. See
  * https://github.com/facebook/react/issues/35187
  *
+ * This implementation uses `useInsertionEffect` to update the callback
+ * reference before any effects are run, ensuring that the latest callback is
+ * always used.
+ *
+ * It also returns a stable function reference.
  */
-export function useEffectEvent<T extends (...args: never[]) => unknown>(
-    callback: T
-): T {
-    const fnRef = useRef<T | null>(null);
+export function useEffectEvent<Args extends unknown[], R>(
+    callback: (...args: Args) => R
+): typeof callback {
+
+    const fnRef = useRef<(...args: Args) => R>(null);
 
     // Update the ref in an insertion effect to ensure the latest callback
     // is used in the effect before even useLayoutEffect is called.
@@ -21,14 +28,13 @@ export function useEffectEvent<T extends (...args: never[]) => unknown>(
         fnRef.current = callback;
     });
 
-    return ((...args: never[]): unknown => {
+    return useCallback((...args: Args): R => {
         if (!fnRef.current) {
-            // eslint-disable-next-line no-console
-            console.error(
+            throw new Error(
                 "custom useEffectEvent: cannot invoke callback before " +
                 "component has mounted"
             );
         }
-        return fnRef.current?.(...args);
-    }) as T;
+        return fnRef.current(...args);
+    }, []);
 }

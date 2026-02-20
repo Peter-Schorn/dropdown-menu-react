@@ -1,13 +1,16 @@
 import {
     type ReactNode,
-    createContext
+    type RefObject,
+    createContext,
 } from "react";
 
-export type DropdownItemSlotsContextType = {
-    setLabel: (node: ReactNode | null) => void;
-    setSubmenu: (node: ReactNode | null) => void;
-    setSubmenuID: (id: string | null) => void;
+export type DropdownItemSlots = {
+    label?: ReactNode;
+    submenu?: ReactNode;
+    submenuID?: string;
 };
+
+export type DropdownItemSlotsContextType = RefObject<DropdownItemSlots>;
 
 export const DropdownItemSlotsContext =
     createContext<DropdownItemSlotsContextType | null>(null);

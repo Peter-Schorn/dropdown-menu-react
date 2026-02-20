@@ -35,7 +35,13 @@ function noop(): void {
     // no operation
 }
 
-const noopLogger: DropdownMenuLogger = new Proxy({} as DropdownMenuLogger, {
+/**
+ * A no-op logger that can be used to disable logging. This is the default
+ * logger for all loggers in this library.
+ *
+ * @public
+ */
+export const noopLogger: DropdownMenuLogger = new Proxy({} as DropdownMenuLogger, {
     get(): () => void {
         return noop;
     }
@@ -211,5 +217,27 @@ export function setConsoleLoggers(): void {
 
         return loggers;
 
+    });
+}
+
+/**
+ * A convenience function that disables all logging by setting all loggers to
+ * the no-op logger.
+ *
+ * @public
+ */
+export function disableLoggers(): void {
+    setLoggers(() => {
+        return {
+            dropdownMenuLogger: noopLogger,
+            dropdownItemLogger: noopLogger,
+            dropdownMenuCoreLogger: noopLogger,
+            dropdownMenuScrollArrowLogger: noopLogger,
+            customScrollbarLogger: noopLogger,
+            dropdownItemLabelLogger: noopLogger,
+            dropdownItemSubmenuLogger: noopLogger,
+            disclosureIndicatorLogger: noopLogger,
+            dropdownItemSlotProviderLogger: noopLogger
+        };
     });
 }

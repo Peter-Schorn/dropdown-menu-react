@@ -7,40 +7,40 @@ export type DebugConfig = {
 
     /**
      * If set to true, show menu IDs next to dropdown menus for debugging
-     * purposes.
+     * purposes. Default: `false`.
      */
     showMenuIds: boolean;
 
     /**
      * If set to true, visually shows the hitboxes for custom scrollbars for
-     * debugging purposes.
+     * debugging purposes. Default: `false`.
      */
     showScrollScrollbarHitboxes: boolean;
 
     /**
      * If set to true, uses an expanded scrollbar hitbox for ALL devices,
      * whereas it is normally only expanded for devices that primarily use touch
-     * input.
+     * input. Default: `false`.
      */
     mouseExpandedHitbox: boolean;
 
     /**
      * If set to true, disables expanded scrollbar hitboxes for ALL devices,
      * whereas it is normally only expanded for devices that primarily use touch
-     * input.
+     * input. Default: `false`.
      */
     disableExpandedHitbox: boolean;
 
     /**
      * If set to true, attaches debug utilities to the global window object
-     * for easy access from the browser console.
+     * for easy access from the browser console. Default: `false`.
      */
     exposeDebugUtilitiesOnWindow: boolean;
 };
 
 /**
  * Default debug configuration. This can be changed via setDebugConfig. Never
- * mutate this object directly, as it is frozen.
+ * mutate this object directly.
  *
  * @public
  */

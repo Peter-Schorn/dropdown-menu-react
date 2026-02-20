@@ -4,6 +4,10 @@
 
 ## OnRequestOpenChangeReason type
 
+A more specific reason for a request to change the open state of the dropdown menu, which can be used by clients to determine how to respond to the request.
+
+The possible values are: - `clickDropdown`<!-- -->: The user clicked somewhere within the dropdown menu, such as on a menu item or on the menu background. - `clickOutside`<!-- -->: The user clicked somewhere outside of the dropdown menu. - `escapeKey`<!-- -->: The user pressed the Escape key while the dropdown menu was open. - `openSubmenu`<!-- -->: The client request to open a submenu when the dropdown menu is not currently open, so the dropdown menu is requesting to open first before opening the requested submenu. - `closeSubmenu`<!-- -->: The client called the `closeSubmenu` method of `DropdownMenuHandle` and passed in the ID of the root menu, so the dropdown menu is requesting to close the entire menu.
+
 **Signature:**
 
 ```typescript

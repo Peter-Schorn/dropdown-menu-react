@@ -4,6 +4,8 @@
 
 ## OnRequestOpenChangeOptions type
 
+The options for a request to change the open state of the dropdown menu.
+
 **Signature:**
 
 ```typescript

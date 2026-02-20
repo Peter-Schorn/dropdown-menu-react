@@ -4,7 +4,7 @@
 
 ## defaultDebugConfig variable
 
-Default debug configuration. This can be changed via setDebugConfig. Never mutate this object directly, as it is frozen.
+Default debug configuration. This can be changed via setDebugConfig. Never mutate this object directly.
 
 **Signature:**
 

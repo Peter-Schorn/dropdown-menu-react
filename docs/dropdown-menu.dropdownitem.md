@@ -9,7 +9,7 @@ A dropdown item component that can optionally contain a submenu.
 **Signature:**
 
 ```typescript
-DropdownItem: (props: DropdownItemProps) => ReactNode
+export declare function DropdownItem(props: DropdownItemProps): ReactNode;
 ```
 
 ## Parameters

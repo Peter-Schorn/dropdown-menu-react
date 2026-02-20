@@ -25,6 +25,9 @@ export type DebugConfig = {
 export const defaultDebugConfig: Readonly<DebugConfig>;
 
 // @public
+export function disableLoggers(): void;
+
+// @public
 export function DisclosureIndicator(input: DisclosureIndicatorProps): JSX.Element;
 
 // @public
@@ -45,10 +48,10 @@ export type DisclosureIndicatorProps = PropsWithChildren & {
 export function DropdownDivider(): JSX.Element;
 
 // @public
-export const DropdownItem: (props: DropdownItemProps) => ReactNode;
+export function DropdownItem(props: DropdownItemProps): ReactNode;
 
 // @public
-export function DropdownItemLabel(input: DropdownItemLabelProps): ReactNode;
+export function DropdownItemLabel(input: DropdownItemLabelProps): null;
 
 // @public
 export type DropdownItemLabelProps = PropsWithChildren;
@@ -59,7 +62,7 @@ export type DropdownItemProps = PropsWithChildren & {
 };
 
 // @public
-export function DropdownItemSubmenu(input: DropdownItemSubmenuProps): ReactNode;
+export function DropdownItemSubmenu(input: DropdownItemSubmenuProps): null;
 
 // @public
 export type DropdownItemSubmenuProps = PropsWithChildren<{
@@ -105,11 +108,12 @@ export type DropdownMenuProps = DropdownMenuPropsInternallyControlled | Dropdown
 // @public
 export type DropdownMenuPropsBase = PropsWithChildren<{
     handle?: Ref<DropdownMenuHandle>;
+    onOpenMenusChange?: (openMenuIDsPath: string[]) => void;
     closeOnClickOutside?: boolean;
     closeOnClickLeafItem?: boolean;
     mouseHoverEvents?: boolean;
     enableKeyEvents?: boolean;
-    onOpenMenusChange?: (openMenuIDsPath: string[]) => void;
+    pointerEnterExitDelayMS?: number;
 }>;
 
 // @public
@@ -125,20 +129,23 @@ export type DropdownMenuPropsInternallyControlled = DropdownMenuPropsBase & {
 };
 
 // @public
+export const noopLogger: DropdownMenuLogger;
+
+// @public
 export type OnRequestOpenChangeEvent = Event | SyntheticEvent;
 
-// @public (undocumented)
+// @public
 export type OnRequestOpenChangeOptions = OnRequestOpenChangeOptionsBase & {
     open: boolean;
 };
 
-// @public (undocumented)
+// @public
 export type OnRequestOpenChangeOptionsBase = {
     reason: OnRequestOpenChangeReason;
     event?: OnRequestOpenChangeEvent;
 };
 
-// @public (undocumented)
+// @public
 export type OnRequestOpenChangeReason = "clickDropdown" | "clickOutside" | "escapeKey" | "openSubmenu" | "closeSubmenu";
 
 // @public

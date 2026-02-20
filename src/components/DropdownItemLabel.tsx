@@ -4,7 +4,7 @@ import {
 
 import {
     useDropdownItemSlotsContext
-} from "../hooks/useDropdownItemSlotsContext";
+ } from "../hooks/useDropdownItemSlotsContext";
 
 import { dropdownItemLabelLogger as logger } from "../utils/loggers";
 
@@ -30,9 +30,12 @@ export function DropdownItemLabel(
 
     logger.debug("render; children:\n", children);
 
-    useDropdownItemSlotsContext({
-        setLabel: children
+    const slotsRef = useDropdownItemSlotsContext({
+        componentName: "DropdownItemLabel"
     });
+
+    // eslint-disable-next-line react-hooks/refs
+    slotsRef.current.label = children;
 
     return null;
 }

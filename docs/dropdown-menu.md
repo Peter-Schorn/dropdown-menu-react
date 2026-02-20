@@ -19,6 +19,17 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[disableLoggers()](./dropdown-menu.disableloggers.md)
+
+
+</td><td>
+
+A convenience function that disables all logging by setting all loggers to the no-op logger.
+
+
+</td></tr>
+<tr><td>
+
 [DisclosureIndicator({ className, style, children }, input)](./dropdown-menu.disclosureindicator.md)
 
 
@@ -164,7 +175,7 @@ Description
 
 </td><td>
 
-Default debug configuration. This can be changed via setDebugConfig. Never mutate this object directly, as it is frozen.
+Default debug configuration. This can be changed via setDebugConfig. Never mutate this object directly.
 
 
 </td></tr>
@@ -176,6 +187,17 @@ Default debug configuration. This can be changed via setDebugConfig. Never mutat
 </td><td>
 
 The context for the disclosure indicator of a dropdown item, which provides information about whether the submenu associated with the dropdown item is currently open or closed. This context is used by the default [DisclosureIndicator()](./dropdown-menu.disclosureindicator.md) component to determine the color of the disclosure indicator icon, but it can also be used by custom disclosure indicator components.
+
+
+</td></tr>
+<tr><td>
+
+[noopLogger](./dropdown-menu.nooplogger.md)
+
+
+</td><td>
+
+A no-op logger that can be used to disable logging. This is the default logger for all loggers in this library.
 
 
 </td></tr>
@@ -357,6 +379,8 @@ An event that could trigger a request for the dropdown menu to change its open s
 
 </td><td>
 
+The options for a request to change the open state of the dropdown menu.
+
 
 </td></tr>
 <tr><td>
@@ -366,6 +390,8 @@ An event that could trigger a request for the dropdown menu to change its open s
 
 </td><td>
 
+The base options for a request to change the open state of the dropdown menu. Excludes the `open` property. See [OnRequestOpenChangeOptions](./dropdown-menu.onrequestopenchangeoptions.md) for the full options object.
+
 
 </td></tr>
 <tr><td>
@@ -374,6 +400,10 @@ An event that could trigger a request for the dropdown menu to change its open s
 
 
 </td><td>
+
+A more specific reason for a request to change the open state of the dropdown menu, which can be used by clients to determine how to respond to the request.
+
+The possible values are: - `clickDropdown`<!-- -->: The user clicked somewhere within the dropdown menu, such as on a menu item or on the menu background. - `clickOutside`<!-- -->: The user clicked somewhere outside of the dropdown menu. - `escapeKey`<!-- -->: The user pressed the Escape key while the dropdown menu was open. - `openSubmenu`<!-- -->: The client request to open a submenu when the dropdown menu is not currently open, so the dropdown menu is requesting to open first before opening the requested submenu. - `closeSubmenu`<!-- -->: The client called the `closeSubmenu` method of `DropdownMenuHandle` and passed in the ID of the root menu, so the dropdown menu is requesting to close the entire menu.
 
 
 </td></tr>

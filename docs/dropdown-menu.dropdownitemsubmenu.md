@@ -9,7 +9,7 @@ A dropdown item submenu component that is used to set the submenu of a dropdown 
 **Signature:**
 
 ```typescript
-export declare function DropdownItemSubmenu(input: DropdownItemSubmenuProps): ReactNode;
+export declare function DropdownItemSubmenu(input: DropdownItemSubmenuProps): null;
 ```
 
 ## Parameters
@@ -62,5 +62,5 @@ input
 
 **Returns:**
 
-ReactNode
+null
 
