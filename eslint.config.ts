@@ -73,7 +73,8 @@ export default defineConfig(
                 checkContextObjects: true,
             }],
 
-            // "react-hooks/exhaustive-deps": "off",
+            // there is a bug where this doesn't even work correctly
+            "react/prop-types": "off",
 
             "jsdoc/require-jsdoc": "off",
             "jsdoc/tag-lines": "off",

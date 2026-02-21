@@ -3,12 +3,6 @@ import {
     createContext
 } from "react";
 
-// import {
-//     createContext
-// } from "use-context-selector";
-
-import { MenuItemNode } from "../MenuItemNode";
-
 import {
     type DropdownMenuRepositionSubmenuEventPhase,
     DropdownMenuEventEmitter
@@ -19,7 +13,6 @@ import {
 } from "../../types/misc";
 
 export type DropdownMenuContextType = {
-    readonly menuItemTreeRef: RefObject<MenuItemNode>;
     readonly menuItemsAlignmentRef: RefObject<Map<string, HorizontalEdge>>;
     readonly mainDropdownMenuEventEmitter: DropdownMenuEventEmitter;
     readonly hoveredMenuItemRef: RefObject<string | null>;
@@ -47,7 +40,6 @@ export type DropdownMenuContextType = {
 };
 
 export const dropdownMenuContextDefaultValue: DropdownMenuContextType = {
-    menuItemTreeRef: { current: new MenuItemNode({ id: "" }) },
     menuItemsAlignmentRef: { current: new Map<string, HorizontalEdge>() },
     mainDropdownMenuEventEmitter: new DropdownMenuEventEmitter(),
     hoveredMenuItemRef: { current: null },

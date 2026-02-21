@@ -494,8 +494,6 @@ const _DropdownMenu = memo(function DropdownMenu(
 
     const ignoreClicksUntilNextPointerDownRef = useRef<boolean>(false);
 
-    const menuItemTreeRef = useRef(new MenuItemNode({ id: menuID }));
-
     const menuItemsAlignmentRef = useRef<Map<string, HorizontalEdge>>(
         new Map<string, HorizontalEdge>([
             [menuID, "right"]
@@ -653,7 +651,8 @@ const _DropdownMenu = memo(function DropdownMenu(
 
         }
 
-        menuItemTreeRef.current = menuItemTree;
+        dropdownMenuStore.getState().setMenuItemTree(menuItemTree);
+
         logger.debug(
             "buildMenuItemTree: built menu item tree:\n" +
             `${menuItemTree.toTreeString()}`
@@ -661,7 +660,8 @@ const _DropdownMenu = memo(function DropdownMenu(
 
     }, [
         getSubmenuItemTree,
-        menuID
+        menuID,
+        dropdownMenuStore
     ]);
 
     const scheduleBuildMenuItemTreeEffectEvent = useEffectEvent((): void => {
@@ -1207,14 +1207,15 @@ const _DropdownMenu = memo(function DropdownMenu(
         submenuID: string
     ): void => {
 
+        const menuItemTree = dropdownMenuStore.getState().menuItemTree;
 
         if (!isOpenRef.current) {
 
-            if (!menuItemTreeRef.current.hasChild(submenuID)) {
+            if (!menuItemTree.hasChild(submenuID)) {
                 logger.error(
                     `openSubmenu: submenu with ID ${submenuID} not found ` +
                     "in menu item tree:\n" +
-                    `${menuItemTreeRef.current.toTreeString()}`
+                    `${menuItemTree.toTreeString()}`
                 );
                 return;
             }
@@ -1249,12 +1250,12 @@ const _DropdownMenu = memo(function DropdownMenu(
             // the submenuID that we want to open may be a non-direct child of
             // one of the currently open submenus, meaning we also have to add
             // all of the ancestors of that submenu to the open submenu IDs
-            const newIDs = menuItemTreeRef.current.pathToChild(submenuID);
+            const newIDs = menuItemTree.pathToChild(submenuID);
             if (newIDs.length === 0) {
                 logger.error(
                     `openSubmenu: submenu with ID ${submenuID} not found in ` +
                     "menu item tree:\n" +
-                    `${menuItemTreeRef.current.toTreeString()}`
+                    `${menuItemTree.toTreeString()}`
                 );
                 return prevIDs;
             }
@@ -1317,23 +1318,25 @@ const _DropdownMenu = memo(function DropdownMenu(
                 return prevIDs;
             }
 
-            const parent = menuItemTreeRef.current.parentOf(submenuID);
+            const menuItemTree = dropdownMenuStore.getState().menuItemTree;
+
+            const parent = menuItemTree.parentOf(submenuID);
             if (!parent) {
                 logger.error(
                     `closeSubmenu: parent of submenu with ID ${submenuID} ` +
                     "not found in menu item tree:\n" +
-                    `${menuItemTreeRef.current.toTreeString()}`
+                    `${menuItemTree.toTreeString()}`
                 );
                 return prevIDs;
             }
-            const newIds = menuItemTreeRef.current.pathToChild(parent.id);
+            const newIds = menuItemTree.pathToChild(parent.id);
             if (newIds.length === 0) {
                 // this should never happen as we have already verified that the
                 // parent exists in the menu item tree
                 logger.error(
                     "closeSubmenu: could not find path to child for parent " +
                     `${parent.id} of submenu ${submenuID}; menuItemTree:\n` +
-                    `${menuItemTreeRef.current.toTreeString()}`
+                    `${menuItemTree.toTreeString()}`
                 );
                 return prevIDs;
             }
@@ -1370,6 +1373,8 @@ const _DropdownMenu = memo(function DropdownMenu(
         menuItemsAlignmentRef.current.clear();
         menuItemsAlignmentRef.current.set(menuID, "right");
 
+        const menuItemTree = dropdownMenuStore.getState().menuItemTree;
+
         /**
          * Whether we will actually open a submenu after opening the main
          * dropdown menu.
@@ -1378,7 +1383,7 @@ const _DropdownMenu = memo(function DropdownMenu(
 
         if (pendingOpenSubmenuIDRef.current) {
             if (
-                menuItemTreeRef.current.hasChild(
+                menuItemTree.hasChild(
                     pendingOpenSubmenuIDRef.current
                 )
             ) {
@@ -1390,7 +1395,7 @@ const _DropdownMenu = memo(function DropdownMenu(
                     "openDropdownMenu: pending open submenu ID " +
                     `${pendingOpenSubmenuIDRef.current} not found in menu ` +
                     "item tree:\n" +
-                    `${menuItemTreeRef.current.toTreeString()}`
+                    `${menuItemTree.toTreeString()}`
                 );
             }
             clearPendingOpenSubmenuRequest();
@@ -2402,7 +2407,7 @@ const _DropdownMenu = memo(function DropdownMenu(
                 window.getOpenMenuIDs = (): string[] =>
                     [...dropdownMenuStore.getState().openMenuIDsPath];
                 window.getMenuItemTree = (): MenuItemNode =>
-                    menuItemTreeRef.current;
+                    dropdownMenuStore.getState().menuItemTree;
                 window.buildMenuItemTree = buildMenuItemTree;
                 window.positionDropdownMenu = (
                     phase?: DropdownMenuRepositionSubmenuEventPhase
@@ -2480,7 +2485,6 @@ const _DropdownMenu = memo(function DropdownMenu(
 
     const dropdownMenuContextValue = useMemo(
         (): DropdownMenuContextType => ({
-            menuItemTreeRef,
             menuItemsAlignmentRef,
             mainDropdownMenuEventEmitter,
             hoveredMenuItemRef,

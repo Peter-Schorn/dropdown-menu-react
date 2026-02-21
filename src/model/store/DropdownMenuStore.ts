@@ -14,6 +14,8 @@ import {
     subscribeWithSelector
 } from "zustand/middleware";
 
+import { MenuItemNode } from "../MenuItemNode";
+
 import type {
     UpdateState,
 } from "../../types/misc";
@@ -45,6 +47,9 @@ export type DropdownMenuStore = Readonly<{
      */
     pendingFocusSubmenuID: string | null;
     setPendingFocusSubmenuID: (pendingFocusSubmenuID: string | null) => void;
+
+    menuItemTree: MenuItemNode;
+    setMenuItemTree: (menuItemTree: MenuItemNode) => void;
 }>;
 
 export type DropdownMenuStoreContextType = Mutate<
@@ -100,6 +105,18 @@ function createDropdownMenuStore(): DropdownMenuStoreContextType {
             });
         },
 
+        menuItemTree: new MenuItemNode({ id: "" }),
+        setMenuItemTree: (menuItemTree: MenuItemNode): void => {
+            set((state) => {
+                if (state.menuItemTree === menuItemTree) {
+                    return state;
+                }
+                return {
+                    menuItemTree
+                };
+            });
+        }
+
     })));
 }
 
@@ -138,7 +155,9 @@ export const mockDropdownMenuStore: DropdownMenuStore = {
     submenusPortalContainer: null,
     setSubmenusPortalContainer: (): void => { },
     pendingFocusSubmenuID: null,
-    setPendingFocusSubmenuID: (): void => { }
+    setPendingFocusSubmenuID: (): void => { },
+    menuItemTree: new MenuItemNode({ id: "" }),
+    setMenuItemTree: (): void => { }
 };
 
 export const mockDropdownMenuStoreContextValue: DropdownMenuStoreContextType = {
