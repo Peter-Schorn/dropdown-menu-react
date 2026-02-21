@@ -57,9 +57,6 @@ export type DropdownMenuStoreContextType = Mutate<
     [["zustand/subscribeWithSelector", never]]
 >;
 
-// export type DropdownMenuStoreContextType =
-//     StoreApi<DropdownMenuStore>;
-
 function createDropdownMenuStore(): DropdownMenuStoreContextType {
     return createStore<DropdownMenuStore>()(subscribeWithSelector((set) => ({
 
