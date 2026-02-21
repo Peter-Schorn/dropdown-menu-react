@@ -280,8 +280,8 @@ const _DropdownItem = memo(function DropdownItem(
             const parentMenuID = menuItemTreeRef.current.parentOf(submenuID)?.id;
             if (!parentMenuID) {
                 logger.debug(
-                    "parentMenuIsOpen: could not find parent menu ID for submenu " +
-                    `with ID ${submenuID}; returning false`
+                    "parentMenuIsOpen: could not find parent menu ID for " +
+                    `submenu with ID ${submenuID}; returning false`
                 );
                 return false;
             }
