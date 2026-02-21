@@ -21,6 +21,10 @@ import {
 } from "zustand";
 
 import {
+    DropdownItemLabelSlotConsumer
+} from "./DropdownItemLabelSlotConsumer";
+
+import {
     DropdownMenuContext
     // dropdownMenuContextDefaultValue
 } from "../model/context/DropdownMenuContext";
@@ -37,16 +41,16 @@ import {
 } from "../model/store/DropdownSubmenuStore";
 
 import {
+    DropdownItemSlotsStoreContext,
+    useCreateDropdownItemSlotsStore,
+    useDropdownItemSlotsStoreContext
+} from "../model/store/DropdownItemSlotsStore";
+
+import {
     type DropdownSubmenuContextType,
     DropdownSubmenuContext
     // dropdownSubmenuContextDefaultValue
 } from "../model/context/DropdownSubmenuContext";
-
-import {
-    type DropdownItemSlotsContextType,
-    type DropdownItemSlots,
-    DropdownItemSlotsContext
-} from "../model/context/DropdownItemSlotsContext";
 
 import {
     type DisclosureIndicatorContextType,
@@ -125,37 +129,26 @@ export function DropdownItem(
     props: DropdownItemProps
 ): ReactNode {
 
-    const slotsRef = useRef<DropdownItemSlots>({});
-
-    // reset slots on every render to avoid stale data;
-    // eslint-disable-next-line react-hooks/refs
-    slotsRef.current = {};
+    const slotsStore = useCreateDropdownItemSlotsStore();
 
     // filter out `children` from props before passing to _DropdownItem since it
     // is not used by _DropdownItem and would cause unnecessary re-renders if it
     // changed
     const {
         children: _,
-        ...filteredProps
+        ..._dropdownItemProps
     } = props;
 
-    const innerProps = {
-        ...filteredProps,
-        slotsRef
-    };
-
     return (
-        <DropdownItemSlotsContext.Provider value={slotsRef}>
+        <DropdownItemSlotsStoreContext.Provider value={slotsStore}>
             {props.children}
-            <_DropdownItem {...innerProps} />
-        </DropdownItemSlotsContext.Provider>
+            <_DropdownItem {..._dropdownItemProps} />
+        </DropdownItemSlotsStoreContext.Provider>
     );
 
 }
 
-type _DropdownItemProps = Omit<DropdownItemProps, "children"> & {
-    slotsRef: DropdownItemSlotsContextType;
-};
+type _DropdownItemProps = Omit<DropdownItemProps, "children">;
 
 const _DropdownItem = memo(function DropdownItem(
     props: _DropdownItemProps
@@ -165,9 +158,20 @@ const _DropdownItem = memo(function DropdownItem(
     // const debugConfig = defaultDebugConfig;
 
     const {
-        onClick,
-        slotsRef
+        onClick
     } = props;
+
+    const dropdownItemSlotsStoreContext = useDropdownItemSlotsStoreContext();
+
+    const submenu = useStore(
+        dropdownItemSlotsStoreContext,
+        (state) => state.submenu
+    );
+
+    const submenuIDExternal = useStore(
+        dropdownItemSlotsStoreContext,
+        (state) => state.submenuID
+    );
 
     const dropdownMenuContext = useContext(DropdownMenuContext);
     // const dropdownMenuContext = dropdownMenuContextDefaultValue;
@@ -240,10 +244,9 @@ const _DropdownItem = memo(function DropdownItem(
     );
     // const parentScrollbarHitbox = null as HTMLDivElement | null;
 
-    const isSubmenu = (
-        slotsRef.current.submenu !== null &&
-        slotsRef.current.submenu !== undefined
-    );
+    const isSubmenu = useMemo(() => {
+        return submenu !== null && submenu !== undefined;
+    }, [submenu]);
 
     /**
      * An internally generated unique identifier for this submenu. Used if no
@@ -254,8 +257,6 @@ const _DropdownItem = memo(function DropdownItem(
         () => crypto.randomUUID(),
         []
     );
-
-    const submenuIDExternal = slotsRef.current.submenuID;
 
     /** A unique identifier for this submenu. */
     const submenuID = submenuIDExternal ?? submenuIDDefault;
@@ -489,22 +490,9 @@ const _DropdownItem = memo(function DropdownItem(
         }
 
         // eslint-disable-next-line react-hooks/rules-of-hooks
-        const labelChanges = useWhyObjectChanged(
-            "label",
-            slotsRef.current.label
-        );
-
-        if (labelChanges.hasChanges) {
-            changeMessages.push(
-                "\nlabelChanges:\n",
-                labelChanges
-            );
-        }
-
-        // eslint-disable-next-line react-hooks/rules-of-hooks
         const submenuChanges = useWhyObjectChanged(
             "submenu",
-            slotsRef.current.submenu
+            submenu
         );
 
         if (submenuChanges.hasChanges) {
@@ -557,7 +545,7 @@ const _DropdownItem = memo(function DropdownItem(
             `render: submenuID: ${submenuID}; ` +
             `submenuIsOpen: ${submenuIsOpen}; ` +
             `parentMenuIsOpen: ${parentMenuIsOpen};`,
-            ...changeMessages
+            // ...changeMessages
         );
     }
 
@@ -2704,7 +2692,8 @@ const _DropdownItem = memo(function DropdownItem(
                         data-has-submenu={isSubmenu}
                         data-submenu-id={submenuID}
                     >
-                        {slotsRef.current.label}
+                        <DropdownItemLabelSlotConsumer />
+
                     </div>
                     {
                         debugConfig.showMenuIds &&
@@ -2752,7 +2741,7 @@ const _DropdownItem = memo(function DropdownItem(
                                 <DropdownSubmenuStoreContext.Provider
                                     value={dropdownSubmenuStore}
                                 >
-                                    {slotsRef.current.submenu}
+                                    {submenu}
                                 </DropdownSubmenuStoreContext.Provider>
                             </DropdownSubmenuContext.Provider>
                         </DropdownMenuCore>
@@ -2775,6 +2764,7 @@ const _DropdownItem = memo(function DropdownItem(
             )}
         </button>
     );
+
 }, (prev, next) => {
 
     const areEqual = Object.is(prev, next);

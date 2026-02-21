@@ -1,10 +1,11 @@
 import {
-    type PropsWithChildren
+    type PropsWithChildren,
+    useLayoutEffect
 } from "react";
 
 import {
-    useDropdownItemSlotsContext
- } from "../hooks/useDropdownItemSlotsContext";
+    useDropdownItemSlotsStoreContext
+} from "../model/store/DropdownItemSlotsStore";
 
 import { dropdownItemLabelLogger as logger } from "../utils/loggers";
 
@@ -30,12 +31,28 @@ export function DropdownItemLabel(
 
     logger.debug("render; children:\n", children);
 
-    const slotsRef = useDropdownItemSlotsContext({
+    const dropdownItemSlotsStoreContext = useDropdownItemSlotsStoreContext({
         componentName: "DropdownItemLabel"
     });
 
-    // eslint-disable-next-line react-hooks/refs
-    slotsRef.current.label = children;
+    useLayoutEffect(() => {
+
+        dropdownItemSlotsStoreContext.getState().setLabel(children);
+
+    }, [
+        children,
+        dropdownItemSlotsStoreContext
+    ]);
+
+    // use a separate effect for cleanup to prevent the label from being removed
+    // and re-added to the store every time it changes.
+    useLayoutEffect(() => {
+        return (): void => {
+            dropdownItemSlotsStoreContext.getState().setLabel(null);
+        };
+    }, [
+        dropdownItemSlotsStoreContext
+    ]);
 
     return null;
 }

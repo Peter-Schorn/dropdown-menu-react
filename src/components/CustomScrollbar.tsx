@@ -11,6 +11,7 @@ import {
     useLayoutEffect,
     useState,
     useMemo,
+    memo
 } from "react";
 
 import {
@@ -109,7 +110,9 @@ export type CustomScrollbarProps = {
     zIndex: number;
 };
 
-export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
+export const CustomScrollbar = memo(function CustomScrollbar(
+    props: CustomScrollbarProps
+): JSX.Element {
 
     /**
      * Padding to expand the hitbox of the scrollbar track for touch events.
@@ -1114,7 +1117,7 @@ export function CustomScrollbar(props: CustomScrollbarProps): JSX.Element {
         </>
     );
 
-}
+});
 
 // use any to exclude from the generated .d.ts file
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access

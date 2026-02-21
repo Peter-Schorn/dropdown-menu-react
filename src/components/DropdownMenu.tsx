@@ -371,16 +371,6 @@ const _DropdownMenu = memo(function DropdownMenu(
     const dropdownMenuStore = useCreateDropdownMenuStore();
     // const dropdownMenuStore = mockDropdownMenuStoreContextValue;
 
-    const openMenuIDsPath = useStore(
-        dropdownMenuStore,
-        (state) => state.openMenuIDsPath
-    );
-
-    const submenusPortalContainer = useStore(
-        dropdownMenuStore,
-        (state) => state.submenusPortalContainer
-    );
-
     const setSubmenusPortalContainer = useStore(
         dropdownMenuStore,
         (state) => state.setSubmenusPortalContainer
@@ -549,6 +539,12 @@ const _DropdownMenu = memo(function DropdownMenu(
      */
     const pendingOpenSubmenuIDRef = useRef<string | null>(null);
 
+    /**
+     * A mutation observer that observes changes to the dropdown menu's DOM,
+     * which is used to rebuild the menu item tree.
+     */
+    const mutationObserverRef = useRef<MutationObserver | null>(null);
+
     const setHoveredMenuItem = useCallback((
         menuItemID: string | null
     ): void => {
@@ -581,6 +577,9 @@ const _DropdownMenu = memo(function DropdownMenu(
         const node = new MenuItemNode({
             id: submenuID
         });
+
+        const submenusPortalContainer =
+            dropdownMenuStore.getState().submenusPortalContainer;
 
         if (!submenusPortalContainer) {
             logger.warn(
@@ -617,7 +616,7 @@ const _DropdownMenu = memo(function DropdownMenu(
 
         return node;
 
-    }, [submenusPortalContainer]);
+    }, [dropdownMenuStore]);
 
     const buildMenuItemTree = useCallback((): void => {
 
@@ -1371,13 +1370,6 @@ const _DropdownMenu = memo(function DropdownMenu(
         menuItemsAlignmentRef.current.clear();
         menuItemsAlignmentRef.current.set(menuID, "right");
 
-        // if there is a pending request to open a submenu, then we should not
-        // update the `openMenuIDsPath` until after we have handled the pending
-        // submenu open request, which will happen in `openSubmenu`
-        if (!pendingOpenSubmenuIDRef.current) {
-            dropdownMenuStore.getState().setOpenMenuIDsPath([menuID]);
-        }
-
         /**
          * Whether we will actually open a submenu after opening the main
          * dropdown menu.
@@ -1404,10 +1396,16 @@ const _DropdownMenu = memo(function DropdownMenu(
             clearPendingOpenSubmenuRequest();
         }
 
-        // if we are not going to open a submenu, then we should position the
-        // menu now, but if we are going to open a submenu, then we should wait
-        // to position the menu until after we have opened the submenu.
         if (!willOpenSubmenu) {
+            // if there is a pending request to open a submenu, then we should
+            // not update the `openMenuIDsPath` until after we have handled the
+            // pending submenu open request, which will happen in `openSubmenu`
+            dropdownMenuStore.getState().setOpenMenuIDsPath([menuID]);
+
+            // if we are not going to open a submenu, then we should position
+            // the menu now, but if we are going to open a submenu, then we
+            // should wait to position the menu until after we have opened the
+            // submenu.
             positionDropdownMenu("initial");
         }
 
@@ -1506,6 +1504,9 @@ const _DropdownMenu = memo(function DropdownMenu(
      */
     const getCurrentMenuDropdownItems = useCallback((): HTMLElement[] => {
 
+        const submenusPortalContainer =
+            dropdownMenuStore.getState().submenusPortalContainer;
+
         const dropdownMenuContent = dropdownMenuContentRef.current;
         if (!dropdownMenuContent || !submenusPortalContainer) {
             logger.warn(
@@ -1571,7 +1572,6 @@ const _DropdownMenu = memo(function DropdownMenu(
         }
     }, [
         dropdownMenuStore,
-        submenusPortalContainer,
         menuID
     ]);
 
@@ -1591,6 +1591,9 @@ const _DropdownMenu = memo(function DropdownMenu(
             submenuIsOpen
         }: FocusFirstSubmenuOptions
     ): boolean => {
+
+        const submenusPortalContainer =
+            dropdownMenuStore.getState().submenusPortalContainer;
 
         if (!submenusPortalContainer) {
             logger.warn(
@@ -1651,7 +1654,6 @@ const _DropdownMenu = memo(function DropdownMenu(
 
         return true;
     }, [
-        submenusPortalContainer,
         dropdownMenuStore
     ]);
 
@@ -1663,6 +1665,9 @@ const _DropdownMenu = memo(function DropdownMenu(
     ): void => {
 
         const dropdownMenu = dropdownMenuRef.current;
+
+        const submenusPortalContainer =
+            dropdownMenuStore.getState().submenusPortalContainer;
 
         if (!submenusPortalContainer || !dropdownMenu) {
             logger.warn(
@@ -1695,7 +1700,7 @@ const _DropdownMenu = memo(function DropdownMenu(
             dropdownItem
         );
         dropdownItem.focus();
-    }, [submenusPortalContainer]);
+    }, [dropdownMenuStore]);
 
     const handleKeyDownEffectEvent = useEffectEvent((
         event: KeyboardEvent
@@ -1727,6 +1732,9 @@ const _DropdownMenu = memo(function DropdownMenu(
             );
             return;
         }
+
+        const submenusPortalContainer =
+            dropdownMenuStore.getState().submenusPortalContainer;
 
         const dropdownIsFocused =
             document.activeElement &&
@@ -1916,14 +1924,14 @@ const _DropdownMenu = memo(function DropdownMenu(
         else if (event.key === "ArrowLeft") {
             logger.debug("handleKeyDown: ArrowLeft");
 
-            if (openMenuIDsPath.length <= 1) {
+            if (openMenuIDs.length <= 1) {
                 logger.debug(
                     "handleKeyDown: ArrowLeft: no open submenus; returning"
                 );
                 return;
             }
 
-            const openSubmenuID = openMenuIDsPath[openMenuIDsPath.length - 1];
+            const openSubmenuID = openMenuIDs[openMenuIDs.length - 1];
             if (openSubmenuID) {
                 event.preventDefault();
                 closeSubmenu(openSubmenuID);
@@ -1994,14 +2002,23 @@ const _DropdownMenu = memo(function DropdownMenu(
         // ]
     );
 
-    // MARK: useEffect: change to openMenuIDsPath
+    // MARK: useEffect: changes to openMenuIDsPath
     useEffect(() => {
-        logger.debug(
-            "useEffect: openMenuIDsPath changed; new path:", openMenuIDsPath
+        const unsubscribe = dropdownMenuStore.subscribe(
+            (state) => state.openMenuIDsPath,
+            (newOpenMenuIDsPath) => {
+                logger.debug(
+                    "dropdownMenuStore subscription: openMenuIDsPath changed:",
+                    newOpenMenuIDsPath
+                );
+                onOpenMenusChangeEffectEvent([...newOpenMenuIDsPath]);
+            }
         );
-        onOpenMenusChangeEffectEvent([...openMenuIDsPath]);
+
+        return unsubscribe;
+
     }, [
-        openMenuIDsPath
+        dropdownMenuStore
     ]);
 
     // MARK: useEffect: Click outside
@@ -2142,6 +2159,110 @@ const _DropdownMenu = memo(function DropdownMenu(
         isOpen
     ]);
 
+    // MARK: useEffect: submenusPortalContainer build menu item tree
+    useEffect(() => {
+
+        function submenusPortalContainerChangeHandler(
+            newSubmenusPortalContainer: HTMLDivElement | null
+        ): void {
+
+            logger.debug(
+                "dropdownMenuStore subscription: submenusPortalContainer " +
+                "changed:",
+                newSubmenusPortalContainer
+            );
+
+            mutationObserverRef.current?.disconnect();
+
+            // if the submenusPortalContainer has been set for the first time,
+            // or if it changes, then we should build the menu item tree
+            if (newSubmenusPortalContainer) {
+                // buildMenuItemTree needs to query the submenusPortalContainer
+                // to find all submenus, so we must wait for it to be set
+                buildMenuItemTreeEffectEvent();
+            }
+
+            const mutationObserverOptions: MutationObserverInit = {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [
+                    "data-submenu-id"
+                ]
+            };
+
+            mutationObserverRef.current = new MutationObserver((): void => {
+                logger.debug(
+                    "MutationObserver: DOM changed; rebuilding menu item tree"
+                );
+                scheduleBuildMenuItemTreeEffectEvent();
+            });
+
+            const submenusPortalContainer =
+                dropdownMenuStore.getState().submenusPortalContainer;
+
+            if (submenusPortalContainer) {
+
+                mutationObserverRef.current.observe(
+                    submenusPortalContainer,
+                    mutationObserverOptions
+                );
+                logger.debug(
+                    "MutationObserver: observing submenusPortalContainer " +
+                    "for mutations:",
+                    submenusPortalContainer
+                );
+            }
+            else {
+                logger.info(
+                    "MutationObserver: submenusPortalContainer is null; not " +
+                    "observing for mutations"
+                );
+            }
+
+            if (
+                dropdownMenuMeasuringContainerRef.current
+            ) {
+
+                mutationObserverRef.current.observe(
+                    dropdownMenuMeasuringContainerRef.current,
+                    mutationObserverOptions
+                );
+
+                logger.debug(
+                    "MutationObserver: observing " +
+                    "dropdownMenuMeasuringContainer for mutations:",
+                    dropdownMenuMeasuringContainerRef.current
+                );
+
+            }
+            else {
+                logger.warn(
+                    "MutationObserver: dropdownMenuMeasuringContainerRef or " +
+                    "dropdownMenuContentRef is null; not observing for " +
+                    "mutations"
+                );
+            }
+
+        }
+
+        const unsubscribe = dropdownMenuStore.subscribe(
+            (state) => state.submenusPortalContainer,
+            submenusPortalContainerChangeHandler
+        );
+
+        // the submenusPortalContainer may have already been set before this
+        // effect even runs, in which case the subscription callback will not be
+        // called
+        const submenusPortalContainer =
+            dropdownMenuStore.getState().submenusPortalContainer;
+
+        submenusPortalContainerChangeHandler(submenusPortalContainer);
+
+        return unsubscribe;
+
+    }, [dropdownMenuStore]);
+
     // MARK: useEffect: ResizeObserver
     useEffect(() => {
 
@@ -2271,104 +2392,6 @@ const _DropdownMenu = memo(function DropdownMenu(
         isOpen
     ]);
 
-    // MARK: useEffect: submenusPortalContainer build menu item tree
-    useEffect(() => {
-
-        logger.debug(
-            "useEffect: submenusPortalContainer build menu item tree; " +
-            "submenusPortalContainer:", submenusPortalContainer
-        );
-
-        // buildMenuItemTree needs to query the submenusPortalContainer to find
-        // all submenus, so we must wait for it to be set
-        if (submenusPortalContainer) {
-            // we must build the menu item tree even if the dropdown menu is
-            // currently closed because the client could still call
-            // `openSubmenu`, which needs the menu item tree to find the submenu
-            // to open
-            buildMenuItemTreeEffectEvent();
-        }
-
-    }, [
-        submenusPortalContainer
-    ]);
-
-    // MARK: useEffect: MutationObserver
-    useEffect(() => {
-
-        const mutationObserverOptions: MutationObserverInit = {
-            childList: true,
-            subtree: true,
-            attributeFilter: [
-                "data-submenu-id"
-            ]
-        };
-
-        logger.debug(
-            "useEffect: MutationObserver begin; isOpen:", isOpen
-        );
-
-        const mutationObserver = new MutationObserver((): void => {
-            logger.debug(
-                "useEffect: MutationObserver: DOM changed; " +
-                "rebuilding menu item tree"
-            );
-            scheduleBuildMenuItemTreeEffectEvent();
-        });
-
-        if (submenusPortalContainer) {
-
-            mutationObserver.observe(
-                submenusPortalContainer,
-                mutationObserverOptions
-            );
-            logger.debug(
-                "useEffect: MutationObserver observing " +
-                "submenusPortalContainer for mutations:",
-                submenusPortalContainer
-            );
-        }
-        else {
-            logger.info(
-                "useEffect: MutationObserver: submenusPortalContainer is " +
-                "null; not observing for mutations"
-            );
-        }
-
-        if (isOpen) {
-
-            if (
-                dropdownMenuMeasuringContainerRef.current &&
-                dropdownMenuContentRef.current
-            ) {
-
-                mutationObserver.observe(
-                    dropdownMenuMeasuringContainerRef.current,
-                    mutationObserverOptions
-                );
-
-            }
-            else {
-                logger.warn(
-                    "useEffect: MutationObserver: " +
-                    "dropdownMenuMeasuringContainerRef or " +
-                    "dropdownMenuContentRef is null; not observing for resizes"
-                );
-            }
-        }
-
-        return (): void => {
-            logger.debug(
-                "useEffect: MutationObserver cleanup: disconnecting observer"
-            );
-            mutationObserver.disconnect();
-        };
-
-    }, [
-        isOpen,
-        submenusPortalContainer
-    ]);
-
     // MARK: useEffect: Debug expose dropdown menu API on window object
     useEffect(() => {
 
@@ -2428,6 +2451,10 @@ const _DropdownMenu = memo(function DropdownMenu(
     // MARK: useEffect: Cleanup on unmount
     useEffect(() => {
         return (): void => {
+            if (mutationObserverRef.current) {
+                mutationObserverRef.current.disconnect();
+                mutationObserverRef.current = null;
+            }
             if (repositionMenusRafIdRef.current !== null) {
                 cancelAnimationFrame(repositionMenusRafIdRef.current);
                 repositionMenusRafIdRef.current = null;

@@ -1,10 +1,11 @@
 import {
-    type PropsWithChildren
+    type PropsWithChildren,
+    useLayoutEffect
 } from "react";
 
 import {
-    useDropdownItemSlotsContext
-} from "../hooks/useDropdownItemSlotsContext";
+    useDropdownItemSlotsStoreContext
+} from "../model/store/DropdownItemSlotsStore";
 
 import { dropdownItemSubmenuLogger as logger } from "../utils/loggers";
 
@@ -51,15 +52,35 @@ export function DropdownItemSubmenu(
         submenuID
     );
 
-    const slotsRef = useDropdownItemSlotsContext({
+    const dropdownItemSlotsStoreContext = useDropdownItemSlotsStoreContext({
         componentName: "DropdownItemSubmenu"
     });
 
-    // eslint-disable-next-line react-hooks/refs
-    slotsRef.current.submenu = children;
+    useLayoutEffect(() => {
 
-    // eslint-disable-next-line react-hooks/refs
-    slotsRef.current.submenuID = submenuID;
+        dropdownItemSlotsStoreContext.getState().setSubmenu({
+            submenu: children,
+            submenuID: submenuID ?? null
+        });
+
+    }, [
+        children,
+        submenuID,
+        dropdownItemSlotsStoreContext
+    ]);
+
+    // use a separate effect for cleanup to prevent the submenu from being
+    // removed and re-added to the store every time it changes.
+    useLayoutEffect(() => {
+        return (): void => {
+            dropdownItemSlotsStoreContext.getState().setSubmenu({
+                submenu: null,
+                submenuID: null
+            });
+        };
+    }, [
+        dropdownItemSlotsStoreContext
+    ]);
 
     return null;
 }

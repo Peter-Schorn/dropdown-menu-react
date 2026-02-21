@@ -6,8 +6,13 @@ import {
 
 import {
     type StoreApi,
+    type Mutate,
     createStore
 } from "zustand";
+
+import {
+    subscribeWithSelector
+} from "zustand/middleware";
 
 import type {
     UpdateState,
@@ -34,15 +39,24 @@ export type DropdownMenuStore = Readonly<{
         submenusPortalContainer: HTMLDivElement | null
     ) => void;
 
+    /**
+     * The ID of the dropdown item that should receive focus once its parent
+     * menu opens.
+     */
     pendingFocusSubmenuID: string | null;
     setPendingFocusSubmenuID: (pendingFocusSubmenuID: string | null) => void;
 }>;
 
-export type DropdownMenuStoreContextType =
-    StoreApi<DropdownMenuStore>;
+export type DropdownMenuStoreContextType = Mutate<
+    StoreApi<DropdownMenuStore>,
+    [["zustand/subscribeWithSelector", never]]
+>;
+
+// export type DropdownMenuStoreContextType =
+//     StoreApi<DropdownMenuStore>;
 
 function createDropdownMenuStore(): DropdownMenuStoreContextType {
-    return createStore<DropdownMenuStore>((set) => ({
+    return createStore<DropdownMenuStore>()(subscribeWithSelector((set) => ({
 
         openMenuIDsPath: [],
         setOpenMenuIDsPath: (update: UpdateState<readonly string[]>): void => {
@@ -86,7 +100,7 @@ function createDropdownMenuStore(): DropdownMenuStoreContextType {
             });
         },
 
-    }));
+    })));
 }
 
 /**
