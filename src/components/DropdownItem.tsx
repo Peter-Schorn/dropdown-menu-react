@@ -2036,7 +2036,11 @@ const _DropdownItem = memo(function DropdownItem(
             // if the parent has no scrollbar hitbox, then a pointerleave event
             // always means that the pointer has logically left the dropdown
             // item container
-            parentScrollbarHitbox
+            parentScrollbarHitbox &&
+            event.relatedTarget instanceof HTMLElement &&
+            // if the pointer did not move to a scroll bar hitbox, then the
+            // pointer has logically left the dropdown item container
+            event.relatedTarget.hasAttribute("data-scrollbar-hitbox")
         ) {
 
             if (eventWithinDropdownItemContainerComponentTreeRects(event)) {

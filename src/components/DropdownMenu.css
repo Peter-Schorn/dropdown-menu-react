@@ -228,4 +228,7 @@
 
 .bd-dropdown-divider {
     margin: 5px var(--dropdown-item-container-horizontal-padding);
+    border: none;
+    color: lightgray;
+    border-top: 1px solid;
 }
