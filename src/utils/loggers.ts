@@ -28,7 +28,6 @@ export type DropdownMenuLoggers<T extends DropdownMenuLogger = DropdownMenuLogge
     dropdownItemLabelLogger: T;
     dropdownItemSubmenuLogger: T;
     disclosureIndicatorLogger: T;
-    dropdownItemSlotProviderLogger: T;
 };
 
 function noop(): void {
@@ -57,7 +56,6 @@ export let customScrollbarLogger: DropdownMenuLogger = noopLogger;
 export let dropdownItemLabelLogger: DropdownMenuLogger = noopLogger;
 export let dropdownItemSubmenuLogger: DropdownMenuLogger = noopLogger;
 export let disclosureIndicatorLogger: DropdownMenuLogger = noopLogger;
-export let dropdownItemSlotProviderLogger: DropdownMenuLogger = noopLogger;
 
 /**
  * The type for the `setLoggers` function, which can be used to set the loggers
@@ -100,8 +98,7 @@ export function setLoggers<
             customScrollbarLogger: customScrollbarLogger as T,
             dropdownItemLabelLogger: dropdownItemLabelLogger as T,
             dropdownItemSubmenuLogger: dropdownItemSubmenuLogger as T,
-            disclosureIndicatorLogger: disclosureIndicatorLogger as T,
-            dropdownItemSlotProviderLogger: dropdownItemSlotProviderLogger as T
+            disclosureIndicatorLogger: disclosureIndicatorLogger as T
         })
         : loggers;
 
@@ -133,9 +130,6 @@ export function setLoggers<
     }
     if (newLoggers.disclosureIndicatorLogger) {
         disclosureIndicatorLogger = newLoggers.disclosureIndicatorLogger;
-    }
-    if (newLoggers.dropdownItemSlotProviderLogger) {
-        dropdownItemSlotProviderLogger = newLoggers.dropdownItemSlotProviderLogger;
     }
 }
 

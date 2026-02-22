@@ -56,7 +56,7 @@ export type DropdownMenuCoreHandle = {
  * Contains the core logic shared by both the main dropdown menu and the
  * submenus
  */
-export const DropdownMenuCore = memo(function DropdownMenuCore(
+export const DropdownMenuCore = memo(function DropdownMenuCoreMemo(
     props: DropdownMenuCoreProps
 ): JSX.Element {
 

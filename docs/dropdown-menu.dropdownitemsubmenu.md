@@ -2,65 +2,14 @@
 
 [Home](./index.md) &gt; [dropdown-menu](./dropdown-menu.md) &gt; [DropdownItemSubmenu](./dropdown-menu.dropdownitemsubmenu.md)
 
-## DropdownItemSubmenu() function
+## DropdownItemSubmenu variable
 
 A dropdown item submenu component that is used to set the submenu of a dropdown item when it is used as a child of a [DropdownItem()](./dropdown-menu.dropdownitem.md)<!-- -->. The submenu content should consist primarily of [DropdownItem()](./dropdown-menu.dropdownitem.md) components, but can also include other components, such as [DropdownDivider()](./dropdown-menu.dropdowndivider.md)<!-- -->.
 
 **Signature:**
 
 ```typescript
-export declare function DropdownItemSubmenu(input: DropdownItemSubmenuProps): null;
+DropdownItemSubmenu: import("react").NamedExoticComponent<{
+    children?: ReactNode | undefined;
+}>
 ```
-
-## Parameters
-
-<table><thead><tr><th>
-
-Parameter
-
-
-</th><th>
-
-Type
-
-
-</th><th>
-
-Description
-
-
-</th></tr></thead>
-<tbody><tr><td>
-
-{ children, submenuID }
-
-
-</td><td>
-
-(not declared)
-
-
-</td><td>
-
-
-</td></tr>
-<tr><td>
-
-input
-
-
-</td><td>
-
-[DropdownItemSubmenuProps](./dropdown-menu.dropdownitemsubmenuprops.md)
-
-
-</td><td>
-
-
-</td></tr>
-</tbody></table>
-
-**Returns:**
-
-null
-

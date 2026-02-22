@@ -5,27 +5,16 @@ import {
     type PointerEvent as ReactPointerEvent,
     useRef,
     useEffect,
+    useLayoutEffect,
     useCallback,
     useMemo,
     memo,
-    useContext,
+    useContext
 } from "react";
-
-import {
-    createPortal
-} from "react-dom";
 
 import {
     useStore
 } from "zustand";
-
-import {
-    DropdownItemLabelSlotConsumer
-} from "./DropdownItemLabelSlotConsumer";
-
-import {
-    DropdownItemSubmenuSlotConsumer
-} from "./DropdownItemSubmenuSlotConsumer";
 
 import {
     DropdownMenuContext
@@ -38,31 +27,25 @@ import {
 } from "../model/store/DropdownMenuStore";
 
 import {
-    DropdownSubmenuStoreContext,
-    useCreateDropdownSubmenuStore,
-    useDropdownSubmenuStoreContext
-} from "../model/store/DropdownSubmenuStore";
-
-import {
-    DropdownItemSlotsStoreContext,
-    useCreateDropdownItemSlotsStore,
-    useDropdownItemSlotsStoreContext
-} from "../model/store/DropdownItemSlotsStore";
-
-import {
     type DropdownSubmenuContextType,
     DropdownSubmenuContext
     // dropdownSubmenuContextDefaultValue
 } from "../model/context/DropdownSubmenuContext";
 
 import {
-    type DisclosureIndicatorContextType,
-    DisclosureIndicatorContext
-} from "../model/context/DisclosureIndicatorContext";
+    DropdownSubmenuStoreContext,
+    useCreateDropdownSubmenuStore,
+    useDropdownSubmenuStoreContext
+} from "../model/store/DropdownSubmenuStore";
+
+import {
+    type DropdownItemContextType,
+    DropdownItemContext
+} from "../model/context/DropdownItemContext";
 
 import {
     type DropdownMenuCoreHandle,
-    DropdownMenuCore
+    // DropdownMenuCore
 } from "./DropdownMenuCore";
 
 import {
@@ -74,7 +57,7 @@ import {
 
 import {
     type CustomScrollbarHandle,
-    CustomScrollbar
+    // CustomScrollbar
 } from "./CustomScrollbar";
 
 import { useEffectEvent } from "../hooks/useEffectEvent";
@@ -92,10 +75,6 @@ import { useWhyObjectChanged } from "../hooks/useWhyObjectChanged";
 import {
     DROPDOWN_IDEAL_MIN_WIDTH
 } from "../utils/constants";
-
-import { useDebugConfig } from "../hooks/useDebugConfig";
-
-// import { defaultDebugConfig } from "../utils/debugConfig";
 
 import type { HorizontalEdge } from "../types/misc";
 
@@ -119,53 +98,27 @@ export type DropdownItemProps = PropsWithChildren & {
      * A click handler for the dropdown item.
      */
     onClick?: (event: MouseEvent) => void;
+
+    /**
+     * The ID of the submenu of this dropdown item. If not provided, a unique ID
+     * will be generated internally. You can use this ID to open and close the
+     * submenu of this dropdown item programmatically via the `openSubmenu` and
+     * `closeSubmenu` methods of {@link DropdownMenuHandle}.
+     */
+    submenuID?: string;
 };
 
-/**
- * A dropdown item component that can optionally contain a submenu.
- *
- * @param props - An object containing:
- * - `onClick` - A click handler for the dropdown item.
- *
- * @public
- */
-export function DropdownItem(
+// doc comments are on the exported `DropdownItem` component at the bottom so
+// that they are visible in the docs
+const _DropdownItem = memo(function DropdownItemMemo(
     props: DropdownItemProps
-): ReactNode {
-
-    const slotsStore = useCreateDropdownItemSlotsStore();
-
-    // filter out `children` from props before passing to _DropdownItem since it
-    // is not used by _DropdownItem and would cause unnecessary re-renders if it
-    // changed
-    const {
-        children: _,
-        ..._dropdownItemProps
-    } = props;
-
-    return (
-        <DropdownItemSlotsStoreContext.Provider value={slotsStore}>
-            {props.children}
-            <_DropdownItem {..._dropdownItemProps} />
-        </DropdownItemSlotsStoreContext.Provider>
-    );
-
-}
-
-type _DropdownItemProps = Omit<DropdownItemProps, "children">;
-
-const _DropdownItem = memo(function DropdownItem(
-    props: _DropdownItemProps
 ): JSX.Element {
 
-    const debugConfig = useDebugConfig();
-    // const debugConfig = defaultDebugConfig;
-
     const {
-        onClick
+        onClick,
+        submenuID: submenuIDExternal,
+        children
     } = props;
-
-    const dropdownItemSlotsStoreContext = useDropdownItemSlotsStoreContext();
 
     const dropdownMenuContext = useContext(DropdownMenuContext);
     // const dropdownMenuContext = dropdownMenuContextDefaultValue;
@@ -205,15 +158,6 @@ const _DropdownItem = memo(function DropdownItem(
     const dropdownSubmenuStore = useCreateDropdownSubmenuStore();
     // const dropdownSubmenuStore = dropdownSubmenuContextDefaultValue;
 
-    const scrollbarHitbox = useStore(
-        dropdownSubmenuStore,
-        (state) => state.scrollbarHitbox
-    );
-
-    const setScrollbarHitbox = useStore(
-        dropdownSubmenuStore,
-        (state) => state.setScrollbarHitbox
-    );
 
     /**
      * The submenu context from the parent submenu.
@@ -222,7 +166,7 @@ const _DropdownItem = memo(function DropdownItem(
     // const dropdownParentSubmenuContext = dropdownSubmenuContextDefaultValue;
 
     const {
-        parentDropdownMenuMeasuringContainerRef,
+        dropdownMenuMeasuringContainerRef: parentDropdownMenuMeasuringContainerRef,
     } = dropdownParentSubmenuContext;
     // const parentDropdownMenuMeasuringContainerRef = useRef<HTMLDivElement>(null);
 
@@ -238,26 +182,18 @@ const _DropdownItem = memo(function DropdownItem(
     // const parentScrollbarHitbox = null as HTMLDivElement | null;
 
     const isSubmenu: boolean = useStore(
-        dropdownItemSlotsStoreContext,
-        (state) => {
-            const submenu = state.submenu;
-            return submenu !== null && submenu !== undefined;
-        }
+        dropdownSubmenuStore,
+        (state) => state.isSubmenu
     );
+    // const isSubmenu = true;
 
     /**
      * An internally generated unique identifier for this submenu. Used if no
-     * external submenu ID is provided via the `DropdownItemSubmenu` slot
-     * component.
+     * external submenu ID is provided.
      */
     const submenuIDDefault: string = useMemo<string>(
         () => crypto.randomUUID(),
         []
-    );
-
-    const submenuIDExternal: string | null = useStore(
-        dropdownItemSlotsStoreContext,
-        (state) => state.submenuID
     );
 
     /** A unique identifier for this submenu. */
@@ -291,23 +227,6 @@ const _DropdownItem = memo(function DropdownItem(
         }
     );
     // const parentMenuIsOpen = true;
-
-    const zIndex: number = useStore(
-        dropdownMenuStoreContext,
-        (state) => {
-            if (submenuIsOpen) {
-                const openMenuIds = state.openMenuIDsPath;
-                const index = openMenuIds.indexOf(submenuID);
-                const zIndex = 10 + index * 2;
-                return zIndex;
-            }
-            else {
-                // default z-index for closed submenu
-                return 10;
-            }
-        }
-    );
-    // const zIndex = 10;
 
     const dropdownMenuMeasuringContainerRef = useRef<HTMLDivElement>(null);
     const dropdownMenuRef = useRef<HTMLDivElement>(null);
@@ -414,19 +333,6 @@ const _DropdownItem = memo(function DropdownItem(
         }
 
         // eslint-disable-next-line react-hooks/rules-of-hooks
-        const debugConfigChanges = useWhyObjectChanged(
-            "debugConfig",
-            debugConfig
-        );
-
-        if (debugConfigChanges.hasChanges) {
-            changeMessages.push(
-                "\ndebugConfigChanges:\n",
-                debugConfigChanges
-            );
-        }
-
-        // eslint-disable-next-line react-hooks/rules-of-hooks
         const dropdownMenuContextChanges = useWhyObjectChanged(
             "DropdownMenuContext",
             dropdownMenuContext
@@ -436,32 +342,6 @@ const _DropdownItem = memo(function DropdownItem(
             changeMessages.push(
                 "\ndropdownMenuContextChanges:\n",
                 dropdownMenuContextChanges
-            );
-        }
-
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const submenuContextChanges = useWhyObjectChanged(
-            "DropdownSubmenuContext",
-            dropdownParentSubmenuContext
-        );
-
-        if (submenuContextChanges.hasChanges) {
-            changeMessages.push(
-                "\nsubmenuContextChanges:\n",
-                submenuContextChanges
-            );
-        }
-
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const submenuIsOpenChanges = useWhyObjectChanged(
-            "submenuIsOpen",
-            submenuIsOpen
-        );
-
-        if (submenuIsOpenChanges.hasChanges) {
-            changeMessages.push(
-                "\nsubmenuIsOpenChanges:\n",
-                submenuIsOpenChanges
             );
         }
 
@@ -479,28 +359,54 @@ const _DropdownItem = memo(function DropdownItem(
         }
 
         // eslint-disable-next-line react-hooks/rules-of-hooks
-        const zIndexChanges = useWhyObjectChanged(
-            "zIndex",
-            zIndex
+        const submenuContextChanges = useWhyObjectChanged(
+            "DropdownSubmenuContext",
+            dropdownParentSubmenuContext
         );
 
-        if (zIndexChanges.hasChanges) {
+        if (submenuContextChanges.hasChanges) {
             changeMessages.push(
-                "\nzIndexChanges:\n",
-                zIndexChanges
+                "\nsubmenuContextChanges:\n",
+                submenuContextChanges
             );
         }
 
         // eslint-disable-next-line react-hooks/rules-of-hooks
-        const scrollbarHitboxChanges = useWhyObjectChanged(
-            "scrollbarHitbox",
-            scrollbarHitbox
+        const dropdownParentSubmenuStoreContextChanges = useWhyObjectChanged(
+            "dropdownParentSubmenuStoreContext",
+            dropdownParentSubmenuStoreContext
         );
 
-        if (scrollbarHitboxChanges.hasChanges) {
+        if (dropdownParentSubmenuStoreContextChanges.hasChanges) {
             changeMessages.push(
-                "\nscrollbarHitboxChanges:\n",
-                scrollbarHitboxChanges
+                "\ndropdownParentSubmenuStoreContextChanges:\n",
+                dropdownParentSubmenuStoreContextChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const dropdownSubmenuStoreChanges = useWhyObjectChanged(
+            "dropdownSubmenuStore",
+            dropdownSubmenuStore
+        );
+
+        if (dropdownSubmenuStoreChanges.hasChanges) {
+            changeMessages.push(
+                "\ndropdownSubmenuStoreChanges:\n",
+                dropdownSubmenuStoreChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const submenusPortalContainerChanges = useWhyObjectChanged(
+            "submenusPortalContainer",
+            submenusPortalContainer
+        );
+
+        if (submenusPortalContainerChanges.hasChanges) {
+            changeMessages.push(
+                "\nsubmenusPortalContainerChanges:\n",
+                submenusPortalContainerChanges
             );
         }
 
@@ -530,11 +436,50 @@ const _DropdownItem = memo(function DropdownItem(
             );
         }
 
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const submenuIsOpenChanges = useWhyObjectChanged(
+            "submenuIsOpen",
+            submenuIsOpen
+        );
+
+        if (submenuIsOpenChanges.hasChanges) {
+            changeMessages.push(
+                "\nsubmenuIsOpenChanges:\n",
+                submenuIsOpenChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const isSubmenuChanges = useWhyObjectChanged(
+            "isSubmenu",
+            isSubmenu
+        );
+
+        if (isSubmenuChanges.hasChanges) {
+            changeMessages.push(
+                "\nisSubmenuChanges:\n",
+                isSubmenuChanges
+            );
+        }
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const submenuIDChanges = useWhyObjectChanged(
+            "submenuID",
+            submenuID
+        );
+
+        if (submenuIDChanges.hasChanges) {
+            changeMessages.push(
+                "\nsubmenuIDChanges:\n",
+                submenuIDChanges
+            );
+        }
+
         logger.debug(
             `render: submenuID: ${submenuID}; ` +
             `submenuIsOpen: ${submenuIsOpen}; ` +
             `parentMenuIsOpen: ${parentMenuIsOpen};`,
-            // ...changeMessages
+            ...changeMessages
         );
     }
 
@@ -2241,6 +2186,18 @@ const _DropdownItem = memo(function DropdownItem(
         submenuID
     ]);
 
+    // MARK: useLayoutEffect: Update submenuID in store
+    useLayoutEffect(() => {
+        dropdownSubmenuStore.getState().setSubmenuID(submenuID);
+        logger.debug(
+            "useLayoutEffect: set submenu ID in store to " +
+            `${submenuID}`
+        );
+    }, [
+        dropdownSubmenuStore,
+        submenuID
+    ]);
+
     // MARK: useEffect: Update hovered menu item
     useEffect(() => {
 
@@ -2616,19 +2573,20 @@ const _DropdownItem = memo(function DropdownItem(
 
     const dropdownSubmenuContextValue = useMemo(
         (): DropdownSubmenuContextType => ({
-            parentDropdownMenuMeasuringContainerRef:
-                dropdownMenuMeasuringContainerRef
+            dropdownMenuMeasuringContainerRef,
+            dropdownMenuRef,
+            dropdownMenuContentRef,
+            dropdownMenuCoreRef,
+            customScrollbarRef
         }),
         []
     );
 
-    const disclosureIndicatorContextValue = useMemo(
-        (): DisclosureIndicatorContextType => ({
-            submenuIsOpen
+    const dropdownItemContextValue = useMemo(
+        (): DropdownItemContextType => ({
+            dropdownItemRef
         }),
-        [
-            submenuIsOpen
-        ]
+        []
     );
 
     return (
@@ -2644,97 +2602,20 @@ const _DropdownItem = memo(function DropdownItem(
             aria-controls={isSubmenu ? submenuID : undefined}
             aria-owns={isSubmenu ? submenuID : undefined}
         >
-            <div
-                className="bd-dropdown-item"
-                ref={dropdownItemRef}
-                data-has-submenu={isSubmenu}
-                data-submenu-id={submenuID}
-            //  `data-hover` and `data-secondary-focus` will be
-            //  programmatically set
+            <DropdownItemContext.Provider
+                value={dropdownItemContextValue}
             >
-                <DisclosureIndicatorContext.Provider
-                    value={disclosureIndicatorContextValue}
+                <DropdownSubmenuContext.Provider
+                    value={dropdownSubmenuContextValue}
                 >
-
-                    {/* TODO: hover and secondary focus are not set here
-                        because we will remove this bd-dropdown-item-label
-                        class */}
-                    <div
-                        className="bd-dropdown-item-label"
-                        // provided so that the client can customize styles
-                        // based on these states
-                        data-has-submenu={isSubmenu}
-                        data-submenu-id={submenuID}
+                    <DropdownSubmenuStoreContext.Provider
+                        value={dropdownSubmenuStore}
                     >
-                        <DropdownItemLabelSlotConsumer />
-
-                    </div>
-                    {
-                        debugConfig.showMenuIds &&
-                        (
-                            <div className="bd-dropdown-debug-id">
-                                {submenuID}
-                            </div>
-                        )
-                    }
-                </DisclosureIndicatorContext.Provider>
-            </div>
-            {/* WebKit (Safari) clips the submenu to the parent element when
-                    the parent is scrollable. Also, even on non-WebKit browsers,
-                    the submenu does not move up and down with the page when it
-                    is rubber band scrolling if it is inside the
-                    dropdownItemContainer. */}
-            {isSubmenu && createPortal((
-                // the measuring container is necessary so that the width of
-                // the scroll bar can be measured
-                <div
-                    className="bd-dropdown-menu-measuring-container"
-                    ref={dropdownMenuMeasuringContainerRef}
-                    role="menu"
-                    id={submenuID}
-                    data-submenu-id={submenuID}
-                    style={{
-                        zIndex
-                    }}
-                >
-                    <div
-                        className="bd-dropdown-menu bd-dropdown-submenu"
-                        ref={dropdownMenuRef}
-                        data-submenu-id={submenuID}
-                    >
-                        <DropdownMenuCore
-                            isOpen={submenuIsOpen}
-                            handle={dropdownMenuCoreRef}
-                            dropdownMenuRef={dropdownMenuRef}
-                            dropdownMenuContentRef={dropdownMenuContentRef}
-                        >
-                            <DropdownSubmenuContext.Provider
-                                value={dropdownSubmenuContextValue}
-                            >
-                                <DropdownSubmenuStoreContext.Provider
-                                    value={dropdownSubmenuStore}
-                                >
-                                    <DropdownItemSubmenuSlotConsumer />
-                                </DropdownSubmenuStoreContext.Provider>
-                            </DropdownSubmenuContext.Provider>
-                        </DropdownMenuCore>
-                    </div>
-                    <CustomScrollbar
-                        scrollContainerIsVisible={submenuIsOpen}
-                        handle={customScrollbarRef}
-                        scrollContainerWrapperRef={
-                            dropdownMenuMeasuringContainerRef
-                        }
-                        scrollContainerRef={dropdownMenuRef}
-                        scrollbarHitbox={scrollbarHitbox}
-                        setScrollbarHitbox={setScrollbarHitbox}
-                        zIndex={zIndex}
-                    />
-                </div>
-            ),
-                submenusPortalContainer
-                ?? document.body
-            )}
+                        {/* MARK: label and submenu go here */}
+                        {children}
+                    </DropdownSubmenuStoreContext.Provider>
+                </DropdownSubmenuContext.Provider>
+            </DropdownItemContext.Provider>
         </button>
     );
 
@@ -2752,8 +2633,21 @@ const _DropdownItem = memo(function DropdownItem(
     return areEqual;
 });
 
-_DropdownItem.displayName = "_DropdownItem";
-
 // use any to exclude from the generated .d.ts file
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-(DropdownItem as any).displayName = "DropdownItem";
+(_DropdownItem as any).displayName = "DropdownItem";
+
+/**
+ * A dropdown item component that can optionally contain a submenu.
+ *
+ * @param props - An object containing:
+ * - `onClick` - A click handler for the dropdown item.
+ * - `submenuID` - The ID of the submenu of this dropdown item. If not provided,
+ *   a unique ID will be generated internally. You can use this ID to open and
+ *   close the submenu of this dropdown item programmatically via the
+ *   `openSubmenu` and `closeSubmenu` methods of {@link DropdownMenuHandle}.
+ *
+ * @public
+ */
+export const DropdownItem = _DropdownItem as
+    (props: DropdownItemProps) => ReactNode;

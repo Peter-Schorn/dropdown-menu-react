@@ -1,11 +1,39 @@
 import {
+    type ReactNode,
     type PropsWithChildren,
-    useLayoutEffect
+    useMemo,
+    useContext,
+    useRef,
+    memo,
+    useEffect
 } from "react";
 
 import {
-    useDropdownItemSlotsStoreContext
-} from "../model/store/DropdownItemSlotsStore";
+    useStore
+} from "zustand";
+
+import { useEffectEvent } from "../hooks/useEffectEvent";
+
+import { useDebugConfig } from "../hooks/useDebugConfig";
+
+import {
+    DropdownItemContext
+} from "../model/context/DropdownItemContext";
+
+import {
+    useDropdownMenuStoreContext
+    // mockDropdownMenuStoreContextValue
+} from "../model/store/DropdownMenuStore";
+
+import {
+    useDropdownSubmenuStoreContext
+    // mockDropdownSubmenuStoreContextValue
+} from "../model/store/DropdownSubmenuStore";
+
+import {
+    type DisclosureIndicatorContextType,
+    DisclosureIndicatorContext
+} from "../model/context/DisclosureIndicatorContext";
 
 import { dropdownItemLabelLogger as logger } from "../utils/loggers";
 
@@ -25,37 +53,111 @@ export type DropdownItemLabelProps = PropsWithChildren;
  *
  * @public
  */
-export function DropdownItemLabel(
+export const DropdownItemLabel = memo(function DropdownItemLabelMemo(
     { children }: DropdownItemLabelProps
-): null {
+): ReactNode {
 
-    logger.debug("render; children:\n", children);
+    const debugConfig = useDebugConfig();
 
-    const dropdownItemSlotsStoreContext = useDropdownItemSlotsStoreContext({
-        componentName: "DropdownItemLabel"
+    // MARK: DropdownItem Context
+    const {
+        dropdownItemRef
+    } = useContext(DropdownItemContext);
+
+    // MARK: Submenu Store
+    const dropdownSubmenuStoreContext = useDropdownSubmenuStoreContext();
+
+    const submenuID = useStore(
+        dropdownSubmenuStoreContext,
+        (state) => state.submenuID
+    );
+
+    const isSubmenu = useStore(
+        dropdownSubmenuStoreContext,
+        (state) => state.isSubmenu
+    );
+
+    // MARK: Menu Store
+    const dropdownMenuStoreContext = useDropdownMenuStoreContext();
+
+    const submenuIsOpen: boolean = useStore(
+        dropdownMenuStoreContext,
+        (state) => {
+            return state.openMenuIDsPath.includes(submenuID);
+        }
+    );
+
+    const dropdownItemLabelRef = useRef<HTMLDivElement>(null);
+    const internalID = useRef(crypto.randomUUID());
+
+    logger.debug(
+        // eslint-disable-next-line react-hooks/refs
+        `render: internalID: ${internalID.current}; ` +
+        `submenuID: "${submenuID}"; submenuIsOpen: ${submenuIsOpen}; ` +
+        "children:\n",
+        children
+    );
+
+    const disclosureIndicatorContextValue = useMemo(
+        (): DisclosureIndicatorContextType => ({
+            submenuIsOpen
+        }),
+        [
+            submenuIsOpen
+        ]
+    );
+
+    const onCommit = useEffectEvent(() => {
+        logger.debug(
+            `commit: internalID: ${internalID.current}; ` +
+            `submenuID: "${submenuID}"; submenuIsOpen: ${submenuIsOpen}`
+        );
     });
 
-    useLayoutEffect(() => {
+    useEffect(() => {
+        onCommit();
+    });
 
-        dropdownItemSlotsStoreContext.getState().setLabel(children);
+    return (
+        <div
+            className="bd-dropdown-item"
+            ref={dropdownItemRef}
+            data-has-submenu={isSubmenu}
+            data-submenu-id={submenuID}
+        //  `data-hover` and `data-secondary-focus` will be
+        //  programmatically set
+        >
+            <DisclosureIndicatorContext.Provider
+                value={disclosureIndicatorContextValue}
+            >
 
-    }, [
-        children,
-        dropdownItemSlotsStoreContext
-    ]);
+                {/* TODO: hover and secondary focus are not set here
+                    because we will remove this bd-dropdown-item-label
+                    class */}
+                <div
+                    className="bd-dropdown-item-label"
+                    ref={dropdownItemLabelRef}
+                    // provided so that the client can customize styles
+                    // based on these states
+                    data-has-submenu={isSubmenu}
+                    data-submenu-id={submenuID}
+                >
+                    {/* MARK: Label Content */}
+                    {children}
+                </div>
+                {
+                    debugConfig.showMenuIds &&
+                    (
+                        <div className="bd-dropdown-debug-id">
+                            {submenuID}
+                        </div>
+                    )
+                }
+            </DisclosureIndicatorContext.Provider>
+        </div>
+    );
 
-    // use a separate effect for cleanup to prevent the label from being removed
-    // and re-added to the store every time it changes.
-    useLayoutEffect(() => {
-        return (): void => {
-            dropdownItemSlotsStoreContext.getState().setLabel(null);
-        };
-    }, [
-        dropdownItemSlotsStoreContext
-    ]);
-
-    return null;
-}
+});
 
 // use any to exclude from the generated .d.ts file
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access

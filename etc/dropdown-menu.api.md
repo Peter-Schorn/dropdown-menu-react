@@ -7,6 +7,7 @@
 import { Context } from 'react';
 import { CSSProperties } from 'react';
 import { JSX } from 'react';
+import { NamedExoticComponent } from 'react';
 import { PropsWithChildren } from 'react';
 import { ReactNode } from 'react';
 import { Ref } from 'react';
@@ -48,10 +49,12 @@ export type DisclosureIndicatorProps = PropsWithChildren & {
 export function DropdownDivider(): JSX.Element;
 
 // @public
-export function DropdownItem(props: DropdownItemProps): ReactNode;
+export const DropdownItem: (props: DropdownItemProps) => ReactNode;
 
 // @public
-export function DropdownItemLabel(input: DropdownItemLabelProps): null;
+export const DropdownItemLabel: NamedExoticComponent<    {
+children?: ReactNode | undefined;
+}>;
 
 // @public
 export type DropdownItemLabelProps = PropsWithChildren;
@@ -59,15 +62,16 @@ export type DropdownItemLabelProps = PropsWithChildren;
 // @public
 export type DropdownItemProps = PropsWithChildren & {
     onClick?: (event: MouseEvent) => void;
+    submenuID?: string;
 };
 
 // @public
-export function DropdownItemSubmenu(input: DropdownItemSubmenuProps): null;
+export const DropdownItemSubmenu: NamedExoticComponent<    {
+children?: ReactNode | undefined;
+}>;
 
 // @public
-export type DropdownItemSubmenuProps = PropsWithChildren<{
-    submenuID?: string;
-}>;
+export type DropdownItemSubmenuProps = PropsWithChildren;
 
 // @public
 export const DropdownMenu: (props: DropdownMenuProps) => ReactNode;
@@ -99,7 +103,6 @@ export type DropdownMenuLoggers<T extends DropdownMenuLogger = DropdownMenuLogge
     dropdownItemLabelLogger: T;
     dropdownItemSubmenuLogger: T;
     disclosureIndicatorLogger: T;
-    dropdownItemSlotProviderLogger: T;
 };
 
 // @public

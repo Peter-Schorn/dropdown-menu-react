@@ -5,20 +5,57 @@ import {
 } from "react";
 
 import {
+    type Mutate,
     type StoreApi,
     createStore
 } from "zustand";
 
+import {
+    subscribeWithSelector
+} from "zustand/middleware";
+
 export type DropdownSubmenuStore = Readonly<{
+    isSubmenu: boolean;
+    setIsSubmenu: (isSubmenu: boolean) => void;
+
+    submenuID: string;
+    setSubmenuID: (submenuID: string) => void;
+
     scrollbarHitbox: HTMLDivElement | null;
     setScrollbarHitbox: (scrollbarHitbox: HTMLDivElement | null) => void;
 }>;
 
-export type DropdownSubmenuStoreContextType =
-    StoreApi<DropdownSubmenuStore>;
+export type DropdownSubmenuStoreContextType = Mutate<
+    StoreApi<DropdownSubmenuStore>,
+    [["zustand/subscribeWithSelector", never]]
+>;
 
 function createDropdownSubmenuStore(): DropdownSubmenuStoreContextType {
-    return createStore<DropdownSubmenuStore>((set) => ({
+    return createStore<DropdownSubmenuStore>()(subscribeWithSelector((set) => ({
+        isSubmenu: false,
+        setIsSubmenu: (isSubmenu: boolean): void => {
+            set((state) => {
+                if (state.isSubmenu === isSubmenu) {
+                    return state;
+                }
+                return {
+                    isSubmenu
+                };
+            });
+        },
+
+        submenuID: "",
+        setSubmenuID: (submenuID: string): void => {
+            set((state) => {
+                if (state.submenuID === submenuID) {
+                    return state;
+                }
+                return {
+                    submenuID
+                };
+            });
+        },
+
         scrollbarHitbox: null,
         setScrollbarHitbox: (scrollbarHitbox: HTMLDivElement | null): void => {
             set((state) => {
@@ -30,7 +67,7 @@ function createDropdownSubmenuStore(): DropdownSubmenuStoreContextType {
                 };
             });
         }
-    }));
+    })));
 }
 
 /**
@@ -59,6 +96,10 @@ export function useDropdownSubmenuStoreContext(
 }
 
 export const mockDropdownSubmenuStore: DropdownSubmenuStore = {
+    isSubmenu: false,
+    setIsSubmenu: () => { },
+    submenuID: "",
+    setSubmenuID: () => { },
     scrollbarHitbox: null,
     setScrollbarHitbox: () => { }
 };

@@ -4,12 +4,10 @@
 
 ## DropdownItemSubmenuProps type
 
-Props for the [DropdownItemSubmenu()](./dropdown-menu.dropdownitemsubmenu.md) component.
+Props for the [DropdownItemSubmenu](./dropdown-menu.dropdownitemsubmenu.md) component.
 
 **Signature:**
 
 ```typescript
-export type DropdownItemSubmenuProps = PropsWithChildren<{
-    submenuID?: string;
-}>;
+export type DropdownItemSubmenuProps = PropsWithChildren;
 ```

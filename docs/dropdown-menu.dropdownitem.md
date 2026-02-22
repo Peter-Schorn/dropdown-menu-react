@@ -9,7 +9,7 @@ A dropdown item component that can optionally contain a submenu.
 **Signature:**
 
 ```typescript
-export declare function DropdownItem(props: DropdownItemProps): ReactNode;
+DropdownItem: (props: DropdownItemProps) => ReactNode
 ```
 
 ## Parameters
@@ -42,7 +42,7 @@ props
 
 </td><td>
 
-An object containing: - `onClick` - A click handler for the dropdown item.
+An object containing: - `onClick` - A click handler for the dropdown item. - `submenuID` - The ID of the submenu of this dropdown item. If not provided, a unique ID will be generated internally. You can use this ID to open and close the submenu of this dropdown item programmatically via the `openSubmenu` and `closeSubmenu` methods of [DropdownMenuHandle](./dropdown-menu.dropdownmenuhandle.md)<!-- -->.
 
 
 </td></tr>

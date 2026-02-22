@@ -110,7 +110,7 @@ export type CustomScrollbarProps = {
     zIndex: number;
 };
 
-export const CustomScrollbar = memo(function CustomScrollbar(
+export const CustomScrollbar = memo(function CustomScrollbarMemo(
     props: CustomScrollbarProps
 ): JSX.Element {
 

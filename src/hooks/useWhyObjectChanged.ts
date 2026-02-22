@@ -69,6 +69,8 @@ function getChanges(
     return changes;
 }
 
+const UNINITIALIZED = {};
+
 /**
  * A hook that compares the previous and current value of an object and returns
  * information about which keys have changed and what the previous and current
@@ -80,24 +82,26 @@ export function useWhyObjectChanged<T>(
     object: T
 ): ObjectChangeInfo {
 
-    const previousRef = useRef<T | undefined>(undefined);
+    const previousRef = useRef<T | typeof UNINITIALIZED>(UNINITIALIZED);
 
     // eslint-disable-next-line react-hooks/refs
     const previous = previousRef.current;
 
     const objectsAreSame = Object.is(previous, object);
 
-    // eslint-disable-next-line react-hooks/refs
-    const changes = previous === undefined
+    const changes = previous === UNINITIALIZED
         ? {}
         : getChanges(previous, object);
 
     const changedKeys = Object.keys(changes);
 
+    const hasChanges =
+        previous !== UNINITIALIZED &&
+        (changedKeys.length > 0 || !objectsAreSame);
 
     const changeInfo: ObjectChangeInfo = {
         name: label,
-        hasChanges: changedKeys.length > 0 || !objectsAreSame,
+        hasChanges,
         changedKeys,
         changes,
         previous: previous,

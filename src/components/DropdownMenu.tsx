@@ -335,7 +335,7 @@ export type DropdownMenuProps =
 
 // doc comments are on the exported `DropdownMenu` component at the bottom so
 // that they are visible in the docs
-const _DropdownMenu = memo(function DropdownMenu(
+const _DropdownMenu = memo(function DropdownMenuMemo(
     props: DropdownMenuProps
 ): JSX.Element {
 
@@ -2192,7 +2192,8 @@ const _DropdownMenu = memo(function DropdownMenu(
                 subtree: true,
                 attributes: true,
                 attributeFilter: [
-                    "data-submenu-id"
+                    "data-submenu-id",
+                    "data-has-submenu"
                 ]
             };
 
@@ -2250,6 +2251,11 @@ const _DropdownMenu = memo(function DropdownMenu(
             }
 
         }
+
+        logger.debug(
+            "useEffect: subscribing to dropdownMenuStore for changes to " +
+            "submenusPortalContainer"
+        );
 
         const unsubscribe = dropdownMenuStore.subscribe(
             (state) => state.submenusPortalContainer,
@@ -2513,8 +2519,11 @@ const _DropdownMenu = memo(function DropdownMenu(
                 "useMemo: recreating dropdownSubmenuContextValue"
             );
             return {
-                parentDropdownMenuMeasuringContainerRef:
-                    dropdownMenuMeasuringContainerRef
+                dropdownMenuMeasuringContainerRef,
+                dropdownMenuRef,
+                dropdownMenuContentRef,
+                dropdownMenuCoreRef,
+                customScrollbarRef
             };
         },
         []

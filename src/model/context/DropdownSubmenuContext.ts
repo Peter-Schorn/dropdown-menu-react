@@ -3,12 +3,28 @@ import {
     createContext
 } from "react";
 
-export type DropdownSubmenuContextType = {
-    readonly parentDropdownMenuMeasuringContainerRef: RefObject<HTMLDivElement | null>;
-};
+import type {
+    DropdownMenuCoreHandle
+} from "../../components/DropdownMenuCore";
+
+import type {
+    CustomScrollbarHandle
+} from "../../components/CustomScrollbar";
+
+export type DropdownSubmenuContextType = Readonly<{
+    dropdownMenuMeasuringContainerRef: RefObject<HTMLDivElement | null>;
+    dropdownMenuRef: RefObject<HTMLDivElement | null>;
+    dropdownMenuContentRef: RefObject<HTMLDivElement | null>;
+    dropdownMenuCoreRef: RefObject<DropdownMenuCoreHandle | null>;
+    customScrollbarRef: RefObject<CustomScrollbarHandle | null>;
+}>;
 
 export const dropdownSubmenuContextDefaultValue: DropdownSubmenuContextType = {
-    parentDropdownMenuMeasuringContainerRef: { current: null }
+    dropdownMenuMeasuringContainerRef: { current: null },
+    dropdownMenuRef: { current: null },
+    dropdownMenuContentRef: { current: null },
+    dropdownMenuCoreRef: { current: null },
+    customScrollbarRef: { current: null }
 };
 
 export const DropdownSubmenuContext = createContext<DropdownSubmenuContextType>(

@@ -87,28 +87,6 @@ A dropdown item component that can optionally contain a submenu.
 </td></tr>
 <tr><td>
 
-[DropdownItemLabel({ children }, input)](./dropdown-menu.dropdownitemlabel.md)
-
-
-</td><td>
-
-A dropdown item label component that is used to set the label of a dropdown item when it is used as a child of a `DropdownItem`<!-- -->.
-
-
-</td></tr>
-<tr><td>
-
-[DropdownItemSubmenu({ children, submenuID }, input)](./dropdown-menu.dropdownitemsubmenu.md)
-
-
-</td><td>
-
-A dropdown item submenu component that is used to set the submenu of a dropdown item when it is used as a child of a [DropdownItem()](./dropdown-menu.dropdownitem.md)<!-- -->. The submenu content should consist primarily of [DropdownItem()](./dropdown-menu.dropdownitem.md) components, but can also include other components, such as [DropdownDivider()](./dropdown-menu.dropdowndivider.md)<!-- -->.
-
-
-</td></tr>
-<tr><td>
-
 [DropdownMenu(props)](./dropdown-menu.dropdownmenu.md)
 
 
@@ -187,6 +165,28 @@ Default debug configuration. This can be changed via setDebugConfig. Never mutat
 </td><td>
 
 The context for the disclosure indicator of a dropdown item, which provides information about whether the submenu associated with the dropdown item is currently open or closed. This context is used by the default [DisclosureIndicator()](./dropdown-menu.disclosureindicator.md) component to determine the color of the disclosure indicator icon, but it can also be used by custom disclosure indicator components.
+
+
+</td></tr>
+<tr><td>
+
+[DropdownItemLabel](./dropdown-menu.dropdownitemlabel.md)
+
+
+</td><td>
+
+A dropdown item label component that is used to set the label of a dropdown item when it is used as a child of a `DropdownItem`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[DropdownItemSubmenu](./dropdown-menu.dropdownitemsubmenu.md)
+
+
+</td><td>
+
+A dropdown item submenu component that is used to set the submenu of a dropdown item when it is used as a child of a [DropdownItem()](./dropdown-menu.dropdownitem.md)<!-- -->. The submenu content should consist primarily of [DropdownItem()](./dropdown-menu.dropdownitem.md) components, but can also include other components, such as [DropdownDivider()](./dropdown-menu.dropdowndivider.md)<!-- -->.
 
 
 </td></tr>
@@ -278,7 +278,7 @@ Props for the [DropdownItem()](./dropdown-menu.dropdownitem.md) component.
 
 </td><td>
 
-Props for the [DropdownItemSubmenu()](./dropdown-menu.dropdownitemsubmenu.md) component.
+Props for the [DropdownItemSubmenu](./dropdown-menu.dropdownitemsubmenu.md) component.
 
 
 </td></tr>

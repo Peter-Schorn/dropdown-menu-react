@@ -21,7 +21,7 @@ export {
 export {
     type DropdownItemLabelProps,
     DropdownItemLabel
- } from "./components/DropdownItemLabel";
+} from "./components/DropdownItemLabel";
 
 export {
     type DropdownItemSubmenuProps,

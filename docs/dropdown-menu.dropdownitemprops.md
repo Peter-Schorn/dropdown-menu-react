@@ -11,5 +11,6 @@ Props for the [DropdownItem()](./dropdown-menu.dropdownitem.md) component.
 ```typescript
 export type DropdownItemProps = PropsWithChildren & {
     onClick?: (event: MouseEvent) => void;
+    submenuID?: string;
 };
 ```
