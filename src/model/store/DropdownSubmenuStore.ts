@@ -14,14 +14,15 @@ import {
     subscribeWithSelector
 } from "zustand/middleware";
 
-export type DropdownSubmenuStore = Readonly<{
+export type DropdownSubmenuStoreProps = Readonly<{
     isSubmenu: boolean;
-    setIsSubmenu: (isSubmenu: boolean) => void;
-
     submenuID: string;
-    setSubmenuID: (submenuID: string) => void;
-
     scrollbarHitbox: HTMLDivElement | null;
+}>;
+
+export type DropdownSubmenuStore = DropdownSubmenuStoreProps & Readonly<{
+    setIsSubmenu: (isSubmenu: boolean) => void;
+    setSubmenuID: (submenuID: string) => void;
     setScrollbarHitbox: (scrollbarHitbox: HTMLDivElement | null) => void;
 }>;
 
@@ -30,9 +31,18 @@ export type DropdownSubmenuStoreContextType = Mutate<
     [["zustand/subscribeWithSelector", never]]
 >;
 
-function createDropdownSubmenuStore(): DropdownSubmenuStoreContextType {
+export type CreateDropdownSubmenuStoreProps =
+    Partial<DropdownSubmenuStoreProps>;
+
+function createDropdownSubmenuStore(
+    {
+        isSubmenu = false,
+        submenuID = "",
+        scrollbarHitbox = null
+    }: CreateDropdownSubmenuStoreProps
+): DropdownSubmenuStoreContextType {
     return createStore<DropdownSubmenuStore>()(subscribeWithSelector((set) => ({
-        isSubmenu: false,
+        isSubmenu,
         setIsSubmenu: (isSubmenu: boolean): void => {
             set((state) => {
                 if (state.isSubmenu === isSubmenu) {
@@ -44,7 +54,7 @@ function createDropdownSubmenuStore(): DropdownSubmenuStoreContextType {
             });
         },
 
-        submenuID: "",
+        submenuID,
         setSubmenuID: (submenuID: string): void => {
             set((state) => {
                 if (state.submenuID === submenuID) {
@@ -56,7 +66,7 @@ function createDropdownSubmenuStore(): DropdownSubmenuStoreContextType {
             });
         },
 
-        scrollbarHitbox: null,
+        scrollbarHitbox,
         setScrollbarHitbox: (scrollbarHitbox: HTMLDivElement | null): void => {
             set((state) => {
                 if (state.scrollbarHitbox === scrollbarHitbox) {
@@ -75,8 +85,9 @@ function createDropdownSubmenuStore(): DropdownSubmenuStoreContextType {
  * react state. This is used to create a new store instance for each submenu.
  */
 export function useCreateDropdownSubmenuStore(
+    props: CreateDropdownSubmenuStoreProps
 ): DropdownSubmenuStoreContextType {
-    return useState(() => createDropdownSubmenuStore())[0];
+    return useState(() => createDropdownSubmenuStore(props))[0];
 }
 
 export const DropdownSubmenuStoreContext =

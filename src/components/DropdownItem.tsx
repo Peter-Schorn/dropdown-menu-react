@@ -152,14 +152,6 @@ const _DropdownItem = memo(function DropdownItemMemo(
     );
 
     /**
-     * The store for this submenu, which will be provided via context to child
-     * submenus.
-     */
-    const dropdownSubmenuStore = useCreateDropdownSubmenuStore();
-    // const dropdownSubmenuStore = dropdownSubmenuContextDefaultValue;
-
-
-    /**
      * The submenu context from the parent submenu.
      */
     const dropdownParentSubmenuContext = useContext(DropdownSubmenuContext);
@@ -181,12 +173,6 @@ const _DropdownItem = memo(function DropdownItemMemo(
     );
     // const parentScrollbarHitbox = null as HTMLDivElement | null;
 
-    const isSubmenu: boolean = useStore(
-        dropdownSubmenuStore,
-        (state) => state.isSubmenu
-    );
-    // const isSubmenu = true;
-
     /**
      * An internally generated unique identifier for this submenu. Used if no
      * external submenu ID is provided.
@@ -198,6 +184,15 @@ const _DropdownItem = memo(function DropdownItemMemo(
 
     /** A unique identifier for this submenu. */
     const submenuID: string = submenuIDExternal ?? submenuIDDefault;
+
+    /**
+     * The store for this submenu, which will be provided via context to child
+     * submenus.
+     */
+    const dropdownSubmenuStore = useCreateDropdownSubmenuStore({
+        submenuID
+    });
+    // const dropdownSubmenuStore = dropdownSubmenuContextDefaultValue;
 
     /**
      * Whether or not the submenu of this dropdown item is currently open.
@@ -329,7 +324,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
 
         if (propsChanges.hasChanges) {
             changeMessages.push(
-                "\ndropdownMenuContextChanges:\n",
+                "\npropsChanges:\n",
                 propsChanges
             );
         }
@@ -448,19 +443,6 @@ const _DropdownItem = memo(function DropdownItemMemo(
             changeMessages.push(
                 "\nsubmenuIsOpenChanges:\n",
                 submenuIsOpenChanges
-            );
-        }
-
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const isSubmenuChanges = useWhyObjectChanged(
-            "isSubmenu",
-            isSubmenu
-        );
-
-        if (isSubmenuChanges.hasChanges) {
-            changeMessages.push(
-                "\nisSubmenuChanges:\n",
-                isSubmenuChanges
             );
         }
 
@@ -1541,7 +1523,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
      */
     const closeSubmenu = useEffectEvent((): void => {
 
-        if (!isSubmenu) {
+        if (!dropdownSubmenuStore.getState().isSubmenu) {
             return;
         }
 
@@ -1597,7 +1579,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
 
     const openSubmenu = useEffectEvent((): void => {
 
-        if (!isSubmenu) {
+        if (!dropdownSubmenuStore.getState().isSubmenu) {
             return;
         }
 
@@ -1695,7 +1677,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
 
     const toggleSubmenu = useCallback((): void => {
 
-        if (!isSubmenu) {
+        if (!dropdownSubmenuStore.getState().isSubmenu) {
             return;
         }
 
@@ -1707,7 +1689,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
         }
 
     }, [
-        isSubmenu,
+        dropdownSubmenuStore,
         submenuID,
         submenuIsOpen,
         contextOpenSubmenu,
@@ -1737,7 +1719,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
             return;
         }
 
-        if (isSubmenu) {
+        if (dropdownSubmenuStore.getState().isSubmenu) {
             // prevent the click from bubbling up to the main dropdown menu
             // click handler and closing all menus; instead, the click should
             // only toggle the visibility of this submenu
@@ -1871,7 +1853,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
         event?: ReactPointerEvent<HTMLButtonElement> | PointerEvent
     ): void => {
 
-        if (!isSubmenu) {
+        if (!dropdownSubmenuStore.getState().isSubmenu) {
             return;
         }
 
@@ -1930,7 +1912,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
         }, pointerEnterExitDelayMSRef.current);
 
     }, [
-        isSubmenu,
+        dropdownSubmenuStore,
         submenuIsOpen,
         contextOpenSubmenu,
         submenuID,
@@ -1950,7 +1932,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
         event?: ReactPointerEvent<HTMLButtonElement> | PointerEvent
     ): void => {
 
-        if (!isSubmenu) {
+        if (!dropdownSubmenuStore.getState().isSubmenu) {
             return;
         }
 
@@ -2042,7 +2024,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
 
     }, [
         contextCloseSubmenu,
-        isSubmenu,
+        dropdownSubmenuStore,
         submenuIsOpen,
         eventWithinDropdownItemContainerComponentTreeRects,
         submenuID,
@@ -2086,7 +2068,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
             handleDropdownItemContainerPointerLeaveDOM();
         }
 
-        if (!isSubmenu) {
+        if (!dropdownSubmenuStore.getState().isSubmenu) {
             // not a submenu, so no need to open/close anything
             return;
         }
@@ -2135,7 +2117,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
     // MARK: useEffect: Sync submenu open state with context provider
     useEffect(() => {
 
-        if (!isSubmenu) {
+        if (!dropdownSubmenuStore.getState().isSubmenu) {
             // this is not a submenu, so we don't need to do anything
             return;
         }
@@ -2188,16 +2170,70 @@ const _DropdownItem = memo(function DropdownItemMemo(
 
     }, [
         submenuIsOpen,
-        isSubmenu,
+        dropdownSubmenuStore,
         submenuID
+    ]);
+
+    // MARK: useLayoutEffect: Imperatively subscribe to isSubmenu changes and
+    //  set DOM data attributes on the dropdownItemContainer
+    useLayoutEffect(() => {
+
+        // we subscribe to and update these values imperatively to avoid
+        // triggering React re-renders when they change.
+
+        function updateDropdownItemContainerAttributes(
+            isSubmenu: boolean
+        ): void {
+            const dropdownItemContainer = dropdownItemContainerRef.current;
+            if (!dropdownItemContainer) {
+                logger.warn(
+                    "useLayoutEffect: dropdownItemContainerRef is null; cannot " +
+                    "update submenu attributes"
+                );
+                return;
+            }
+
+            dropdownItemContainer.dataset.hasSubmenu = String(isSubmenu);
+
+            if (isSubmenu) {
+                dropdownItemContainer.setAttribute("aria-haspopup", "menu");
+                dropdownItemContainer.setAttribute(
+                    "aria-expanded",
+                    String(submenuIsOpen)
+                );
+                dropdownItemContainer.setAttribute("aria-controls", submenuID);
+                dropdownItemContainer.setAttribute("aria-owns", submenuID);
+            }
+            else {
+                dropdownItemContainer.removeAttribute("aria-haspopup");
+                dropdownItemContainer.removeAttribute("aria-expanded");
+                dropdownItemContainer.removeAttribute("aria-controls");
+                dropdownItemContainer.removeAttribute("aria-owns");
+            }
+        }
+
+        const unsubscribe = dropdownSubmenuStore.subscribe(
+            (state) => state.isSubmenu,
+            updateDropdownItemContainerAttributes
+        );
+
+        updateDropdownItemContainerAttributes(
+            dropdownSubmenuStore.getState().isSubmenu
+        );
+
+        return unsubscribe;
+
+    }, [
+        dropdownSubmenuStore,
+        submenuID,
+        submenuIsOpen
     ]);
 
     // MARK: useLayoutEffect: Update submenuID in store
     useLayoutEffect(() => {
         dropdownSubmenuStore.getState().setSubmenuID(submenuID);
         logger.debug(
-            "useLayoutEffect: set submenu ID in store to " +
-            `${submenuID}`
+            `useLayoutEffect: set submenu ID in store to ${submenuID}`
         );
     }, [
         dropdownSubmenuStore,
@@ -2567,6 +2603,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
 
     // MARK: useEffect: log mount and unmounts
     useEffect(() => {
+        const submenuID = dropdownSubmenuStore.getState().submenuID;
         logger.debug(
             `========== mounted ========== submenu ID ${submenuID}`
         );
@@ -2575,7 +2612,9 @@ const _DropdownItem = memo(function DropdownItemMemo(
                 `========== unmounted ========== submenu ID ${submenuID}`
             );
         };
-    }, [submenuID]);
+    }, [
+        dropdownSubmenuStore
+    ]);
 
     const dropdownSubmenuContextValue = useMemo(
         (): DropdownSubmenuContextType => ({
@@ -2601,14 +2640,9 @@ const _DropdownItem = memo(function DropdownItemMemo(
         <button
             className="bd-dropdown-item-container"
             data-submenu-id={submenuID}
-            data-has-submenu={isSubmenu}
             ref={dropdownItemContainerRef}
             onPointerEnter={handleDropdownItemContainerPointerEnter}
             onPointerLeave={handleDropdownItemContainerPointerLeave}
-            aria-haspopup={isSubmenu ? "menu" : undefined}
-            aria-expanded={isSubmenu ? submenuIsOpen : undefined}
-            aria-controls={isSubmenu ? submenuID : undefined}
-            aria-owns={isSubmenu ? submenuID : undefined}
         >
             <DropdownItemContext.Provider
                 value={dropdownItemContextValue}

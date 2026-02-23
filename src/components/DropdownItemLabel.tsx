@@ -5,7 +5,8 @@ import {
     useContext,
     useRef,
     memo,
-    useEffect
+    useEffect,
+    useLayoutEffect
 } from "react";
 
 import {
@@ -72,11 +73,6 @@ export const DropdownItemLabel = memo(function DropdownItemLabelMemo(
         (state) => state.submenuID
     );
 
-    const isSubmenu = useStore(
-        dropdownSubmenuStoreContext,
-        (state) => state.isSubmenu
-    );
-
     // MARK: Menu Store
     const dropdownMenuStoreContext = useDropdownMenuStoreContext();
 
@@ -93,7 +89,8 @@ export const DropdownItemLabel = memo(function DropdownItemLabelMemo(
     logger.debug(
         // eslint-disable-next-line react-hooks/refs
         `render: internalID: ${internalID.current}; ` +
-        `submenuID: "${submenuID}"; submenuIsOpen: ${submenuIsOpen}; ` +
+        `submenuID: "${submenuID}"; ` +
+        `submenuIsOpen: ${submenuIsOpen}; ` +
         "children:\n",
         children
     );
@@ -118,11 +115,53 @@ export const DropdownItemLabel = memo(function DropdownItemLabelMemo(
         onCommit();
     });
 
+    // MARK: useLayoutEffect: Imperatively subscribe to isSubmenu changes and
+    //  set DOM data attributes on the dropdown item and label elements
+    useLayoutEffect(() => {
+        // we imperatively subscribe to changes to `isSubmenu` to avoid
+        // triggering a re-render of the this component when `isSubmenu`
+        // changes. The client could pass in arbitrarily complex and un-memoized
+        // components as children of this component, and we want to avoid
+        // unnecessary re-renders of those components when `isSubmenu` changes.
+
+        function setHasSubmenuDataAttribute(
+            isSubmenu: boolean
+        ): void {
+            const dropdownItem = dropdownItemRef.current;
+            const dropdownItemLabel = dropdownItemLabelRef.current;
+
+            if (!dropdownItem || !dropdownItemLabel) {
+                logger.warn(
+                    "DropdownItemLabel or DropdownItem ref is null; cannot " +
+                    "set data-has-submenu attribute"
+                );
+                return;
+            }
+
+            const isSubmenuString = String(isSubmenu);
+            dropdownItem.dataset.hasSubmenu = isSubmenuString;
+            dropdownItemLabel.dataset.hasSubmenu = isSubmenuString;
+        }
+
+        const unsubscribe = dropdownSubmenuStoreContext.subscribe(
+            (state) => state.isSubmenu,
+            setHasSubmenuDataAttribute
+        );
+
+        setHasSubmenuDataAttribute(
+            dropdownSubmenuStoreContext.getState().isSubmenu
+        );
+
+        return unsubscribe;
+    }, [
+        dropdownSubmenuStoreContext,
+        dropdownItemRef
+    ]);
+
     return (
         <div
             className="bd-dropdown-item"
             ref={dropdownItemRef}
-            data-has-submenu={isSubmenu}
             data-submenu-id={submenuID}
         //  `data-hover` and `data-secondary-focus` will be
         //  programmatically set
@@ -139,7 +178,6 @@ export const DropdownItemLabel = memo(function DropdownItemLabelMemo(
                     ref={dropdownItemLabelRef}
                     // provided so that the client can customize styles
                     // based on these states
-                    data-has-submenu={isSubmenu}
                     data-submenu-id={submenuID}
                 >
                     {/* MARK: Label Content */}

@@ -381,6 +381,11 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
         []
     );
 
+    const menuID = useMemo(
+        () => crypto.randomUUID(),
+        []
+    );
+
     // MARK: - Store -
 
     /**
@@ -396,7 +401,9 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
      * The store for the submenu, which will be provided via context to child
      * submenus.
      */
-    const dropdownSubmenuStore = useCreateDropdownSubmenuStore();
+    const dropdownSubmenuStore = useCreateDropdownSubmenuStore({
+        submenuID: menuID
+    });
 
     const scrollbarHitbox = useStore(
         dropdownSubmenuStore,
@@ -494,11 +501,6 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
     closeOnClickLeafItemRef.current = closeOnClickLeafItem;
     mouseHoverEventsRef.current = mouseHoverEvents;
     pointerEnterExitDelayMSRef.current = pointerEnterExitDelayMS;
-
-    const menuID = useMemo(
-        () => crypto.randomUUID(),
-        []
-    );
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const dropdownToggleRef = useRef<HTMLButtonElement>(null);
@@ -1982,6 +1984,8 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
     // using these effect event wrappers to prevent the effects from running
     // more often than necessary due to changes in non-reactive values
 
+    const buildMenuItemTreeEffectEvent = useEffectEvent(buildMenuItemTree);
+
     const scheduleDropdownMenuRepositionEffectEvent = useEffectEvent(
         scheduleDropdownMenuReposition
     );
@@ -2038,6 +2042,17 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
 
     }, [
         dropdownMenuStore
+    ]);
+
+    // MARK: useLayoutEffect: Update submenuID in store
+    useLayoutEffect(() => {
+        dropdownSubmenuStore.getState().setSubmenuID(menuID);
+        logger.debug(
+            `useLayoutEffect: set menuID in store to ${menuID}`
+        );
+    }, [
+        dropdownSubmenuStore,
+        menuID
     ]);
 
     // MARK: useLayoutEffect: configure submenusPortalContainer ID
@@ -2230,6 +2245,14 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
             );
 
             mutationObserverRef.current?.disconnect();
+
+            // if the submenusPortalContainer has been set for the first time,
+            // or if it changes, then we should build the menu item tree
+            if (newSubmenusPortalContainer) {
+                // buildMenuItemTree needs to query the submenusPortalContainer
+                // to find all submenus, so we must wait for it to be set
+                buildMenuItemTreeEffectEvent();
+            }
 
             const mutationObserverOptions: MutationObserverInit = {
                 childList: true,
