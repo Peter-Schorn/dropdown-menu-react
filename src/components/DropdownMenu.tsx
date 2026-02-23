@@ -555,12 +555,6 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
      */
     const pendingOpenSubmenuIDRef = useRef<string | null>(null);
 
-    /**
-     * A mutation observer that observes changes to the dropdown menu's DOM,
-     * which is used to rebuild the menu item tree.
-     */
-    const mutationObserverRef = useRef<MutationObserver | null>(null);
-
     const setHoveredMenuItem = useCallback((
         menuItemID: string | null
     ): void => {
@@ -2245,110 +2239,68 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
     // MARK: useEffect: submenusPortalContainer build menu item tree
     useEffect(() => {
 
-        function submenusPortalContainerChangeHandler(
-            newSubmenusPortalContainer: HTMLDivElement | null
-        ): void {
+        buildMenuItemTreeEffectEvent();
 
-            logger.debug(
-                "dropdownMenuStore subscription: submenusPortalContainer " +
-                "changed:",
-                newSubmenusPortalContainer
-            );
-
-            mutationObserverRef.current?.disconnect();
-
-            // if the submenusPortalContainer has been set for the first time,
-            // or if it changes, then we should build the menu item tree
-            if (newSubmenusPortalContainer) {
-                // buildMenuItemTree needs to query the submenusPortalContainer
-                // to find all submenus, so we must wait for it to be set
-                buildMenuItemTreeEffectEvent();
-            }
-
-            const mutationObserverOptions: MutationObserverInit = {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: [
-                    "data-submenu-id",
-                    "data-has-submenu"
-                ]
-            };
-
-            mutationObserverRef.current = new MutationObserver((): void => {
-                logger.debug(
-                    "MutationObserver: DOM changed; rebuilding menu item tree"
-                );
-                scheduleBuildMenuItemTreeEffectEvent();
-            });
-
-            const submenusPortalContainer =
-                dropdownMenuStore.getState().submenusPortalContainer;
-
-            if (submenusPortalContainer) {
-
-                mutationObserverRef.current.observe(
-                    submenusPortalContainer,
-                    mutationObserverOptions
-                );
-                logger.debug(
-                    "MutationObserver: observing submenusPortalContainer " +
-                    "for mutations:",
-                    submenusPortalContainer
-                );
-            }
-            else {
-                logger.info(
-                    "MutationObserver: submenusPortalContainer is null; not " +
-                    "observing for mutations"
-                );
-            }
-
-            if (
-                dropdownMenuMeasuringContainerRef.current
-            ) {
-
-                mutationObserverRef.current.observe(
-                    dropdownMenuMeasuringContainerRef.current,
-                    mutationObserverOptions
-                );
-
-                logger.debug(
-                    "MutationObserver: observing " +
-                    "dropdownMenuMeasuringContainer for mutations:",
-                    dropdownMenuMeasuringContainerRef.current
-                );
-
-            }
-            else {
-                logger.warn(
-                    "MutationObserver: dropdownMenuMeasuringContainerRef or " +
-                    "dropdownMenuContentRef is null; not observing for " +
-                    "mutations"
-                );
-            }
-
-        }
-
-        logger.debug(
-            "useEffect: subscribing to dropdownMenuStore for changes to " +
-            "submenusPortalContainer"
-        );
-
-        const unsubscribe = dropdownMenuStore.subscribe(
-            (state) => state.submenusPortalContainer,
-            submenusPortalContainerChangeHandler
-        );
-
-        // the submenusPortalContainer may have already been set before this
-        // effect even runs, in which case the subscription callback will not be
-        // called
         const submenusPortalContainer =
             dropdownMenuStore.getState().submenusPortalContainer;
 
-        submenusPortalContainerChangeHandler(submenusPortalContainer);
+        const mutationObserverOptions: MutationObserverInit = {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: [
+                "data-submenu-id",
+                "data-has-submenu"
+            ]
+        };
 
-        return unsubscribe;
+        const mutationObserver = new MutationObserver((): void => {
+            logger.debug(
+                "MutationObserver: DOM changed; rebuilding menu item tree"
+            );
+            scheduleBuildMenuItemTreeEffectEvent();
+        });
+
+        mutationObserver.observe(
+            submenusPortalContainer,
+            mutationObserverOptions
+        );
+        logger.debug(
+            "MutationObserver: observing submenusPortalContainer " +
+            "for mutations:",
+            submenusPortalContainer
+        );
+
+        if (
+            dropdownMenuMeasuringContainerRef.current
+        ) {
+
+            mutationObserver.observe(
+                dropdownMenuMeasuringContainerRef.current,
+                mutationObserverOptions
+            );
+
+            logger.debug(
+                "MutationObserver: observing " +
+                "dropdownMenuMeasuringContainer for mutations:",
+                dropdownMenuMeasuringContainerRef.current
+            );
+
+        }
+        else {
+            logger.warn(
+                "MutationObserver: dropdownMenuMeasuringContainerRef or " +
+                "dropdownMenuContentRef is null; not observing for " +
+                "mutations"
+            );
+        }
+
+        return (): void => {
+            mutationObserver.disconnect();
+            logger.debug(
+                "MutationObserver: disconnected observer"
+            );
+        };
 
     }, [dropdownMenuStore]);
 
@@ -2540,10 +2492,6 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
     // MARK: useEffect: Cleanup on unmount
     useEffect(() => {
         return (): void => {
-            if (mutationObserverRef.current) {
-                mutationObserverRef.current.disconnect();
-                mutationObserverRef.current = null;
-            }
             if (repositionMenusRafIdRef.current !== null) {
                 cancelAnimationFrame(repositionMenusRafIdRef.current);
                 repositionMenusRafIdRef.current = null;
