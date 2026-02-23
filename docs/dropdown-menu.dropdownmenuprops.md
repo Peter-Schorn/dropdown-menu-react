@@ -4,14 +4,8 @@
 
 ## DropdownMenuProps type
 
-Props for the `DropdownMenu` component.
-
-This component can be used in either an internally controlled or externally controlled mode. In the internally controlled mode, the open state of the dropdown menu is managed internally by the component, and the `isOpen` and `onOpenChange` props should not be provided. In the externally controlled mode, the open state of the dropdown menu is managed by the parent component, and BOTH the `isOpen` and `onOpenChange` props must be provided.
-
 **Signature:**
 
 ```typescript
-export type DropdownMenuProps = DropdownMenuPropsInternallyControlled | DropdownMenuPropsExternallyControlled;
+export type DropdownMenuProps = PropsWithChildren;
 ```
-**References:** [DropdownMenuPropsInternallyControlled](./dropdown-menu.dropdownmenupropsinternallycontrolled.md)<!-- -->, [DropdownMenuPropsExternallyControlled](./dropdown-menu.dropdownmenupropsexternallycontrolled.md)
-

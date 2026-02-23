@@ -1,17 +1,27 @@
 import "./index.css";
 
 export {
+    type DropdownMenuProps,
+    DropdownMenu
+} from "./components/DropdownMenu";
+
+export {
+    type DropdownToggleProps,
+    DropdownToggle
+} from "./components/DropdownToggle";
+
+export {
     type OnRequestOpenChangeEvent,
     type OnRequestOpenChangeReason,
     type OnRequestOpenChangeOptions,
     type OnRequestOpenChangeOptionsBase,
-    type DropdownMenuHandle,
-    type DropdownMenuProps,
-    type DropdownMenuPropsBase,
-    type DropdownMenuPropsInternallyControlled,
-    type DropdownMenuPropsExternallyControlled,
-    DropdownMenu
-} from "./components/DropdownMenu";
+    type DropdownHandle,
+    type DropdownProps,
+    type DropdownPropsBase,
+    type DropdownPropsInternallyControlled,
+    type DropdownPropsExternallyControlled,
+    Dropdown
+} from "./components/Dropdown";
 
 export {
     type DropdownItemProps,

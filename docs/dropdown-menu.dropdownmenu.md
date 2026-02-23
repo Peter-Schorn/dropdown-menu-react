@@ -4,8 +4,6 @@
 
 ## DropdownMenu() function
 
-A dropdown menu component that can contain dropdown items and arbitrarily nested submenus. The dropdown menu is opened by clicking on the toggle button, and can be closed by clicking outside of the menu or by pressing the Escape key. The menu supports keyboard navigation and will automatically reposition itself to stay within the visual viewport.
-
 **Signature:**
 
 ```typescript
@@ -41,8 +39,6 @@ props
 
 
 </td><td>
-
-The props for this component. See [DropdownMenuProps](./dropdown-menu.dropdownmenuprops.md) for details.
 
 
 </td></tr>

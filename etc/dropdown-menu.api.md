@@ -4,6 +4,7 @@
 
 ```ts
 
+import { ComponentPropsWithRef } from 'react';
 import { Context } from 'react';
 import { CSSProperties } from 'react';
 import { JSX } from 'react';
@@ -46,7 +47,18 @@ export type DisclosureIndicatorProps = PropsWithChildren & {
 };
 
 // @public
+export const Dropdown: (props: DropdownProps) => ReactNode;
+
+// @public
 export function DropdownDivider(): JSX.Element;
+
+// @public
+export type DropdownHandle = {
+    openSubmenu: (submenuID: string) => void;
+    closeSubmenu: (submenuID: string) => void;
+    getOpenMenuIDsPath: () => string[];
+    clearPendingOpenSubmenuRequest: () => void;
+};
 
 // @public
 export const DropdownItem: (props: DropdownItemProps) => ReactNode;
@@ -73,16 +85,8 @@ children?: ReactNode | undefined;
 // @public
 export type DropdownItemSubmenuProps = PropsWithChildren;
 
-// @public
+// @public (undocumented)
 export const DropdownMenu: (props: DropdownMenuProps) => ReactNode;
-
-// @public
-export type DropdownMenuHandle = {
-    openSubmenu: (submenuID: string) => void;
-    closeSubmenu: (submenuID: string) => void;
-    getOpenMenuIDsPath: () => string[];
-    clearPendingOpenSubmenuRequest: () => void;
-};
 
 // @public
 export type DropdownMenuLogger = {
@@ -105,12 +109,15 @@ export type DropdownMenuLoggers<T extends DropdownMenuLogger = DropdownMenuLogge
     disclosureIndicatorLogger: T;
 };
 
-// @public
-export type DropdownMenuProps = DropdownMenuPropsInternallyControlled | DropdownMenuPropsExternallyControlled;
+// @public (undocumented)
+export type DropdownMenuProps = PropsWithChildren;
 
 // @public
-export type DropdownMenuPropsBase = PropsWithChildren<{
-    handle?: Ref<DropdownMenuHandle>;
+export type DropdownProps = DropdownPropsInternallyControlled | DropdownPropsExternallyControlled;
+
+// @public
+export type DropdownPropsBase = PropsWithChildren<{
+    handle?: Ref<DropdownHandle>;
     onOpenMenusChange?: (openMenuIDsPath: string[]) => void;
     closeOnClickOutside?: boolean;
     closeOnClickLeafItem?: boolean;
@@ -120,16 +127,28 @@ export type DropdownMenuPropsBase = PropsWithChildren<{
 }>;
 
 // @public
-export type DropdownMenuPropsExternallyControlled = DropdownMenuPropsBase & {
+export type DropdownPropsExternallyControlled = DropdownPropsBase & {
     isOpen: boolean;
     onRequestOpenChange: (options: OnRequestOpenChangeOptions) => void;
 };
 
 // @public
-export type DropdownMenuPropsInternallyControlled = DropdownMenuPropsBase & {
+export type DropdownPropsInternallyControlled = DropdownPropsBase & {
     isOpen?: never;
     onRequestOpenChange?: never;
 };
+
+// @public
+export function DropdownToggle(input: DropdownToggleProps): JSX.Element;
+
+// @public (undocumented)
+export namespace DropdownToggle {
+    var // (undocumented)
+    displayName: string;
+}
+
+// @public (undocumented)
+export type DropdownToggleProps = PropsWithChildren & ComponentPropsWithRef<"button">;
 
 // @public
 export const noopLogger: DropdownMenuLogger;

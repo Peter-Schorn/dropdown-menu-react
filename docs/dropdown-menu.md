@@ -65,6 +65,17 @@ function MyCustomDisclosureIndicator() {
 </td></tr>
 <tr><td>
 
+[Dropdown(props)](./dropdown-menu.dropdown.md)
+
+
+</td><td>
+
+A dropdown menu component that can contain dropdown items and arbitrarily nested submenus. The dropdown menu is opened by clicking on the toggle button, and can be closed by clicking outside of the menu or by pressing the Escape key. The menu supports keyboard navigation and will automatically reposition itself to stay within the visual viewport.
+
+
+</td></tr>
+<tr><td>
+
 [DropdownDivider()](./dropdown-menu.dropdowndivider.md)
 
 
@@ -92,7 +103,16 @@ A dropdown item component that can optionally contain a submenu.
 
 </td><td>
 
-A dropdown menu component that can contain dropdown items and arbitrarily nested submenus. The dropdown menu is opened by clicking on the toggle button, and can be closed by clicking outside of the menu or by pressing the Escape key. The menu supports keyboard navigation and will automatically reposition itself to stay within the visual viewport.
+
+</td></tr>
+<tr><td>
+
+[DropdownToggle({ type, className, children, ...rest }, input)](./dropdown-menu.dropdowntoggle.md)
+
+
+</td><td>
+
+A dropdown toggle component that serves as the trigger for opening and closing the dropdown menu. It should be used as a child of the `Dropdown` component.
 
 
 </td></tr>
@@ -128,6 +148,30 @@ Sets debug configuration options for the dropdown menu.
 </td><td>
 
 Sets the loggers for this library.
+
+
+</td></tr>
+</tbody></table>
+
+## Namespaces
+
+<table><thead><tr><th>
+
+Namespace
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[DropdownToggle](./dropdown-menu.dropdowntoggle.md)
+
+
+</td><td>
 
 
 </td></tr>
@@ -251,6 +295,17 @@ Props for the `DisclosureIndicator` component.
 </td></tr>
 <tr><td>
 
+[DropdownHandle](./dropdown-menu.dropdownhandle.md)
+
+
+</td><td>
+
+An imperative handle for the [Dropdown()](./dropdown-menu.dropdown.md) component that allows parent components to imperatively control the open state of the dropdown menu and access information about the open submenus.
+
+
+</td></tr>
+<tr><td>
+
 [DropdownItemLabelProps](./dropdown-menu.dropdownitemlabelprops.md)
 
 
@@ -284,17 +339,6 @@ Props for the [DropdownItemSubmenu](./dropdown-menu.dropdownitemsubmenu.md) comp
 </td></tr>
 <tr><td>
 
-[DropdownMenuHandle](./dropdown-menu.dropdownmenuhandle.md)
-
-
-</td><td>
-
-An imperative handle for the [DropdownMenu()](./dropdown-menu.dropdownmenu.md) component that allows parent components to imperatively control the open state of the dropdown menu and access information about the open submenus.
-
-
-</td></tr>
-<tr><td>
-
 [DropdownMenuLogger](./dropdown-menu.dropdownmenulogger.md)
 
 
@@ -322,7 +366,16 @@ An object containing all loggers used in this library. This can be used to set a
 
 </td><td>
 
-Props for the `DropdownMenu` component.
+
+</td></tr>
+<tr><td>
+
+[DropdownProps](./dropdown-menu.dropdownprops.md)
+
+
+</td><td>
+
+Props for the `Dropdown` component.
 
 This component can be used in either an internally controlled or externally controlled mode. In the internally controlled mode, the open state of the dropdown menu is managed internally by the component, and the `isOpen` and `onOpenChange` props should not be provided. In the externally controlled mode, the open state of the dropdown menu is managed by the parent component, and BOTH the `isOpen` and `onOpenChange` props must be provided.
 
@@ -330,34 +383,43 @@ This component can be used in either an internally controlled or externally cont
 </td></tr>
 <tr><td>
 
-[DropdownMenuPropsBase](./dropdown-menu.dropdownmenupropsbase.md)
+[DropdownPropsBase](./dropdown-menu.dropdownpropsbase.md)
 
 
 </td><td>
 
-The base props for the [DropdownMenu()](./dropdown-menu.dropdownmenu.md) component, which are shared between both the internally controlled and externally controlled versions of the component.
+The base props for the [Dropdown()](./dropdown-menu.dropdown.md) component, which are shared between both the internally controlled and externally controlled versions of the component.
 
 
 </td></tr>
 <tr><td>
 
-[DropdownMenuPropsExternallyControlled](./dropdown-menu.dropdownmenupropsexternallycontrolled.md)
+[DropdownPropsExternallyControlled](./dropdown-menu.dropdownpropsexternallycontrolled.md)
 
 
 </td><td>
 
-Props for the `DropdownMenu` component when the open state is controlled externally via the `isOpen` prop. In this case, the `isOpen` and `onRequestOpenChange` props must both be provided.
+Props for the `Dropdown` component when the open state is controlled externally via the `isOpen` prop. In this case, the `isOpen` and `onRequestOpenChange` props must both be provided.
 
 
 </td></tr>
 <tr><td>
 
-[DropdownMenuPropsInternallyControlled](./dropdown-menu.dropdownmenupropsinternallycontrolled.md)
+[DropdownPropsInternallyControlled](./dropdown-menu.dropdownpropsinternallycontrolled.md)
 
 
 </td><td>
 
-Props for the `DropdownMenu` component when the open state is controlled internally by the component. In this case, the `isOpen` and `onRequestOpenChange` props should not be provided.
+Props for the `Dropdown` component when the open state is controlled internally by the component. In this case, the `isOpen` and `onRequestOpenChange` props should not be provided.
+
+
+</td></tr>
+<tr><td>
+
+[DropdownToggleProps](./dropdown-menu.dropdowntoggleprops.md)
+
+
+</td><td>
 
 
 </td></tr>
