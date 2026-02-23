@@ -19,9 +19,9 @@ import {
     useStore
 } from "zustand";
 
-import {
-    createPortal
-} from "react-dom";
+// import {
+//     createPortal
+// } from "react-dom";
 
 import {
     CustomScrollbar,
@@ -40,6 +40,7 @@ import {
 } from "../model/context/DropdownMenuContext";
 
 import {
+    type CreateDropdownMenuStoreProps,
     DropdownMenuStoreContext,
     useCreateDropdownMenuStore
     // mockDropdownMenuStoreContextValue
@@ -362,19 +363,34 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
         pointerEnterExitDelayMS = 200
     } = props;
 
+    const dropdownMenuStoreProps = useMemo(
+        (): CreateDropdownMenuStoreProps => {
+
+            const submenusPortalContainer = document.createElement("div");
+            submenusPortalContainer.className = "bd-submenus-portal-container";
+
+            // Do not attach to the document.body yet in case this render is
+            // discarded (concurrent rendering). Instead, it is attached in a
+            // `useLayoutEffect` that runs after the component mounts and the
+            // render is committed.
+
+            return {
+                submenusPortalContainer
+            };
+        },
+        []
+    );
+
     // MARK: - Store -
 
     /**
      * The store for this submenu, which will be provided via context to child
      * submenus.
      */
-    const dropdownMenuStore = useCreateDropdownMenuStore();
-    // const dropdownMenuStore = mockDropdownMenuStoreContextValue;
-
-    const setSubmenusPortalContainer = useStore(
-        dropdownMenuStore,
-        (state) => state.setSubmenusPortalContainer
+    const dropdownMenuStore = useCreateDropdownMenuStore(
+        dropdownMenuStoreProps
     );
+    // const dropdownMenuStore = mockDropdownMenuStoreContextValue;
 
     /**
      * The store for the submenu, which will be provided via context to child
@@ -1966,8 +1982,6 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
     // using these effect event wrappers to prevent the effects from running
     // more often than necessary due to changes in non-reactive values
 
-    const buildMenuItemTreeEffectEvent = useEffectEvent(buildMenuItemTree);
-
     const scheduleDropdownMenuRepositionEffectEvent = useEffectEvent(
         scheduleDropdownMenuReposition
     );
@@ -2021,6 +2035,44 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
         );
 
         return unsubscribe;
+
+    }, [
+        dropdownMenuStore
+    ]);
+
+    // MARK: useLayoutEffect: configure submenusPortalContainer ID
+    useLayoutEffect(() => {
+
+        const submenusPortalContainer =
+            dropdownMenuStore.getState().submenusPortalContainer;
+
+        if (!submenusPortalContainer) {
+            logger.warn(
+                "useLayoutEffect: submenusPortalContainer is null"
+            );
+            return;
+        }
+
+        submenusPortalContainer.id = menuID;
+
+    }, [
+        dropdownMenuStore,
+        menuID
+    ]);
+
+    // MARK: useLayoutEffect: insert submenusPortalContainer into DOM
+    useLayoutEffect(() => {
+
+        const submenusPortalContainer =
+            dropdownMenuStore.getState().submenusPortalContainer;
+
+        document.body.appendChild(submenusPortalContainer);
+
+        return (): void => {
+            if (submenusPortalContainer.parentElement === document.body) {
+                document.body.removeChild(submenusPortalContainer);
+            }
+        };
 
     }, [
         dropdownMenuStore
@@ -2178,14 +2230,6 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
             );
 
             mutationObserverRef.current?.disconnect();
-
-            // if the submenusPortalContainer has been set for the first time,
-            // or if it changes, then we should build the menu item tree
-            if (newSubmenusPortalContainer) {
-                // buildMenuItemTree needs to query the submenusPortalContainer
-                // to find all submenus, so we must wait for it to be set
-                buildMenuItemTreeEffectEvent();
-            }
 
             const mutationObserverOptions: MutationObserverInit = {
                 childList: true,
@@ -2597,18 +2641,6 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
                         />
                     </div>
                 </div>
-                {/* Create a single portal container for all submenus to appear
-                    inside of so that they can all be discovered without running
-                    a query selector on the entire document */}
-                {createPortal((
-                    <div
-                        className="bd-submenus-portal-container"
-                        id={menuID}
-                        ref={setSubmenusPortalContainer}
-                    />
-                ),
-                    document.body
-                )}
             </DropdownMenuStoreContext.Provider>
         </DropdownMenuContext.Provider>
     );

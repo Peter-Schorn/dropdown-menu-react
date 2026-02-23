@@ -25,30 +25,41 @@ import {
     getNextState
 } from "../../utils/MiscellaneousUtilities";
 
-export type DropdownMenuStore = Readonly<{
+export type RequiredDropdownMenuStoreProps = Readonly<{
+
+    /**
+     * The container element for the portals of all submenus.
+     */
+    submenusPortalContainer: HTMLDivElement;
+
+}>;
+
+export type DropdownMenuStoreProps = RequiredDropdownMenuStoreProps & Readonly<{
     /**
      * The path of open menu IDs, starting from the main dropdown menu and going
      * down the deepest open submenu.
      */
     openMenuIDsPath: readonly string[];
-    setOpenMenuIDsPath: (path: UpdateState<readonly string[]>) => void;
-
-    /**
-     * The container element for the portals of all submenus.
-     */
-    submenusPortalContainer: HTMLDivElement | null;
-    setSubmenusPortalContainer: (
-        submenusPortalContainer: HTMLDivElement | null
-    ) => void;
 
     /**
      * The ID of the dropdown item that should receive focus once its parent
      * menu opens.
      */
     pendingFocusSubmenuID: string | null;
-    setPendingFocusSubmenuID: (pendingFocusSubmenuID: string | null) => void;
 
     menuItemTree: MenuItemNode;
+}>;
+
+export type DropdownMenuStore = DropdownMenuStoreProps & Readonly<{
+
+    setOpenMenuIDsPath: (path: UpdateState<readonly string[]>) => void;
+
+    setSubmenusPortalContainer: (
+        submenusPortalContainer: HTMLDivElement
+    ) => void;
+
+    setPendingFocusSubmenuID: (pendingFocusSubmenuID: string | null) => void;
+
     setMenuItemTree: (menuItemTree: MenuItemNode) => void;
 }>;
 
@@ -57,10 +68,16 @@ export type DropdownMenuStoreContextType = Mutate<
     [["zustand/subscribeWithSelector", never]]
 >;
 
-function createDropdownMenuStore(): DropdownMenuStoreContextType {
+export type CreateDropdownMenuStoreProps =
+    RequiredDropdownMenuStoreProps &
+    Partial<DropdownMenuStoreProps>;
+
+function createDropdownMenuStore(
+    props: CreateDropdownMenuStoreProps
+): DropdownMenuStoreContextType {
     return createStore<DropdownMenuStore>()(subscribeWithSelector((set) => ({
 
-        openMenuIDsPath: [],
+        openMenuIDsPath: props.openMenuIDsPath ?? [],
         setOpenMenuIDsPath: (update: UpdateState<readonly string[]>): void => {
             set((state) => {
                 const path = getNextState(update, state.openMenuIDsPath);
@@ -74,9 +91,9 @@ function createDropdownMenuStore(): DropdownMenuStoreContextType {
             });
         },
 
-        submenusPortalContainer: null,
+        submenusPortalContainer: props.submenusPortalContainer,
         setSubmenusPortalContainer: (
-            submenusPortalContainer: HTMLDivElement | null
+            submenusPortalContainer: HTMLDivElement
         ): void => {
             set((state) => {
                 if (state.submenusPortalContainer === submenusPortalContainer) {
@@ -88,7 +105,7 @@ function createDropdownMenuStore(): DropdownMenuStoreContextType {
             });
         },
 
-        pendingFocusSubmenuID: null,
+        pendingFocusSubmenuID: props.pendingFocusSubmenuID ?? null,
         setPendingFocusSubmenuID: (
             pendingFocusSubmenuID: string | null
         ): void => {
@@ -102,7 +119,7 @@ function createDropdownMenuStore(): DropdownMenuStoreContextType {
             });
         },
 
-        menuItemTree: new MenuItemNode({ id: "" }),
+        menuItemTree: props.menuItemTree ?? new MenuItemNode({ id: "" }),
         setMenuItemTree: (menuItemTree: MenuItemNode): void => {
             set((state) => {
                 if (state.menuItemTree === menuItemTree) {
@@ -122,8 +139,10 @@ function createDropdownMenuStore(): DropdownMenuStoreContextType {
  * react state. This should only be used once per dropdown menu (i.e. per
  * `DropdownMenu` component instance).
  */
-export function useCreateDropdownMenuStore(): DropdownMenuStoreContextType {
-    return useState(() => createDropdownMenuStore())[0];
+export function useCreateDropdownMenuStore(
+    props: CreateDropdownMenuStoreProps
+): DropdownMenuStoreContextType {
+    return useState(() => createDropdownMenuStore(props))[0];
 }
 
 export const DropdownMenuStoreContext =
@@ -146,10 +165,16 @@ export function useDropdownMenuStoreContext(): DropdownMenuStoreContextType {
     return context;
 }
 
+export const mockSubmenusPortalContainer = ((): HTMLDivElement => {
+    const container = document.createElement("div");
+    container.className = "bd-submenus-portal-container";
+    return container;
+})();
+
 export const mockDropdownMenuStore: DropdownMenuStore = {
     openMenuIDsPath: [],
     setOpenMenuIDsPath: (): void => { },
-    submenusPortalContainer: null,
+    submenusPortalContainer: mockSubmenusPortalContainer,
     setSubmenusPortalContainer: (): void => { },
     pendingFocusSubmenuID: null,
     setPendingFocusSubmenuID: (): void => { },

@@ -315,6 +315,8 @@ const _DropdownItem = memo(function DropdownItemMemo(
      */
     const didPerformInitialPositionRef = useRef(false);
 
+    const isFirstRenderRef = useRef(true);
+
     if (__DEV__) {
 
         const changeMessages: unknown[] = [];
@@ -475,8 +477,12 @@ const _DropdownItem = memo(function DropdownItemMemo(
             );
         }
 
+        const isFirstRenderMessage = isFirstRenderRef.current
+            ? "(first render) "
+            : "";
+
         logger.debug(
-            `render: submenuID: ${submenuID}; ` +
+            `render: submenuID: ${submenuID}; ${isFirstRenderMessage}` +
             `submenuIsOpen: ${submenuIsOpen}; ` +
             `parentMenuIsOpen: ${parentMenuIsOpen};`,
             ...changeMessages
@@ -2588,6 +2594,8 @@ const _DropdownItem = memo(function DropdownItemMemo(
         }),
         []
     );
+
+    isFirstRenderRef.current = false;
 
     return (
         <button

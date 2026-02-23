@@ -126,8 +126,8 @@ export const DropdownItemSubmenu = memo(function DropdownItemSubmenuMemo(
 
     // MARK: useLayoutEffect: Set isSubmenu to true
     useLayoutEffect(() => {
-        // the DropdownItemLabel subscribes to this value to determine whether
-        // it has a submenu
+        // the DropdownItemLabel and DropdownItem subscribe to this value to
+        // determine whether they have a submenu
         dropdownSubmenuStoreContext.getState().setIsSubmenu(true);
 
     }, [
@@ -179,7 +179,6 @@ export const DropdownItemSubmenu = memo(function DropdownItemSubmenuMemo(
             </div>
         ),
             submenusPortalContainer
-            ?? document.body
         )
     );
 
