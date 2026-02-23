@@ -676,6 +676,17 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
             `${menuItemTree.toTreeString()}`
         );
 
+        if (__DEV__) {
+            const duplicateIDs = menuItemTree.getDuplicateIDs();
+            if (duplicateIDs.size > 0) {
+                logger.error(
+                    "buildMenuItemTree: found duplicate menu item IDs in " +
+                    "menu item tree:\n",
+                    duplicateIDs
+                );
+            }
+        }
+
     }, [
         getSubmenuItemTree,
         menuID,
@@ -2544,8 +2555,8 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
         };
     }, []);
 
-    // MARK: useLayoutEffect: log commits
-    useLayoutEffect(() => {
+    // MARK: useEffect: log commits
+    useEffect(() => {
         logger.debug(
             "useLayoutEffect: commit; isOpen:", isOpen
         );

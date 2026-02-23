@@ -337,6 +337,79 @@ export class MenuItemNode {
         return count;
     }
 
+    /**
+     * Counts the number of times each ID appears in the tree. Each ID should
+     * only appear once. This is useful for validating the menu structure, since
+     * duplicate IDs could cause all kinds of undefined behavior.
+     *
+     * @returns A map of IDs to the number of times they appear in the tree. If
+     * an ID appears only once, it is not a duplicate and will have a count of
+     * 1\. If an ID appears more than once, it is a duplicate and will have a
+     * count greater than 1.
+     */
+    getIDsCount(): Map<string, number> {
+        const ids = new Map<string, number>();
+
+        function traverse(node: MenuItemNode): void {
+            ids.set(node.id, (ids.get(node.id) ?? 0) + 1);
+            for (const child of node.children) {
+                traverse(child);
+            }
+        }
+
+        traverse(this);
+        return ids;
+    }
+
+    /**
+     * Returns a map of duplicate IDs in the tree. For every ID that appears
+     * more than once in the tree, the map will contain an entry with the ID as
+     * the key and the number of times it appears in the tree as the value.
+     *
+     * @returns A map of duplicate IDs to their counts. If there are no
+     * duplicate IDs in the tree, an empty map is returned.
+     */
+    getDuplicateIDs(): Map<string, number> {
+        const ids = this.getIDsCount();
+        const duplicates = new Map<string, number>();
+        for (const [id, count] of ids.entries()) {
+            if (count > 1) {
+                duplicates.set(id, count);
+            }
+        }
+        return duplicates;
+    }
+
+    /**
+     * Checks if there are any duplicate IDs in the tree. Each ID should only
+     * appear once. This is useful for validating the menu structure, since
+     * duplicate IDs could cause all kinds of undefined behavior.
+     *
+     * @returns `true` if there are duplicate IDs in the tree; `false`
+     * otherwise.
+     */
+    hasDuplicateIDs(): boolean {
+        const ids = new Set<string>();
+        let hasDuplicates = false;
+
+        function traverse(node: MenuItemNode): void {
+            if (ids.has(node.id)) {
+                hasDuplicates = true;
+                return;
+            }
+            ids.add(node.id);
+            for (const child of node.children) {
+                traverse(child);
+                if (hasDuplicates) {
+                    return;
+                }
+            }
+        }
+
+        traverse(this);
+        return hasDuplicates;
+    }
+
     toTreeString(): string {
         const lines: string[] = [];
 
