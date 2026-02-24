@@ -18,7 +18,7 @@ import {
 } from "../model/context/DropdownToggleContext";
 
 type DropdownToggleRequiredTargetProps = {
-    onClick?: (event: OnRequestOpenChangeEvent) => void;
+    onClick: (event: OnRequestOpenChangeEvent) => void;
 };
 
 type DropdownToggleOwnProps = {
@@ -31,16 +31,40 @@ type DropdownToggleOwnProps = {
     onClick?: (event: OnRequestOpenChangeEvent) => void;
 };
 
+// type DropdownToggleAsAcceptingRequiredProps<T extends ElementType> =
+//     T extends keyof JSX.IntrinsicElements
+//         ? T
+//         // extract the props of the component
+//         : T extends JSXElementConstructor<infer Props>
+//             // if props contains `onClick`
+//             ? "onClick" extends keyof Props
+//                 // And if the type of `onClick` is compatible with the required
+//                 // type: Require a super type because function parameters are
+//                 // contravariant.
+//                 ? DropdownToggleRequiredTargetProps["onClick"] extends Props["onClick"]
+//                     ? T
+//                     : never
+//                 : never
+//             : never;
+
+type DropdownToggleAsError = {
+  __dropdownToggleAsError__: "Custom `as` component must accept `onClick?: (event: OnRequestOpenChangeEvent) => void`";
+};
+
 type DropdownToggleAsAcceptingRequiredProps<T extends ElementType> =
     T extends keyof JSX.IntrinsicElements
         ? T
-        : T extends JSXElementConstructor<infer P>
-            ? "onClick" extends keyof P
-                ? NonNullable<DropdownToggleRequiredTargetProps["onClick"]> extends NonNullable<P["onClick"]>
+        : T extends JSXElementConstructor<infer Props>
+            // if props contains `onClick`
+            ? "onClick" extends keyof Props
+                // And if the type of `onClick` is compatible with the required
+                // type: Require a super type because function parameters are
+                // contravariant.
+                ? DropdownToggleRequiredTargetProps["onClick"] extends Props["onClick"]
                     ? T
-                    : never
-                : never
-            : never;
+                    : DropdownToggleAsError
+                : DropdownToggleAsError
+            : DropdownToggleAsError;
 
 /**
  * Props for the {@link DropdownToggle} component.
@@ -57,10 +81,10 @@ export type DropdownToggleProps<T extends ElementType = "button"> =
          */
         as?: DropdownToggleAsAcceptingRequiredProps<T>;
     } & DropdownToggleOwnProps &
-        Omit<
-            ComponentPropsWithRef<T>,
-            keyof DropdownToggleOwnProps | "as"
-        >;
+    Omit<
+        ComponentPropsWithRef<T>,
+        keyof DropdownToggleOwnProps | "as"
+    >;
 
 /**
  * A dropdown toggle component that serves as the trigger for opening and
@@ -172,7 +196,7 @@ function TestDropdownToggle(): JSX.Element {
                 href="#"
             />
             <DropdownToggle
-                // @ts-expect-error
+                // -@ts-expect-error
                 as={CustomComponent}
                 foo="test"
                 onClick={() => console.log("Custom component toggle clicked")}
