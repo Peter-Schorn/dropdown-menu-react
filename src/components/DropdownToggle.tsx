@@ -3,7 +3,7 @@ import {
     type ReactNode,
     type ComponentPropsWithRef,
     type ElementType,
-    type MouseEvent as ReactMouseEvent,
+    type JSXElementConstructor,
     useContext,
     useCallback,
 } from "react";
@@ -17,21 +17,50 @@ import {
     DropdownToggleContext
 } from "../model/context/DropdownToggleContext";
 
-// type DropdownToggleRequiredProps = {
-//     onClick: (event: ReactMouseEvent<Element, MouseEvent>) => void;
-// }
+type DropdownToggleRequiredTargetProps = {
+    onClick?: (event: OnRequestOpenChangeEvent) => void;
+};
+
+type DropdownToggleOwnProps = {
+    className?: string;
+    children?: ReactNode;
+
+    /**
+     * optional user handler; can call event.preventDefault()
+     */
+    onClick?: (event: OnRequestOpenChangeEvent) => void;
+};
+
+type DropdownToggleAsAcceptingRequiredProps<T extends ElementType> =
+    T extends keyof JSX.IntrinsicElements
+        ? T
+        : T extends JSXElementConstructor<infer P>
+            ? "onClick" extends keyof P
+                ? NonNullable<DropdownToggleRequiredTargetProps["onClick"]> extends NonNullable<P["onClick"]>
+                    ? T
+                    : never
+                : never
+            : never;
 
 /**
  * Props for the {@link DropdownToggle} component.
  *
+ * Requires the chosen `as` target supports an `onClick` prop compatible with
+ * `OnRequestOpenChangeEvent`.
+ *
  * @public
  */
-export type DropdownToggleProps<T extends ElementType = "button"> = {
-    /**
-     * The element type to render as. Defaults to "button".
-     */
-    as?: T;
-} & Omit<ComponentPropsWithRef<T>, "as">;
+export type DropdownToggleProps<T extends ElementType = "button"> =
+    {
+        /**
+         * The element type to render as. Defaults to "button".
+         */
+        as?: DropdownToggleAsAcceptingRequiredProps<T>;
+    } & DropdownToggleOwnProps &
+        Omit<
+            ComponentPropsWithRef<T>,
+            keyof DropdownToggleOwnProps | "as"
+        >;
 
 /**
  * A dropdown toggle component that serves as the trigger for opening and
@@ -52,32 +81,23 @@ export function DropdownToggle<T extends ElementType = "button">(
         children,
         ...rest
     }: DropdownToggleProps<T>
-): JSX.Element {
+): ReactNode {
 
     const Component = as ?? "button";
 
-    const {
-        requestOpenChange
-    } = useContext(DropdownToggleContext);
+    const { requestOpenChange } = useContext(DropdownToggleContext);
 
     const handleClick = useCallback((
-        event: ReactMouseEvent<Element, MouseEvent>
+        event: OnRequestOpenChangeEvent
     ): void => {
 
-        // first call the user's onClick handler, if provided, to allow them to
-        // call `event.preventDefault()` to prevent the default toggle behavior
-        (onClick as ((e: ReactMouseEvent<Element, MouseEvent>) => void))?.(
-            event
-        );
+        // call user's handler first (optional) so they can preventDefault
+        onClick?.(event);
 
-        // if the default behavior was prevented, do not toggle the open state
-        // of the dropdown menu
         if (event.defaultPrevented) {
             return;
         }
 
-        // this component only uses the internal reasons, but a custom component
-        // could use any reason it wants
         const reason: OnRequestOpenChangeReasonInternal = "clickToggle";
 
         requestOpenChange({
@@ -93,9 +113,14 @@ export function DropdownToggle<T extends ElementType = "button">(
 
     const isButton = Component === "button";
 
+    // Default props to pass in if the component is a button: type="button" to
+    // prevent accidental form submission. These can still be overridden by the
+    // user if necessary.
+    const defaultButtonProps = isButton ? { type: "button" } as const : {};
+
     return (
         <Component
-            {...(isButton ? { type: "button" } : {})}
+            {...defaultButtonProps}
             className={className}
             onClick={handleClick}
             {...rest}
@@ -103,7 +128,6 @@ export function DropdownToggle<T extends ElementType = "button">(
             {children}
         </Component>
     );
-
 }
 
 DropdownToggle.displayName = "DropdownToggle";
@@ -115,7 +139,8 @@ DropdownToggle.displayName = "DropdownToggle";
 */
 
 type CustomComponentProps = {
-    a: string;
+    foo: string;
+    // onClick?: (event: OnRequestOpenChangeEvent) => void;
 };
 
 function CustomComponent(
@@ -128,18 +153,29 @@ function TestDropdownToggle(): JSX.Element {
 
     return (
         <>
+            <DropdownToggle />
             <DropdownToggle
                 onClick={() => console.log("Toggle clicked")}
             />
+            <DropdownToggle
+                onClick={() => console.log("Toggle clicked")}
+            >
+                Toggle with children world is cool
+            </DropdownToggle>
             <DropdownToggle
                 as="a"
                 href="#"
                 onClick={() => console.log("Link toggle clicked")}
             />
             <DropdownToggle
+                as="a"
+                href="#"
+            />
+            <DropdownToggle
+                // @ts-expect-error
                 as={CustomComponent}
-                a="test"
-                // onClick={() => console.log("Custom component toggle clicked")}
+                foo="test"
+                onClick={() => console.log("Custom component toggle clicked")}
             />
         </>
     );
