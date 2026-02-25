@@ -5,6 +5,8 @@ import {
     type ComponentPropsWithRef,
     type ElementType,
     type JSXElementConstructor,
+    type MouseEventHandler,
+    type SyntheticEvent,
     useContext,
     useCallback,
 } from "react";
@@ -20,10 +22,10 @@ import {
 
 /**
  * The props that a custom component must accept in order to be used as the `as`
- * prop of `DropdownToggle`.
+ * prop of {@link DropdownToggle}.
  *
  * This is used for type checking to ensure that the custom component can
- * receive the necessary `onClick` handler from `DropdownToggle`.
+ * receive the necessary `onClick` handler from {@link DropdownToggle}.
  *
  * @public
  */
@@ -66,7 +68,8 @@ type DropdownToggleAsValidation<T extends ElementType> =
  * Props for the {@link DropdownToggle} component.
  *
  * Requires the chosen `as` target supports an `onClick` prop compatible with
- * `OnRequestOpenChangeEvent`.
+ * `OnRequestOpenChangeEvent`. See also {@link DropdownToggleAsRequiredProps}
+ * for the required props for a custom `as` component.
  *
  * @public
  */
@@ -243,6 +246,33 @@ function CustomComponent9(
     props: {
         foo: string;
         onClick: (event: string) => void;
+    }
+): ReactNode {
+    return null;
+}
+
+function CustomComponent10(
+    props: {
+        foo: string;
+        onClick?: MouseEventHandler | undefined;
+    }
+): ReactNode {
+    return null;
+}
+
+function CustomComponent11(
+    props: {
+        foo?: string;
+        onClick?: (event: Event) => void;
+    }
+): ReactNode {
+    return null;
+}
+
+function CustomComponent12(
+    props: {
+        foo?: string;
+        onClick?: (event: SyntheticEvent) => void;
     }
 ): ReactNode {
     return null;
@@ -428,6 +458,28 @@ function TestDropdownToggle(): JSX.Element {
                 foo="test"
             />
 
+            <DropdownToggle
+                as={CustomComponent10}
+                foo="test"
+            />
+
+            <DropdownToggle
+                as={CustomComponent11}
+                foo="test"
+            />
+
+            <DropdownToggle
+                as={CustomComponent11}
+            />
+
+            <DropdownToggle
+                as={CustomComponent12}
+                foo="test"
+            />
+
+            <DropdownToggle
+                as={CustomComponent12}
+            />
 
             <DropdownToggle
                 // @ts-expect-error -- Invalid `as` component that does not
