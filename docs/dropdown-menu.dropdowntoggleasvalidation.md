@@ -9,7 +9,7 @@ A type-level validation to ensure that the `as` prop provided to `DropdownToggle
 **Signature:**
 
 ```typescript
-export type DropdownToggleAsValidation<T extends ElementType> = T extends keyof JSX.IntrinsicElements ? T : T extends JSXElementConstructor<infer Props> ? "onClick" extends keyof Props ? NonNullable<DropdownToggleAsRequiredProps["onClick"]> extends Props["onClick"] ? "ref" extends keyof Props ? RefInstance<Props> extends HTMLElement ? T : "DropdownToggle error: custom `as` must accept compatible ref" : "DropdownToggle error: custom `as` must declare ref" : "DropdownToggle error: custom `as` must accept compatible onClick" : "DropdownToggle error: custom `as` must declare onClick" : "DropdownToggle error: invalid `as` type";
+export type DropdownToggleAsValidation<T extends ElementType> = T extends keyof JSX.IntrinsicElements ? T : T extends JSXElementConstructor<infer Props> ? "onClick" extends keyof Props ? NonNullable<DropdownToggleAsRequiredProps["onClick"]> extends Props["onClick"] ? "ref" extends keyof Props ? NonNullable<DropdownToggleAsRequiredProps["ref"]> extends Props["ref"] ? T : "DropdownToggle error: custom `as` must accept compatible ref" : "DropdownToggle error: custom `as` must declare ref" : "DropdownToggle error: custom `as` must accept compatible onClick" : "DropdownToggle error: custom `as` must declare onClick" : "DropdownToggle error: invalid `as` type";
 ```
-**References:** [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md)<!-- -->, [RefInstance](./dropdown-menu.refinstance.md)
+**References:** [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md)
 

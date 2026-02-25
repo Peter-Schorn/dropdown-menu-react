@@ -9,7 +9,6 @@ export {
     type DropdownToggleProps,
     type DropdownToggleAsRequiredProps,
     type DropdownToggleOwnProps,
-    type RefInstance,
     type DropdownToggleAsValidation,
     DropdownToggle
 } from "./components/DropdownToggle";

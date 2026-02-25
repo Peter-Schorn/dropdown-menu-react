@@ -120,7 +120,9 @@ A dropdown toggle component that serves as the trigger for opening and closing t
 
 Calling `event.preventDefault()` in the `onClick` handler of the toggle will prevent the default toggle behavior, which is to toggle the open state of the dropdown menu.
 
-The `as` prop can be used to render a different element type instead of the default "button". If a custom component is used with the `as` prop, it must accept an `onClick` prop that can receive the toggle's click handler, which has the signature `(event: OnRequestOpenChangeEvent) => void`<!-- -->. See [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md)<!-- -->.
+The `as` prop can be used to render a different element type instead of the default "button". If a custom component is used with the `as` prop, it must accept the following props: - `onClick`<!-- -->: A function that should be called when the toggle is clicked. The signature `(event: OnRequestOpenChangeEvent) => void` must be assignable to this prop. When this function is called, it will trigger the default toggle behavior of toggling the open state of the dropdown menu. - `ref`<!-- -->: A ref that should be attached to the underlying DOM element that is rendered by the custom component. This allows the dropdown menu to position itself correctly relative to the toggle. It must be an `HTMLElement` or a subtype thereof.
+
+See [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md)<!-- -->.
 
 
 </td></tr>
@@ -484,17 +486,6 @@ Requires the chosen `as` target supports an `onClick` prop compatible with `OnRe
 The options for a request to change the open state of the dropdown menu.
 
 This is used by the `onRequestOpenChange` callback prop of the [Dropdown()](./dropdown-menu.dropdown.md) component, which is called whenever the dropdown menu requests to change its open state.
-
-
-</td></tr>
-<tr><td>
-
-[RefInstance](./dropdown-menu.refinstance.md)
-
-
-</td><td>
-
-Extracts the underlying Ref instance type from a component's props. If the component does not have a ref, the type will be `never`<!-- -->.
 
 
 </td></tr>

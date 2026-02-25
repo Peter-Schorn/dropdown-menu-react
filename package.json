@@ -24,7 +24,8 @@
         "clean-build:dev": "pnpm run clean && pnpm run build:dev",
         "tcm": "tcm -p '{**/*.module.css,index.css}' -o src-gen src",
         "copy-files": "copyfiles -u 1 src-gen/index.css.d.ts dist",
-        "docs": "api-extractor run --local && api-documenter markdown -i temp -o docs"
+        "docs": "api-extractor run --local && api-documenter markdown -i temp -o docs",
+        "test": "cd tests/types/react-19_0 && bash -c 'unset ${!npm_config_*}; npm run clean-test'"
     },
     "exports": {
         ".": {

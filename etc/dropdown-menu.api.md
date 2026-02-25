@@ -153,7 +153,7 @@ export type DropdownToggleAsRequiredProps = {
 };
 
 // @public
-export type DropdownToggleAsValidation<T extends ElementType> = T extends keyof JSX.IntrinsicElements ? T : T extends JSXElementConstructor<infer Props> ? "onClick" extends keyof Props ? NonNullable<DropdownToggleAsRequiredProps["onClick"]> extends Props["onClick"] ? "ref" extends keyof Props ? RefInstance<Props> extends HTMLElement ? T : "DropdownToggle error: custom `as` must accept compatible ref" : "DropdownToggle error: custom `as` must declare ref" : "DropdownToggle error: custom `as` must accept compatible onClick" : "DropdownToggle error: custom `as` must declare onClick" : "DropdownToggle error: invalid `as` type";
+export type DropdownToggleAsValidation<T extends ElementType> = T extends keyof JSX.IntrinsicElements ? T : T extends JSXElementConstructor<infer Props> ? "onClick" extends keyof Props ? NonNullable<DropdownToggleAsRequiredProps["onClick"]> extends Props["onClick"] ? "ref" extends keyof Props ? NonNullable<DropdownToggleAsRequiredProps["ref"]> extends Props["ref"] ? T : "DropdownToggle error: custom `as` must accept compatible ref" : "DropdownToggle error: custom `as` must declare ref" : "DropdownToggle error: custom `as` must accept compatible onClick" : "DropdownToggle error: custom `as` must declare onClick" : "DropdownToggle error: invalid `as` type";
 
 // @public
 export const DropdownToggleContext: Context<Readonly<{
@@ -187,11 +187,6 @@ export const noopLogger: DropdownMenuLogger;
 export type OnRequestOpenChangeOptions = RequestOpenChangeOptionsBase & {
     open: boolean;
 };
-
-// @public
-export type RefInstance<Props> = Props extends {
-    ref?: Ref<infer I>;
-} ? I : never;
 
 // @public
 export type RequestOpenChangeEvent = Event | SyntheticEvent;

@@ -27,6 +27,15 @@ console.error = (...args: unknown[]): void => {
     );
 };
 
+const originalConsoleWarn = console.warn;
+console.warn = (...args: unknown[]): void => {
+    originalConsoleWarn(...args);
+    throw new Error(
+        "console.warn was called; failing test"
+    );
+};
+
+
 // ---- dynamic import AFTER configuring polyfills and globals ----
 const { App } = await import("./App.js");
 

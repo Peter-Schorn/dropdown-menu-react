@@ -27,3 +27,6 @@ dist-ssr
 /temp
 
 src-gen/**
+
+# built tarballs
+*.tgz
