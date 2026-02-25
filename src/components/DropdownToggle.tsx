@@ -3,6 +3,7 @@ import {
     type ReactNode,
     type PropsWithChildren,
     type ComponentPropsWithRef,
+    type Ref,
     type ElementType,
     type JSXElementConstructor,
     type MouseEventHandler,
@@ -12,8 +13,8 @@ import {
 } from "react";
 
 import type {
-    OnRequestOpenChangeReasonInternal,
-    OnRequestOpenChangeEvent
+    RequestOpenChangeReasonInternal,
+    RequestOpenChangeEvent
 } from "../components/Dropdown";
 
 import {
@@ -24,17 +25,21 @@ import {
  * The props that a custom component must accept in order to be used as the `as`
  * prop of {@link DropdownToggle}.
  *
- * The custom component must accept an `onClick` prop that can receive the
- * toggle's click handler, which has the signature
- * `(event: OnRequestOpenChangeEvent) => void`. This is required because the
- * `DropdownToggle` component relies on this `onClick` prop to handle toggle
- * behavior when the toggle is clicked. If a custom component does not accept a
- * compatible `onClick` prop, it will not work correctly as a dropdown toggle.
+ * The custom component must accept the following props:
+ * - `onClick`: A function that should be called when the toggle is clicked. The
+ *    signature `(event: OnRequestOpenChangeEvent) => void` must be assignable
+ *    to this prop. When this function is called, it will trigger the default
+ *    toggle behavior of toggling the open state of the dropdown menu.
+ * - `ref`: A ref that should be attached to the underlying DOM element that is
+ *    rendered by the custom component. This allows the dropdown menu to
+ *    position itself correctly relative to the toggle. It must be an
+ *    `HTMLElement` or a subtype thereof.
  *
  * @public
  */
 export type DropdownToggleAsRequiredProps = {
-    onClick?: (event: OnRequestOpenChangeEvent) => void;
+    onClick?: (event: RequestOpenChangeEvent) => void;
+    ref?: Ref<HTMLElement | null>;
 };
 
 /**
@@ -50,10 +55,10 @@ export type DropdownToggleOwnProps = PropsWithChildren & {
     className?: string;
 
     /**
-     * Optional click handler. Can call event.preventDefault() to prevent the
+     * Optional click handler. Can call `event.preventDefault()` to prevent the
      * default toggle behavior of opening/closing the dropdown menu.
      */
-    onClick?: (event: OnRequestOpenChangeEvent) => void;
+    onClick?: (event: RequestOpenChangeEvent) => void;
 };
 
 type DropdownToggleAsValidation<T extends ElementType> =
@@ -112,9 +117,7 @@ export type DropdownToggleProps<T extends ElementType = "button"> =
  * default "button". If a custom component is used with the `as` prop, it must
  * accept an `onClick` prop that can receive the toggle's click handler, which
  * has the signature `(event: OnRequestOpenChangeEvent) => void`. See
- * {@link DropdownToggleAsRequiredProps} for the required props for a custom
- * `as` component.
- *
+ * {@link DropdownToggleAsRequiredProps}.
  *
  * @public
  */
@@ -128,25 +131,30 @@ export function DropdownToggle<T extends ElementType = "button">(
     }: DropdownToggleProps<T>
 ): ReactNode {
 
-    const Component = as ?? "button";
-
-    const { requestOpenChange } = useContext(DropdownToggleContext);
+    const {
+        isOpen,
+        requestOpenChange,
+        dropdownToggleRef
+    } = useContext(DropdownToggleContext);
 
     const handleClick = useCallback((
-        event: OnRequestOpenChangeEvent
+        event: RequestOpenChangeEvent
     ): void => {
 
         // call user's handler first (optional) so they can preventDefault
         onClick?.(event);
 
+        // if the user called `event.preventDefault()` in their onClick handler,
+        // do not proceed with the default toggle behavior
         if (event.defaultPrevented) {
             return;
         }
 
         // This component only uses the internal reasons, but a custom component
         // could use any reason it wants.
-        const reason: OnRequestOpenChangeReasonInternal = "clickToggle";
+        const reason: RequestOpenChangeReasonInternal = "clickToggle";
 
+        // request that the dropdown menu to toggle its open state
         requestOpenChange({
             open: (prevIsOpen) => !prevIsOpen,
             reason,
@@ -158,18 +166,33 @@ export function DropdownToggle<T extends ElementType = "button">(
         onClick
     ]);
 
+    const setRef = useCallback((
+        element: HTMLElement | null
+    ): void => {
+        dropdownToggleRef.current = element;
+    }, [
+        dropdownToggleRef
+    ]);
+
+    const Component = as ?? "button";
+
     const isButton = Component === "button";
 
     // Default props to pass in if the component is a button: type="button" to
     // prevent accidental form submission. These can still be overridden by the
-    // user if necessary.
+    // client if necessary.
     const defaultButtonProps = isButton ? { type: "button" } as const : {};
 
     return (
         <Component
             {...defaultButtonProps}
+            ref={setRef}
             className={className}
             onClick={handleClick}
+            // attach this data attribute so that clients can style the toggle
+            // based on whether the menu is open or closed using CSS attribute
+            // selectors (e.g. `[data-open="true"]` or `[data-open="false"]`)
+            data-open={isOpen}
             {...rest}
         >
             {children}
@@ -188,7 +211,7 @@ DropdownToggle.displayName = "DropdownToggle";
 function CustomComponent(
     props: {
         foo: string;
-        onClick: (event: OnRequestOpenChangeEvent) => void;
+        onClick: (event: RequestOpenChangeEvent) => void;
     }
 ): ReactNode {
     return null;
@@ -196,7 +219,7 @@ function CustomComponent(
 
 function CustomComponent2(
     props: {
-        onClick?: (event: OnRequestOpenChangeEvent) => void;
+        onClick?: (event: RequestOpenChangeEvent) => void;
     }
 ): ReactNode {
     return null;
@@ -204,7 +227,7 @@ function CustomComponent2(
 
 function CustomComponent3(
     props: {
-        onClick: (event: OnRequestOpenChangeEvent) => void | undefined | null;
+        onClick: (event: RequestOpenChangeEvent) => void | undefined | null;
         bar?: number;
     }
 ): ReactNode {
@@ -216,7 +239,7 @@ function CustomComponent4(
     props: {
         foo: string;
         bar: number;
-        onClick: (event: OnRequestOpenChangeEvent) => void;
+        onClick: (event: RequestOpenChangeEvent) => void;
     }
 ): ReactNode {
     return null;
@@ -225,7 +248,7 @@ function CustomComponent4(
 function CustomComponent5(
     props: {
         foo: string;
-        onClick: ((event: OnRequestOpenChangeEvent) => void) | null;
+        onClick: ((event: RequestOpenChangeEvent) => void) | null;
     }
 ): ReactNode {
     return null;
@@ -234,7 +257,7 @@ function CustomComponent5(
 function CustomComponent6(
     props: {
         foo: string;
-        onClick: ((event: OnRequestOpenChangeEvent) => void) | undefined;
+        onClick: ((event: RequestOpenChangeEvent) => void) | undefined;
     }
 ): ReactNode {
     return null;
