@@ -24,8 +24,12 @@ import {
  * The props that a custom component must accept in order to be used as the `as`
  * prop of {@link DropdownToggle}.
  *
- * This is used for type checking to ensure that the custom component can
- * receive the necessary `onClick` handler from {@link DropdownToggle}.
+ * The custom component must accept an `onClick` prop that can receive the
+ * toggle's click handler, which has the signature
+ * `(event: OnRequestOpenChangeEvent) => void`. This is required because the
+ * `DropdownToggle` component relies on this `onClick` prop to handle toggle
+ * behavior when the toggle is clicked. If a custom component does not accept a
+ * compatible `onClick` prop, it will not work correctly as a dropdown toggle.
  *
  * @public
  */
@@ -53,9 +57,12 @@ export type DropdownToggleOwnProps = PropsWithChildren & {
 };
 
 type DropdownToggleAsValidation<T extends ElementType> =
+    // all intrinsic elements are valid `as` targets since they all accept an
+    // `onClick` prop with a compatible type
     T extends keyof JSX.IntrinsicElements
         ? T
         : T extends JSXElementConstructor<infer Props>
+            // ensure the `onClick` prop is present
             ? "onClick" extends keyof Props
                 ? DropdownToggleAsRequiredProps["onClick"] extends Props["onClick"]
                     ? T
