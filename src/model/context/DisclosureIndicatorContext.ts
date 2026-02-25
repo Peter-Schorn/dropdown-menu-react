@@ -12,13 +12,13 @@ import {
  *
  * @public
  */
-export type DisclosureIndicatorContextType = {
+export type DisclosureIndicatorContextType = Readonly<{
     /**
      * A boolean value indicating whether the submenu associated with the
      * dropdown item is currently open or closed.
      */
-    readonly submenuIsOpen: boolean;
-};
+    submenuIsOpen: boolean;
+}>;
 
 /**
  * The context for the disclosure indicator of a dropdown item, which provides
@@ -32,7 +32,16 @@ export type DisclosureIndicatorContextType = {
  */
 export const DisclosureIndicatorContext =
     createContext<DisclosureIndicatorContextType>({
-        submenuIsOpen: false
+        get submenuIsOpen(): boolean {
+            // eslint-disable-next-line no-console
+            console.warn(
+                "DisclosureIndicatorContext.submenuIsOpen was accessed, but " +
+                "no provider is set up. This component must be used as a " +
+                "child of a <DropdownItemLabel> component that is a child of " +
+                "a <DropdownItem> component."
+            );
+            return false;
+        }
     });
 
 

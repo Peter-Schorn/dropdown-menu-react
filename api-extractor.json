@@ -426,14 +426,25 @@
         "logLevel": "error",
         // instead, log error directly to console and fail the build
         "addToApiReportFile": false
-      }
+      },
 
-      // "ae-extra-release-tag": {
-      //   "logLevel": "warning",
-      //   "addToApiReportFile": true
-      // },
-      //
-      // . . .
+      "ae-missing-release-tag": {
+        "logLevel": "error",
+        // instead, log error directly to console and fail the build
+        "addToApiReportFile": false
+      },
+
+      "ae-extra-release-tag": {
+        "logLevel": "error",
+        // instead, log error directly to console and fail the build
+        "addToApiReportFile": false
+      },
+
+      "ae-unresolved-link": {
+        "logLevel": "error",
+        // instead, log error directly to console and fail the build
+        "addToApiReportFile": false
+      }
     },
 
     /**

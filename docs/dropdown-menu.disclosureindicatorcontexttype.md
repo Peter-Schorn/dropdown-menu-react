@@ -9,7 +9,7 @@ The context type for the disclosure indicator of a dropdown item, which provides
 **Signature:**
 
 ```typescript
-export type DisclosureIndicatorContextType = {
-    readonly submenuIsOpen: boolean;
-};
+export type DisclosureIndicatorContextType = Readonly<{
+    submenuIsOpen: boolean;
+}>;
 ```

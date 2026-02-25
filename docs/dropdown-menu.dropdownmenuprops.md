@@ -4,6 +4,8 @@
 
 ## DropdownMenuProps type
 
+The props for the `DropdownMenu` component.
+
 **Signature:**
 
 ```typescript

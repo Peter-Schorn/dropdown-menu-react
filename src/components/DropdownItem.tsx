@@ -103,10 +103,11 @@ export type DropdownItemProps = PropsWithChildren & {
      * The ID of the submenu of this dropdown item. If not provided, a unique ID
      * will be generated internally. You can use this ID to open and close the
      * submenu of this dropdown item programmatically via the `openSubmenu` and
-     * `closeSubmenu` methods of {@link DropdownMenuHandle}.
+     * `closeSubmenu` methods of {@link DropdownHandle}.
      */
     submenuID?: string;
 };
+
 
 // doc comments are on the exported `DropdownItem` component at the bottom so
 // that they are visible in the docs
@@ -2687,7 +2688,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
  * - `submenuID` - The ID of the submenu of this dropdown item. If not provided,
  *   a unique ID will be generated internally. You can use this ID to open and
  *   close the submenu of this dropdown item programmatically via the
- *   `openSubmenu` and `closeSubmenu` methods of {@link DropdownMenuHandle}.
+ *   `openSubmenu` and `closeSubmenu` methods of {@link DropdownHandle}.
  *
  * @public
  */

@@ -7,11 +7,14 @@
 import { ComponentPropsWithRef } from 'react';
 import { Context } from 'react';
 import { CSSProperties } from 'react';
+import { ElementType } from 'react';
 import { JSX } from 'react';
+import { JSXElementConstructor } from 'react';
 import { NamedExoticComponent } from 'react';
 import { PropsWithChildren } from 'react';
 import { ReactNode } from 'react';
 import { Ref } from 'react';
+import { RefObject } from 'react';
 import { SyntheticEvent } from 'react';
 
 // @public
@@ -33,12 +36,14 @@ export function disableLoggers(): void;
 export function DisclosureIndicator(input: DisclosureIndicatorProps): JSX.Element;
 
 // @public
-export const DisclosureIndicatorContext: Context<DisclosureIndicatorContextType>;
+export const DisclosureIndicatorContext: Context<Readonly<{
+submenuIsOpen: boolean;
+}>>;
 
 // @public
-export type DisclosureIndicatorContextType = {
-    readonly submenuIsOpen: boolean;
-};
+export type DisclosureIndicatorContextType = Readonly<{
+    submenuIsOpen: boolean;
+}>;
 
 // @public
 export type DisclosureIndicatorProps = PropsWithChildren & {
@@ -85,7 +90,7 @@ children?: ReactNode | undefined;
 // @public
 export type DropdownItemSubmenuProps = PropsWithChildren;
 
-// @public (undocumented)
+// @public
 export const DropdownMenu: (props: DropdownMenuProps) => ReactNode;
 
 // @public
@@ -109,7 +114,7 @@ export type DropdownMenuLoggers<T extends DropdownMenuLogger = DropdownMenuLogge
     disclosureIndicatorLogger: T;
 };
 
-// @public (undocumented)
+// @public
 export type DropdownMenuProps = PropsWithChildren;
 
 // @public
@@ -139,36 +144,74 @@ export type DropdownPropsInternallyControlled = DropdownPropsBase & {
 };
 
 // @public
-export function DropdownToggle(input: DropdownToggleProps): JSX.Element;
+export function DropdownToggle<T extends ElementType = "button">(input: DropdownToggleProps<T>): ReactNode;
 
-// @public (undocumented)
-export namespace DropdownToggle {
-    var // (undocumented)
-    displayName: string;
-}
+// @public
+export type DropdownToggleAsRequiredProps = {
+    onClick?: (event: RequestOpenChangeEvent) => void;
+    ref?: (element: HTMLElement | null) => void;
+};
 
-// @public (undocumented)
-export type DropdownToggleProps = PropsWithChildren & ComponentPropsWithRef<"button">;
+// @public
+export type DropdownToggleAsValidation<T extends ElementType> = T extends keyof JSX.IntrinsicElements ? T : T extends JSXElementConstructor<infer Props> ? "onClick" extends keyof Props ? NonNullable<DropdownToggleAsRequiredProps["onClick"]> extends Props["onClick"] ? "ref" extends keyof Props ? RefInstance<Props> extends HTMLElement ? T : "DropdownToggle error: custom `as` must accept compatible ref" : "DropdownToggle error: custom `as` must declare ref" : "DropdownToggle error: custom `as` must accept compatible onClick" : "DropdownToggle error: custom `as` must declare onClick" : "DropdownToggle error: invalid `as` type";
+
+// @public
+export const DropdownToggleContext: Context<Readonly<{
+isOpen: boolean;
+requestOpenChange: (options: RequestOpenChangeOptions) => void;
+dropdownToggleRef: RefObject<HTMLElement | null>;
+}>>;
+
+// @public
+export type DropdownToggleContextType = Readonly<{
+    isOpen: boolean;
+    requestOpenChange: (options: RequestOpenChangeOptions) => void;
+    dropdownToggleRef: RefObject<HTMLElement | null>;
+}>;
+
+// @public
+export type DropdownToggleOwnProps = PropsWithChildren & {
+    className?: string;
+    onClick?: (event: RequestOpenChangeEvent) => void;
+};
+
+// @public
+export type DropdownToggleProps<T extends ElementType = "button"> = {
+    as?: DropdownToggleAsValidation<T>;
+} & DropdownToggleOwnProps & Omit<ComponentPropsWithRef<T>, keyof DropdownToggleOwnProps | keyof DropdownToggleAsRequiredProps | "as">;
 
 // @public
 export const noopLogger: DropdownMenuLogger;
 
 // @public
-export type OnRequestOpenChangeEvent = Event | SyntheticEvent;
-
-// @public
-export type OnRequestOpenChangeOptions = OnRequestOpenChangeOptionsBase & {
+export type OnRequestOpenChangeOptions = RequestOpenChangeOptionsBase & {
     open: boolean;
 };
 
 // @public
-export type OnRequestOpenChangeOptionsBase = {
-    reason: OnRequestOpenChangeReason;
-    event?: OnRequestOpenChangeEvent;
+export type RefInstance<Props> = Props extends {
+    ref?: Ref<infer I>;
+} ? I : never;
+
+// @public
+export type RequestOpenChangeEvent = Event | SyntheticEvent;
+
+// @public
+export type RequestOpenChangeOptions = RequestOpenChangeOptionsBase & {
+    open: boolean | ((prevIsOpen: boolean) => boolean);
 };
 
 // @public
-export type OnRequestOpenChangeReason = "clickDropdown" | "clickOutside" | "escapeKey" | "openSubmenu" | "closeSubmenu";
+export type RequestOpenChangeOptionsBase = {
+    reason: RequestOpenChangeReason;
+    event?: RequestOpenChangeEvent;
+};
+
+// @public
+export type RequestOpenChangeReason = RequestOpenChangeReasonInternal | (string & {});
+
+// @public
+export type RequestOpenChangeReasonInternal = "clickDropdown" | "clickToggle" | "clickOutside" | "escapeKey" | "openSubmenu" | "closeSubmenu";
 
 // @public
 export function setConsoleLoggers(): void;

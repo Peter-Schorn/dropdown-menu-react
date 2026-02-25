@@ -4,7 +4,6 @@ import {
     type ReactNode,
     type Ref as ReactRef,
     type SyntheticEvent as ReactSyntheticEvent,
-    type MouseEvent as ReactMouseEvent,
     useCallback,
     useEffect,
     useMemo,
@@ -15,24 +14,23 @@ import {
     useLayoutEffect,
 } from "react";
 
-import {
-    useStore
-} from "zustand";
-
-// import {
-//     createPortal
-// } from "react-dom";
-
-import {
-    CustomScrollbar,
-    type CustomScrollbarHandle
+import type {
+    CustomScrollbarHandle
 } from "./CustomScrollbar";
 
-import {
-    type DropdownMenuCoreHandle,
-    DropdownMenuCore
+import type {
+    DropdownMenuCoreHandle,
 } from "./DropdownMenuCore";
 
+import {
+    type DropdownContextType,
+    DropdownContext
+} from "../model/context/DropdownContext";
+
+import {
+    type DropdownToggleContextType,
+    DropdownToggleContext
+} from "../model/context/DropdownToggleContext";
 
 import {
     type DropdownMenuContextType,
@@ -70,6 +68,8 @@ import {
 
 import { useEffectEvent } from "../hooks/useEffectEvent";
 
+import { useUpdatingRef } from "../hooks/useUpdatingRef";
+
 import { useDebugConfig } from "../hooks/useDebugConfig";
 
 // import { defaultDebugConfig } from "../utils/debugConfig";
@@ -98,7 +98,7 @@ import { dropdownMenuLogger as logger } from "../utils/loggers";
  *
  * @public
  */
-export type OnRequestOpenChangeEvent =
+export type RequestOpenChangeEvent =
     | Event
     | ReactSyntheticEvent;
 
@@ -107,9 +107,8 @@ export type OnRequestOpenChangeEvent =
  * menu, which can be used by clients to determine how to respond to the
  * request.
  *
- * The possible values are:
- * - `clickDropdown`: The user clicked somewhere within the dropdown menu, such
- *   as on a menu item or on the menu background.
+ * The possible values used by this library are:
+ * - `clickToggle`: The user clicked on the dropdown toggle button.
  * - `clickOutside`: The user clicked somewhere outside of the dropdown menu.
  * - `escapeKey`: The user pressed the Escape key while the dropdown menu was
  *   open.
@@ -117,13 +116,30 @@ export type OnRequestOpenChangeEvent =
  *   is not currently open, so the dropdown menu is requesting to open first
  *   before opening the requested submenu.
  * - `closeSubmenu`: The client called the `closeSubmenu` method of
- *   `DropdownMenuHandle` and passed in the ID of the root menu, so the dropdown
+ *   `DropdownHandle` and passed in the ID of the root menu, so the dropdown
  *   menu is requesting to close the entire menu.
+ *
+ * A client can also define their own custom reasons by using any string value
+ * that is not one of the above values. For example, when creating your own
+ * custom dropdown toggle component, you can call `requestOpenChange` from
+ * {@link DropdownToggleContext} to request to change the open state of the
+ * dropdown menu and pass in your own custom reason.
  *
  * @public
  */
-export type OnRequestOpenChangeReason =
-    | "clickDropdown"
+export type RequestOpenChangeReason =
+    | RequestOpenChangeReasonInternal
+    | (string & {});
+
+/**
+ * All of the reasons used internally by this library to trigger open state
+ * changes. See {@link RequestOpenChangeReason}.
+ *
+ * @public
+ */
+export type RequestOpenChangeReasonInternal =
+    | "clickDropdown" // TODO: REMOVE THIS
+    | "clickToggle"
     | "clickOutside"
     | "escapeKey"
     | "openSubmenu"
@@ -136,26 +152,64 @@ export type OnRequestOpenChangeReason =
  *
  * @public
  */
-export type OnRequestOpenChangeOptionsBase = {
+export type RequestOpenChangeOptionsBase = {
     /**
      * The reason for the open state change request. This is a more specific
      * description of the event that triggered the request, which can be used by
      * clients to determine how to respond to the request.
      */
-    reason: OnRequestOpenChangeReason;
+    reason: RequestOpenChangeReason;
 
     /**
      * The event that triggered the open state change request, if applicable.
      */
-    event?: OnRequestOpenChangeEvent;
+    event?: RequestOpenChangeEvent;
+};
+
+type RequestOpenChangeOptionsBaseInternal = RequestOpenChangeOptionsBase & {
+    /**
+     * An internal reason for the open state change request, which is guaranteed
+     * to be one of the specific string literals defined in
+     * `OnRequestOpenChangeReasonInternal`. Internally, this library will only
+     * use these reasons.
+     */
+    reason: RequestOpenChangeReasonInternal;
+};
+
+type RequestOpenChangeOptionsInternal = RequestOpenChangeOptionsBaseInternal & {
+    open: boolean | ((prevIsOpen: boolean) => boolean);
 };
 
 /**
  * The options for a request to change the open state of the dropdown menu.
  *
+ * It is mainly used by the {@link DropdownToggle} component to request to open
+ * or close the dropdown menu when the user interacts with the toggle button,
+ * but it can also be used by other components to request open state changes for
+ * other reasons, such as when a submenu item is clicked and the menu should
+ * close.
+ *
  * @public
  */
-export type OnRequestOpenChangeOptions = OnRequestOpenChangeOptionsBase & {
+export type RequestOpenChangeOptions = RequestOpenChangeOptionsBase & {
+    /**
+     * The new open state that the dropdown menu is requesting. This can be a
+     * boolean value indicating the desired open state, or a function that takes
+     * the previous open state as an argument and returns the new open state.
+     */
+    open: boolean | ((prevIsOpen: boolean) => boolean);
+};
+
+/**
+ * The options for a request to change the open state of the dropdown menu.
+ *
+ * This is used by the `onRequestOpenChange` callback prop of the
+ * {@link Dropdown} component, which is called whenever the dropdown menu
+ * requests to change its open state.
+ *
+ * @public
+ */
+export type OnRequestOpenChangeOptions = RequestOpenChangeOptionsBase & {
 
     /**
      * The new open state that the dropdown menu is requesting. `true` if the
@@ -219,7 +273,7 @@ export type DropdownHandle = {
  */
 export type DropdownPropsBase = PropsWithChildren<{
     /**
-     * Optional ref to access DropdownHandle methods.
+     * Optional ref to access {@link DropdownHandle} methods.
      */
     handle?: ReactRef<DropdownHandle>;
 
@@ -311,9 +365,13 @@ export type DropdownPropsExternallyControlled = DropdownPropsBase & {
      * Callback that is called whenever the dropdown menu requests to change its
      * open state.
      *
-     * @param open - The requested new open state of the dropdown menu.
-     * @param event - The event that triggered the open state change request, if
-     * applicable.
+     * @param options - The options for the open state change request:
+     * - `open`: The new open state that the dropdown menu is requesting.
+     * - `reason`: The reason for the open state change request, which is a more
+     *   specific description of the event that triggered the request.
+     * - `event`: The event that triggered the open state change request, if
+     *   applicable. This could be a native DOM event or a React synthetic
+     *   event.
      */
     onRequestOpenChange: (options: OnRequestOpenChangeOptions) => void;
 };
@@ -363,6 +421,76 @@ const _Dropdown = memo(function DropdownMemo(
         pointerEnterExitDelayMS = 200
     } = props;
 
+    // MARK: - Open State -
+
+    // The internal open state of the dropdown menu. Used when the open state is
+    // not controlled externally via the `isOpen` prop.
+    const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+    /**
+     * Whether the open state is controlled externally via the `isOpen` prop
+     * provided by the user of this component.
+     */
+    const isExternallyControlled = externalIsOpen !== undefined;
+
+    /**
+     * The current open state of the dropdown menu. This is either controlled
+     * externally via the `externalIsOpen` prop, or internally via state
+     * (internalIsOpen).
+     */
+    const isOpen = isExternallyControlled
+        ? externalIsOpen
+        : internalIsOpen;
+
+    // yes, refs normally shouldn't be set during render, but this value does
+    // NOT actually affect rendering at all, and we need other callbacks to have
+    // access to the latest value of `isOpen` without causing re-renders, so we
+    // store it in a ref and update it during render
+    const isOpenRef = useUpdatingRef(isOpen);
+
+    /**
+     * Requests a change to the open state of the dropdown menu. If the open
+     * state is controlled externally, this will call the `onOpenChange`
+     * callback. If the open state is controlled internally, this will update
+     * the `internalIsOpen` state.
+     */
+    const requestOpenChange = useEffectEvent((
+        options: RequestOpenChangeOptionsInternal
+    ): void => {
+
+        if (isExternallyControlled) {
+            // When `open` is a function, we call it with the `setIsOpen`
+            // closure's `isOpen` value, which could theoretically be stale if
+            // multiple updates occur before re-render. However, this is
+            // acceptable because in controlled mode, the parent owns the state
+            // and should handle updates properly.
+            const resolvedOpen = typeof options.open === "function"
+                ? options.open(isOpenRef.current)
+                : options.open;
+
+            const fullOptions: OnRequestOpenChangeOptions = {
+                ...options,
+                open: resolvedOpen
+            };
+
+            onRequestOpenChange(fullOptions);
+        } else {
+            // when internally controlled, we pass `open` directly to
+            // setInternalIsOpen, which guarantees access to the latest state
+            // via React's state updater mechanism
+            setInternalIsOpen(options.open);
+        }
+    });
+
+    /**
+     * Whether the dropdown menu has finished opening. This becomes true after
+     * the menu has been opened and positioned. It becomes false when the menu
+     * is closed.
+     */
+    const didFinishOpenRef = useRef(false);
+
+    // MARK: - Stores -
+
     const dropdownMenuStoreProps = useMemo(
         (): CreateDropdownMenuStoreProps => {
 
@@ -386,8 +514,6 @@ const _Dropdown = memo(function DropdownMemo(
         []
     );
 
-    // MARK: - Store -
-
     /**
      * The store for this submenu, which will be provided via context to child
      * submenus.
@@ -405,105 +531,31 @@ const _Dropdown = memo(function DropdownMemo(
         submenuID: menuID
     });
 
-    const scrollbarHitbox = useStore(
-        dropdownSubmenuStore,
-        (state) => state.scrollbarHitbox
-    );
-
-    const setScrollbarHitbox = useStore(
-        dropdownSubmenuStore,
-        (state) => state.setScrollbarHitbox
-    );
-
-    // The internal open state of the dropdown menu. Used when the open state is
-    // not controlled externally via the `isOpen` prop.
-    const [internalIsOpen, setInternalIsOpen] = useState(false);
-
-    /**
-     * Whether the open state is controlled externally via the `isOpen` prop
-     * provided by the user of this component.
-     */
-    const isExternallyControlled = externalIsOpen !== undefined;
-
-    /**
-     * The current open state of the dropdown menu. This is either controlled
-     * externally via the `externalIsOpen` prop, or internally via state
-     * (internalIsOpen).
-     */
-    const isOpen = isExternallyControlled
-        ? externalIsOpen
-        : internalIsOpen;
-
-    const isOpenRef = useRef(isOpen);
-    // yes, refs normally shouldn't be set during render, but this value does
-    // NOT actually affect rendering at all, and we need other callbacks to have
-    // access to the latest value of `isOpen` without causing re-renders, so we
-    // store it in a ref and update it during render
-    isOpenRef.current = isOpen;
-
-    /**
-     * Requests a change to the open state of the dropdown menu. If the open
-     * state is controlled externally, this will call the `onOpenChange`
-     * callback. If the open state is controlled internally, this will update
-     * the `internalIsOpen` state.
-     */
-    const requestOpenChange = useEffectEvent((
-        open: boolean | ((prevIsOpen: boolean) => boolean),
-        options: OnRequestOpenChangeOptionsBase
-    ): void => {
-
-        if (isExternallyControlled) {
-            // When `open` is a function, we call it with the `setIsOpen`
-            // closure's `isOpen` value, which could theoretically be stale if
-            // multiple updates occur before re-render. However, this is
-            // acceptable because in controlled mode, the parent owns the state
-            // and should handle updates properly.
-            const resolvedOpen = typeof open === "function"
-                ? open(isOpenRef.current)
-                : open;
-
-            const fullOptions: OnRequestOpenChangeOptions = {
-                ...options,
-                open: resolvedOpen
-            };
-
-            onRequestOpenChange(fullOptions);
-        } else {
-            // when internally controlled, we pass `open` directly to
-            // setInternalIsOpen, which guarantees access to the latest state
-            // via React's state updater mechanism
-            setInternalIsOpen(open);
-        }
-    });
-
-    /**
-     * Whether the dropdown menu has finished opening. This becomes true after
-     * the menu has been opened and positioned. It becomes false when the menu
-     * is closed.
-     */
-    const didFinishOpenRef = useRef(false);
-
     const mainDropdownMenuEventEmitter = useMemo(
         () => new DropdownMenuEventEmitter(),
         []
     );
 
+    /**
+     * The ID of the currently hovered menu item, or `null` if no menu item is
+     * currently hovered.
+     */
     const hoveredMenuItemRef = useRef<string | null>(null);
-
-    const closeOnClickLeafItemRef = useRef<boolean>(closeOnClickLeafItem);
-    const mouseHoverEventsRef = useRef<boolean>(mouseHoverEvents);
-    const pointerEnterExitDelayMSRef = useRef<number>(
-        pointerEnterExitDelayMS
-    );
 
     // yes, refs normally shouldn't be set during render, but these values do
     // NOT actually affect rendering at all
-    closeOnClickLeafItemRef.current = closeOnClickLeafItem;
-    mouseHoverEventsRef.current = mouseHoverEvents;
-    pointerEnterExitDelayMSRef.current = pointerEnterExitDelayMS;
+    const closeOnClickLeafItemRef = useUpdatingRef<boolean>(
+        closeOnClickLeafItem
+    );
+    const mouseHoverEventsRef = useUpdatingRef<boolean>(
+        mouseHoverEvents
+    );
+    const pointerEnterExitDelayMSRef = useUpdatingRef<number>(
+        pointerEnterExitDelayMS
+    );
 
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const dropdownToggleRef = useRef<HTMLButtonElement>(null);
+    const dropdownToggleRef = useRef<HTMLElement>(null);
     const dropdownMenuMeasuringContainerRef = useRef<HTMLDivElement>(null);
     const dropdownMenuRef = useRef<HTMLDivElement>(null);
     const dropdownMenuContentRef = useRef<HTMLDivElement>(null);
@@ -1216,16 +1268,6 @@ const _Dropdown = memo(function DropdownMemo(
         });
     }, [positionDropdownMenu]);
 
-    const toggleDropdownMenu = useCallback((
-        options: OnRequestOpenChangeOptionsBase
-    ): void => {
-        requestOpenChange(
-            isOpen => !isOpen,
-            options
-        );
-    }, [
-    ]);
-
     const openSubmenu = useCallback((
         submenuID: string
     ): void => {
@@ -1253,7 +1295,8 @@ const _Dropdown = memo(function DropdownMemo(
             // first, and then, if the open request is not blocked, open the
             // requested submenu after the menu has finished opening.
             pendingOpenSubmenuIDRef.current = submenuID;
-            requestOpenChange(true, {
+            requestOpenChange({
+                open: true,
                 reason: "openSubmenu"
             });
 
@@ -1291,6 +1334,7 @@ const _Dropdown = memo(function DropdownMemo(
 
     },
         [
+            isOpenRef,
             dropdownMenuStore
         ]
         // [
@@ -1330,7 +1374,8 @@ const _Dropdown = memo(function DropdownMemo(
                     `closeSubmenu: submenu with ID ${submenuID} is the root ` +
                     "menu; requesting close all menus"
                 );
-                requestOpenChange(false, {
+                requestOpenChange({
+                    open: false,
                     reason: "closeSubmenu"
                 });
                 // If the open/close state is controlled externally, then the
@@ -1487,43 +1532,6 @@ const _Dropdown = memo(function DropdownMemo(
         didFinishOpenRef.current = false;
         didPerformInitialPositionRef.current = false;
     });
-
-    const handleClick = useCallback((
-        event: ReactMouseEvent<HTMLDivElement, MouseEvent>
-    ): void => {
-
-        logger.debug("handleClick; event.target:", event.target);
-
-        if (ignoreClicksUntilNextPointerDownRef.current) {
-            logger.debug(
-                "handleClick: pointer has not gone down since scroll arrow " +
-                "disappeared; ignoring click"
-            );
-            ignoreClicksUntilNextPointerDownRef.current = false;
-
-            event.preventDefault();
-            event.stopPropagation();
-            event.nativeEvent.stopImmediatePropagation();
-
-            return;
-        }
-
-        const dropdownMenu = dropdownMenuRef.current;
-        if (!dropdownMenu) {
-            logger.warn(
-                "handleClick: dropdownMenu is null"
-            );
-            return;
-        }
-
-        toggleDropdownMenu({
-            reason: "clickDropdown",
-            event
-        });
-
-    }, [
-        toggleDropdownMenu
-    ]);
 
     /**
      * If a dropdown item is currently focused, returns all dropdown items in
@@ -1776,7 +1784,8 @@ const _Dropdown = memo(function DropdownMemo(
         if (event.key === "Escape") {
             logger.debug("handleKeyDown: Escape");
             event.preventDefault();
-            requestOpenChange(false, {
+            requestOpenChange({
+                open: false,
                 reason: "escapeKey",
                 event
             });
@@ -2000,13 +2009,10 @@ const _Dropdown = memo(function DropdownMemo(
     );
 
     // MARK: useEffect: change to isOpen
-    useEffect((/* changes */) => {
+    useEffect(() => {
 
         logger.debug(
             "useEffect: isOpen:", isOpen
-            // "\nchanges:", changes,
-            // "\nopenDropdownMenu._debug:", openDropdownMenu._debug,
-            // "\npositionDropdownMenu._debug:", positionDropdownMenu._debug
         );
 
         // use a microtask because the code that opens and positions the menu
@@ -2021,14 +2027,10 @@ const _Dropdown = memo(function DropdownMemo(
             }
         });
 
-    },
-        [
-            isOpen
-        ]
-        // [
-        //     "isOpen"
-        // ]
-    );
+    }, [
+        isOpen,
+        dropdownMenuStore
+    ]);
 
     // MARK: useEffect: changes to openMenuIDsPath
     useEffect(() => {
@@ -2042,6 +2044,13 @@ const _Dropdown = memo(function DropdownMemo(
                 onOpenMenusChangeEffectEvent([...newOpenMenuIDsPath]);
             }
         );
+
+        // call the `onOpenMenusChange` callback immediately with the initial
+        // value of `openMenuIDsPath` so that the client can be aware of the
+        // initial open menu state (which is usually all menus closed, i.e.
+        // `[]`).
+        const openMenuIDsPath = dropdownMenuStore.getState().openMenuIDsPath;
+        onOpenMenusChangeEffectEvent([...openMenuIDsPath]);
 
         return unsubscribe;
 
@@ -2145,7 +2154,8 @@ const _Dropdown = memo(function DropdownMemo(
                     "onClickOutside: hiding dropdown menu; target:",
                     event.target
                 );
-                requestOpenChange(false, {
+                requestOpenChange({
+                    open: false,
                     reason: "clickOutside",
                     event
                 });
@@ -2515,6 +2525,27 @@ const _Dropdown = memo(function DropdownMemo(
     //     openDropdownMenu();
     // }, [openDropdownMenu]);
 
+    const dropdownContextValue = useMemo(
+        (): DropdownContextType => ({
+            dropdownMenuMeasuringContainerRef,
+            dropdownMenuRef,
+            dropdownMenuContentRef,
+            dropdownMenuCoreRef,
+            customScrollbarRef
+        }),
+        []
+    );
+
+    const dropdownToggleContextValue = useMemo(
+        (): DropdownToggleContextType => ({
+            isOpen,
+            requestOpenChange: requestOpenChange as
+                (options: RequestOpenChangeOptions) => void,
+            dropdownToggleRef
+        }),
+        [isOpen]
+    );
+
     const dropdownMenuContextValue = useMemo(
         (): DropdownMenuContextType => ({
             menuItemsAlignmentRef,
@@ -2532,6 +2563,9 @@ const _Dropdown = memo(function DropdownMemo(
         }),
         [
             mainDropdownMenuEventEmitter,
+            mouseHoverEventsRef,
+            closeOnClickLeafItemRef,
+            pointerEnterExitDelayMSRef,
             setHoveredMenuItem,
             scheduleDropdownMenuReposition,
             openSubmenu,
@@ -2556,75 +2590,32 @@ const _Dropdown = memo(function DropdownMemo(
     );
 
     return (
-        <DropdownMenuContext.Provider
-            value={dropdownMenuContextValue}
-        >
-            <DropdownMenuStoreContext.Provider value={dropdownMenuStore}>
-                <div
-                    className="bd-dropdown"
-                    ref={dropdownRef}
-                    onClick={handleClick}
+        <DropdownContext.Provider value={dropdownContextValue}>
+            <DropdownToggleContext.Provider
+                value={dropdownToggleContextValue}
+            >
+                <DropdownMenuContext.Provider
+                    value={dropdownMenuContextValue}
                 >
-                    <button
-                        ref={dropdownToggleRef}
-                        className="bd-dropdown-toggle"
-                        title={
-                            debugConfig.showMenuIds
-                                ? menuID
-                                : undefined
-                        }
-                    >
-                        <i className="fa fa-ellipsis-v px-2"></i>
-                    </button>
-                    {debugConfig.showMenuIds && (
-                        <span
-                            className="bd-dropdown-main-debug-id"
+                    <DropdownMenuStoreContext.Provider value={dropdownMenuStore}>
+                        <DropdownSubmenuContext.Provider
+                            value={dropdownSubmenuContextValue}
                         >
-                            {menuID}
-                        </span>
-                    )}
-                    {/* the measuring container is necessary so that the width of
-                    the scroll bar can be measured */}
-                    <div
-                        className="bd-dropdown-menu-measuring-container"
-                        ref={dropdownMenuMeasuringContainerRef}
-                    >
-                        <div
-                            className="bd-dropdown-menu"
-                            ref={dropdownMenuRef}
-                        >
-                            <DropdownMenuCore
-                                isOpen={isOpen}
-                                handle={dropdownMenuCoreRef}
-                                dropdownMenuRef={dropdownMenuRef}
-                                dropdownMenuContentRef={dropdownMenuContentRef}
+                            <DropdownSubmenuStoreContext.Provider
+                                value={dropdownSubmenuStore}
                             >
-                                <DropdownSubmenuContext.Provider
-                                    value={dropdownSubmenuContextValue}
+                                <div
+                                    className="bd-dropdown"
+                                    ref={dropdownRef}
                                 >
-                                    <DropdownSubmenuStoreContext.Provider
-                                        value={dropdownSubmenuStore}
-                                    >
-                                        {children}
-                                    </DropdownSubmenuStoreContext.Provider>
-                                </DropdownSubmenuContext.Provider>
-                            </DropdownMenuCore>
-                        </div>
-                        <CustomScrollbar
-                            scrollContainerIsVisible={isOpen}
-                            handle={customScrollbarRef}
-                            scrollContainerWrapperRef={
-                                dropdownMenuMeasuringContainerRef
-                            }
-                            scrollContainerRef={dropdownMenuRef}
-                            scrollbarHitbox={scrollbarHitbox}
-                            setScrollbarHitbox={setScrollbarHitbox}
-                            zIndex={10}
-                        />
-                    </div>
-                </div>
-            </DropdownMenuStoreContext.Provider>
-        </DropdownMenuContext.Provider>
+                                    {children}
+                                </div>
+                            </DropdownSubmenuStoreContext.Provider>
+                        </DropdownSubmenuContext.Provider>
+                    </DropdownMenuStoreContext.Provider>
+                </DropdownMenuContext.Provider>
+            </DropdownToggleContext.Provider>
+        </DropdownContext.Provider>
     );
 
 }, (prev, next) => {
@@ -2646,11 +2637,16 @@ const _Dropdown = memo(function DropdownMemo(
 (_Dropdown as any).displayName = "Dropdown";
 
 /**
- * A dropdown menu component that can contain dropdown items and arbitrarily
- * nested submenus. The dropdown menu is opened by clicking on the toggle
- * button, and can be closed by clicking outside of the menu or by pressing the
- * Escape key. The menu supports keyboard navigation and will automatically
- * reposition itself to stay within the visual viewport.
+ * A dropdown component that serves as the root of the dropdown menu. It
+ * should wrap a {@link DropdownMenu} component, which contains the actual menu
+ * content, and a {@link DropdownToggle} component, which is used to toggle the
+ * opening and closing of the menu.
+ *
+ * Can contain dropdown items and arbitrarily nested submenus. The dropdown menu
+ * is opened by clicking on the toggle button, and can be closed by clicking
+ * outside of the menu or by pressing the Escape key. The menu supports keyboard
+ * navigation and will automatically reposition itself to stay within the visual
+ * viewport.
  *
  * @param props - The props for this component. See {@link DropdownMenuProps}
  * for details.

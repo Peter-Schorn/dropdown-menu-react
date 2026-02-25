@@ -6,12 +6,14 @@
 
 The options for a request to change the open state of the dropdown menu.
 
+This is used by the `onRequestOpenChange` callback prop of the [Dropdown()](./dropdown-menu.dropdown.md) component, which is called whenever the dropdown menu requests to change its open state.
+
 **Signature:**
 
 ```typescript
-export type OnRequestOpenChangeOptions = OnRequestOpenChangeOptionsBase & {
+export type OnRequestOpenChangeOptions = RequestOpenChangeOptionsBase & {
     open: boolean;
 };
 ```
-**References:** [OnRequestOpenChangeOptionsBase](./dropdown-menu.onrequestopenchangeoptionsbase.md)
+**References:** [RequestOpenChangeOptionsBase](./dropdown-menu.requestopenchangeoptionsbase.md)
 

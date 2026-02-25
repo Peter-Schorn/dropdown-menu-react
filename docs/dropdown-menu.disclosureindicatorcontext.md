@@ -9,5 +9,7 @@ The context for the disclosure indicator of a dropdown item, which provides info
 **Signature:**
 
 ```typescript
-DisclosureIndicatorContext: import("react").Context<DisclosureIndicatorContextType>
+DisclosureIndicatorContext: import("react").Context<Readonly<{
+    submenuIsOpen: boolean;
+}>>
 ```

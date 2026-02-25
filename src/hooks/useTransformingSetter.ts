@@ -30,7 +30,7 @@ export type UseTransformingSetterOptions<T> = {
  *
  * @returns A new state setter function that applies the transformation before
  * setting the state. This function is memoized and will only change if
- * `setState` or `transform` change.
+ * `transformIsStable` is `false` and `transform` changes.
  */
 export function useTransformingSetter<T>(
     {

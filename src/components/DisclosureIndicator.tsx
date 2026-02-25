@@ -98,7 +98,7 @@ export function DisclosureIndicator(
     const resolvedClassName = className ? className : defaultClassName;
 
     logger.debug(
-        "DisclosureIndicator: render; submenuIsOpen: " + submenuIsOpen
+        `DisclosureIndicator: render; submenuIsOpen: ${submenuIsOpen}`
     );
 
     return (

@@ -12,10 +12,10 @@ import {
     type HorizontalEdge
 } from "../../types/misc";
 
-export type DropdownMenuContextType = {
-    readonly menuItemsAlignmentRef: RefObject<Map<string, HorizontalEdge>>;
-    readonly mainDropdownMenuEventEmitter: DropdownMenuEventEmitter;
-    readonly hoveredMenuItemRef: RefObject<string | null>;
+export type DropdownMenuContextType = Readonly<{
+    menuItemsAlignmentRef: RefObject<Map<string, HorizontalEdge>>;
+    mainDropdownMenuEventEmitter: DropdownMenuEventEmitter;
+    hoveredMenuItemRef: RefObject<string | null>;
 
     /**
      * When the scroll arrow disappears while the pointer is down, then when the
@@ -37,7 +37,7 @@ export type DropdownMenuContextType = {
     openSubmenu: (submenuID: string) => void;
     closeSubmenu: (submenuID: string) => void;
 
-};
+}>;
 
 export const dropdownMenuContextDefaultValue: DropdownMenuContextType = {
     menuItemsAlignmentRef: { current: new Map<string, HorizontalEdge>() },

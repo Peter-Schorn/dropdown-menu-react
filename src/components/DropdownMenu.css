@@ -15,6 +15,11 @@
     border-radius: 6px;
     cursor: pointer;
 
+    /* horizontally and vertically center all children  */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
     /* disables double-tap to zoom, which removes the need for the browser to
     delay the generation of click events when the user taps the screen */
     touch-action: manipulation;

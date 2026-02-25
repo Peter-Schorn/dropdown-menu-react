@@ -6,6 +6,8 @@ import {
 import {
     type DropdownMenuLoggers,
     type DropdownMenuLogger,
+    Dropdown,
+    DropdownToggle,
     DropdownMenu,
     DropdownItem,
     DisclosureIndicator,
@@ -54,34 +56,39 @@ function TestComponent1(): JSX.Element {
     console.log("inside TestComponent1");
 
     return (
-        <DropdownMenu>
-            <DropdownItem>
-                <DropdownItemLabel>
-                    New Tab
-                </DropdownItemLabel>
-            </DropdownItem>
-            <DropdownDivider />
-            <DropdownItem>
-                <DropdownItemLabel>
-                    File
-                    <DisclosureIndicator />
-                </DropdownItemLabel>
-                <DropdownItemSubmenu
+        <Dropdown>
+            <DropdownToggle>
+                Menu
+            </DropdownToggle>
+            <DropdownMenu>
+                <DropdownItem>
+                    <DropdownItemLabel>
+                        New Tab
+                    </DropdownItemLabel>
+                </DropdownItem>
+                <DropdownDivider />
+                <DropdownItem
                     submenuID="file-submenu"
                 >
-                    <DropdownItem>
-                        <DropdownItemLabel>
-                            Open
-                        </DropdownItemLabel>
-                    </DropdownItem>
-                    <DropdownItem>
-                        <DropdownItemLabel>
-                            Save
-                        </DropdownItemLabel>
-                    </DropdownItem>
-                </DropdownItemSubmenu>
-            </DropdownItem>
-        </DropdownMenu>
+                    <DropdownItemLabel>
+                        File
+                        <DisclosureIndicator />
+                    </DropdownItemLabel>
+                    <DropdownItemSubmenu>
+                        <DropdownItem>
+                            <DropdownItemLabel>
+                                Open
+                            </DropdownItemLabel>
+                        </DropdownItem>
+                        <DropdownItem>
+                            <DropdownItemLabel>
+                                Save
+                            </DropdownItemLabel>
+                        </DropdownItem>
+                    </DropdownItemSubmenu>
+                </DropdownItem>
+            </DropdownMenu>
+        </Dropdown>
     );
 
 }
@@ -91,37 +98,44 @@ function TestComponent2(): JSX.Element {
     const [menuIsOpen, setMenuIsOpen] = useState(true);
 
     return (
-        <DropdownMenu
+        <Dropdown
             isOpen={menuIsOpen}
-            onRequestOpenChange={setMenuIsOpen}
+            onRequestOpenChange={(options) => {
+                setMenuIsOpen(options.open);
+            }}
         >
-            <DropdownItem>
-                <DropdownItemLabel>
-                    New Tab
-                </DropdownItemLabel>
-            </DropdownItem>
-            <DropdownDivider />
-            <DropdownItem>
-                <DropdownItemLabel>
-                    File
-                    <DisclosureIndicator />
-                </DropdownItemLabel>
-                <DropdownItemSubmenu
+            <DropdownToggle>
+                Menu
+            </DropdownToggle>
+            <DropdownMenu>
+                <DropdownItem>
+                    <DropdownItemLabel>
+                        New Tab
+                    </DropdownItemLabel>
+                </DropdownItem>
+                <DropdownDivider />
+                <DropdownItem
                     submenuID="file-submenu"
                 >
-                    <DropdownItem>
-                        <DropdownItemLabel>
-                            Open
-                        </DropdownItemLabel>
-                    </DropdownItem>
-                    <DropdownItem>
-                        <DropdownItemLabel>
-                            Save
-                        </DropdownItemLabel>
-                    </DropdownItem>
-                </DropdownItemSubmenu>
-            </DropdownItem>
-        </DropdownMenu>
+                    <DropdownItemLabel>
+                        File
+                        <DisclosureIndicator />
+                    </DropdownItemLabel>
+                    <DropdownItemSubmenu>
+                        <DropdownItem>
+                            <DropdownItemLabel>
+                                Open
+                            </DropdownItemLabel>
+                        </DropdownItem>
+                        <DropdownItem>
+                            <DropdownItemLabel>
+                                Save
+                            </DropdownItemLabel>
+                        </DropdownItem>
+                    </DropdownItemSubmenu>
+                </DropdownItem>
+            </DropdownMenu>
+        </Dropdown>
     );
 
 }

@@ -26,7 +26,6 @@ import {
 } from "../../utils/MiscellaneousUtilities";
 
 export type RequiredDropdownMenuStoreProps = Readonly<{
-
     /**
      * The container element for the portals of all submenus.
      */
@@ -51,7 +50,6 @@ export type DropdownMenuStoreProps = RequiredDropdownMenuStoreProps & Readonly<{
 }>;
 
 export type DropdownMenuStore = DropdownMenuStoreProps & Readonly<{
-
     setOpenMenuIDsPath: (path: UpdateState<readonly string[]>) => void;
 
     setSubmenusPortalContainer: (
@@ -76,7 +74,6 @@ function createDropdownMenuStore(
     props: CreateDropdownMenuStoreProps
 ): DropdownMenuStoreContextType {
     return createStore<DropdownMenuStore>()(subscribeWithSelector((set) => ({
-
         openMenuIDsPath: props.openMenuIDsPath ?? [],
         setOpenMenuIDsPath: (update: UpdateState<readonly string[]>): void => {
             set((state) => {
@@ -159,7 +156,7 @@ export function useDropdownMenuStoreContext(): DropdownMenuStoreContextType {
     if (!context) {
         throw new Error(
             "useDropdownMenuContext must be used within a " +
-            "DropdownMenuContext2.Provider"
+            "DropdownMenuContext.Provider"
         );
     }
     return context;

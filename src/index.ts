@@ -7,14 +7,24 @@ export {
 
 export {
     type DropdownToggleProps,
+    type DropdownToggleAsRequiredProps,
+    type DropdownToggleOwnProps,
+    type RefInstance,
+    type DropdownToggleAsValidation,
     DropdownToggle
 } from "./components/DropdownToggle";
 
 export {
-    type OnRequestOpenChangeEvent,
-    type OnRequestOpenChangeReason,
+    type RequestOpenChangeEvent,
+
+    type RequestOpenChangeReason,
+    type RequestOpenChangeReasonInternal,
+
+    type RequestOpenChangeOptionsBase,
+
+    type RequestOpenChangeOptions,
     type OnRequestOpenChangeOptions,
-    type OnRequestOpenChangeOptionsBase,
+
     type DropdownHandle,
     type DropdownProps,
     type DropdownPropsBase,
@@ -49,6 +59,11 @@ export {
     type DisclosureIndicatorContextType,
     DisclosureIndicatorContext
 } from "./model/context/DisclosureIndicatorContext";
+
+export {
+    type DropdownToggleContextType,
+    DropdownToggleContext
+} from "./model/context/DropdownToggleContext";
 
 export {
     type DebugConfig,

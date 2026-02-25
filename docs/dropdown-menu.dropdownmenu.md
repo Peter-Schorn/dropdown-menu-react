@@ -4,6 +4,8 @@
 
 ## DropdownMenu() function
 
+The dropdown menu component that should be used as a child of `Dropdown`<!-- -->. This component is responsible for rendering the dropdown menu and its contents, which can include arbitrarily nested submenus. It should only be used once per dropdown menu (i.e. per `Dropdown` component instance).
+
 **Signature:**
 
 ```typescript

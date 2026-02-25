@@ -64,11 +64,26 @@ export type DropdownToggleOwnProps = PropsWithChildren & {
 /**
  * Extracts the underlying Ref instance type from a component's props. If the
  * component does not have a ref, the type will be `never`.
+ *
+ * @public
  */
-type RefInstance<Props> =
+export type RefInstance<Props> =
   Props extends { ref?: Ref<infer I> } ? I : never;
 
-type DropdownToggleAsValidation<T extends ElementType> =
+/**
+ * A type-level validation to ensure that the `as` prop provided to
+ * `DropdownToggle` is a valid element type that can be used as the toggle. The
+ * `as` prop is valid if it is either:
+ * - An intrinsic element (e.g. "button", "a", "div", etc.), since all intrinsic
+ *   elements accept `onClick` and `ref` props with compatible types.
+ * - A custom component that accepts an `onClick` prop that can receive the
+ *   toggle's click handler (i.e. `(event: OnRequestOpenChangeEvent) => void`)
+ *   and a `ref` prop that can receive the toggle's ref (i.e.
+ *   `Ref<HTMLElement>`).
+ *
+ * @public
+ */
+export type DropdownToggleAsValidation<T extends ElementType> =
     // all intrinsic elements are valid `as` targets since they all accept an
     // `onClick` prop with a compatible type
     T extends keyof JSX.IntrinsicElements
@@ -204,7 +219,7 @@ export function DropdownToggle<T extends ElementType = "button">(
             // selectors (e.g. `[data-open="true"]` or `[data-open="false"]`)
             data-open={isOpen}
             {...rest}
-            // these should overwrite any user-provided props since they are
+            // these should override any user-provided props since they are
             // required for the toggle to function correctly
             ref={setRef}
             onClick={handleClick}
@@ -214,7 +229,9 @@ export function DropdownToggle<T extends ElementType = "button">(
     );
 }
 
-DropdownToggle.displayName = "DropdownToggle";
+// use any to exclude from the generated .d.ts file
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+(DropdownToggle as any).displayName = "DropdownToggle";
 
 
 /* eslint-disable
@@ -304,6 +321,8 @@ function CustomComponent8(
 function CustomComponent9(
     props: {
         foo: string;
+        // invalid event type: string is not a subtype of
+        // `OnRequestOpenChangeEvent`
         onClick: (event: string) => void;
         ref: Ref<HTMLButtonElement>;
     }

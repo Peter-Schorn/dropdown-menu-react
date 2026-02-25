@@ -12,7 +12,12 @@ import "eslint-import-resolver-typescript";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig(
-    globalIgnores(["**/dist", "**/src-gen"]),
+    globalIgnores([
+        "**/dist",
+        "**/src-gen",
+        "temp",
+        "etc"
+    ]),
     {
         files: [
             "**/*.{ts,tsx,js}",

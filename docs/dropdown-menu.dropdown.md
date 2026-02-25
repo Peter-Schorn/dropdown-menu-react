@@ -4,7 +4,9 @@
 
 ## Dropdown() function
 
-A dropdown menu component that can contain dropdown items and arbitrarily nested submenus. The dropdown menu is opened by clicking on the toggle button, and can be closed by clicking outside of the menu or by pressing the Escape key. The menu supports keyboard navigation and will automatically reposition itself to stay within the visual viewport.
+A dropdown component that serves as the root of the dropdown menu. It should wrap a [DropdownMenu()](./dropdown-menu.dropdownmenu.md) component, which contains the actual menu content, and a [DropdownToggle()](./dropdown-menu.dropdowntoggle.md) component, which is used to toggle the opening and closing of the menu.
+
+Can contain dropdown items and arbitrarily nested submenus. The dropdown menu is opened by clicking on the toggle button, and can be closed by clicking outside of the menu or by pressing the Escape key. The menu supports keyboard navigation and will automatically reposition itself to stay within the visual viewport.
 
 **Signature:**
 

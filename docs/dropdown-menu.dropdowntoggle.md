@@ -2,19 +2,30 @@
 
 [Home](./index.md) &gt; [dropdown-menu](./dropdown-menu.md) &gt; [DropdownToggle](./dropdown-menu.dropdowntoggle.md)
 
-## DropdownToggle namespace
+## DropdownToggle() function
+
+A dropdown toggle component that serves as the trigger for opening and closing the dropdown menu. It should be used as a child of the `Dropdown` component.
+
+Calling `event.preventDefault()` in the `onClick` handler of the toggle will prevent the default toggle behavior, which is to toggle the open state of the dropdown menu.
+
+The `as` prop can be used to render a different element type instead of the default "button". If a custom component is used with the `as` prop, it must accept an `onClick` prop that can receive the toggle's click handler, which has the signature `(event: OnRequestOpenChangeEvent) => void`<!-- -->. See [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md)<!-- -->.
 
 **Signature:**
 
 ```typescript
-export declare namespace DropdownToggle 
+export declare function DropdownToggle<T extends ElementType = "button">(input: DropdownToggleProps<T>): ReactNode;
 ```
 
-## Variables
+## Parameters
 
 <table><thead><tr><th>
 
-Variable
+Parameter
+
+
+</th><th>
+
+Type
 
 
 </th><th>
@@ -25,7 +36,26 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-[displayName](./dropdown-menu.dropdowntoggle.displayname.md)
+{ as, className, onClick, children, ...rest }
+
+
+</td><td>
+
+(not declared)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+input
+
+
+</td><td>
+
+[DropdownToggleProps](./dropdown-menu.dropdowntoggleprops.md)<!-- -->&lt;T&gt;
 
 
 </td><td>
@@ -33,4 +63,8 @@ Description
 
 </td></tr>
 </tbody></table>
+
+**Returns:**
+
+ReactNode
 

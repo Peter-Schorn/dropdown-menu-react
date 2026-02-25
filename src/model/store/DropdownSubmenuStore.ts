@@ -100,7 +100,8 @@ export function useDropdownSubmenuStoreContext(
     const store = useContext(DropdownSubmenuStoreContext);
     if (!store) {
         throw new Error(
-            "useDropdownSubmenuStore must be used within a DropdownSubmenuStoreProvider"
+            "useDropdownSubmenuStore must be used within a " +
+            "DropdownSubmenuStoreProvider"
         );
     }
     return store;

@@ -4,8 +4,16 @@
 
 ## DropdownToggleProps type
 
+Props for the [DropdownToggle()](./dropdown-menu.dropdowntoggle.md) component.
+
+Requires the chosen `as` target supports an `onClick` prop compatible with `OnRequestOpenChangeEvent`<!-- -->. See also [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md) for the required props for a custom `as` component.
+
 **Signature:**
 
 ```typescript
-export type DropdownToggleProps = PropsWithChildren & ComponentPropsWithRef<"button">;
+export type DropdownToggleProps<T extends ElementType = "button"> = {
+    as?: DropdownToggleAsValidation<T>;
+} & DropdownToggleOwnProps & Omit<ComponentPropsWithRef<T>, keyof DropdownToggleOwnProps | keyof DropdownToggleAsRequiredProps | "as">;
 ```
+**References:** [DropdownToggleAsValidation](./dropdown-menu.dropdowntoggleasvalidation.md)<!-- -->, [DropdownToggleOwnProps](./dropdown-menu.dropdowntoggleownprops.md)<!-- -->, [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md)
+
