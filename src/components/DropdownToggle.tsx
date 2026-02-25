@@ -34,7 +34,7 @@ import {
  * @public
  */
 export type DropdownToggleAsRequiredProps = {
-    onClick: (event: OnRequestOpenChangeEvent) => void;
+    onClick?: (event: OnRequestOpenChangeEvent) => void;
 };
 
 /**
@@ -64,7 +64,14 @@ type DropdownToggleAsValidation<T extends ElementType> =
         : T extends JSXElementConstructor<infer Props>
             // ensure the `onClick` prop is present
             ? "onClick" extends keyof Props
-                ? DropdownToggleAsRequiredProps["onClick"] extends Props["onClick"]
+                // Ensure the `onClick` prop is compatible with the toggle's
+                // click handler. Specifically,
+                // `(event: OnRequestOpenChangeEvent) => void` must be
+                // assignable to the `onClick` prop of the custom component.
+                // This requires that the type of the `event` parameter in the
+                // custom component's `onClick` prop is a subtype of
+                // `OnRequestOpenChangeEvent`.
+                ? NonNullable<DropdownToggleAsRequiredProps["onClick"]> extends Props["onClick"]
                     ? T
                     : "DropdownToggle error: custom `as` must accept compatible onClick"
                 : "DropdownToggle error: custom `as` must declare onClick"
