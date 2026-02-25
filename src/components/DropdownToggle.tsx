@@ -39,31 +39,27 @@ export type DropdownToggleAsRequiredProps = {
 export type DropdownToggleOwnProps = PropsWithChildren & {
     /**
      * The class name to apply to the dropdown toggle element. Defaults to
-     * "bd-dropdown-toggle".
+     * `bd-dropdown-toggle`.
      */
     className?: string;
 
     /**
-     * optional user handler; can call event.preventDefault()
+     * Optional click handler. Can call event.preventDefault() to prevent the
+     * default toggle behavior of opening/closing the dropdown menu.
      */
     onClick?: (event: OnRequestOpenChangeEvent) => void;
 };
 
-type DropdownToggleAsAcceptingRequiredProps<T extends ElementType> =
+type DropdownToggleAsValidation<T extends ElementType> =
     T extends keyof JSX.IntrinsicElements
         ? T
         : T extends JSXElementConstructor<infer Props>
-            // if props contains `onClick`
             ? "onClick" extends keyof Props
-                // Accept only `as` components whose `onClick` prop can receive
-                // the handler that DropdownToggle provides. In assignability
-                // terms, the target `onClick` type must be a compatible
-                // supertype of our required handler type.
                 ? DropdownToggleAsRequiredProps["onClick"] extends Props["onClick"]
                     ? T
-                    : "DropdownToggle error: custom `as` component must accept `onClick?: (event: OnRequestOpenChangeEvent) => void` (3)"
-                : "DropdownToggle error: custom `as` component must accept `onClick?: (event: OnRequestOpenChangeEvent) => void` (2)"
-            : "DropdownToggle error: custom `as` component must accept `onClick?: (event: OnRequestOpenChangeEvent) => void` (1)";
+                    : "DropdownToggle error: custom `as` must accept compatible onClick"
+                : "DropdownToggle error: custom `as` must declare onClick"
+            : "DropdownToggle error: invalid `as` type";
 
 
 /**
@@ -79,7 +75,7 @@ export type DropdownToggleProps<T extends ElementType = "button"> =
         /**
          * The element type to render as. Defaults to "button".
          */
-        as?: DropdownToggleAsAcceptingRequiredProps<T>;
+        as?: DropdownToggleAsValidation<T>;
     } & DropdownToggleOwnProps &
     Omit<
         ComponentPropsWithRef<T>,
@@ -98,7 +94,9 @@ export type DropdownToggleProps<T extends ElementType = "button"> =
  * The `as` prop can be used to render a different element type instead of the
  * default "button". If a custom component is used with the `as` prop, it must
  * accept an `onClick` prop that can receive the toggle's click handler, which
- * has the signature `(event: OnRequestOpenChangeEvent) => void`.
+ * has the signature `(event: OnRequestOpenChangeEvent) => void`. See
+ * {@link DropdownToggleAsRequiredProps} for the required props for a custom
+ * `as` component.
  *
  *
  * @public
@@ -189,7 +187,62 @@ function CustomComponent2(
 
 function CustomComponent3(
     props: {
-        onClick: (event: never) => void;
+        onClick: (event: OnRequestOpenChangeEvent) => void | undefined | null;
+        bar?: number;
+    }
+): ReactNode {
+    return null;
+}
+
+
+function CustomComponent4(
+    props: {
+        foo: string;
+        bar: number;
+        onClick: (event: OnRequestOpenChangeEvent) => void;
+    }
+): ReactNode {
+    return null;
+}
+
+function CustomComponent5(
+    props: {
+        foo: string;
+        onClick: ((event: OnRequestOpenChangeEvent) => void) | null;
+    }
+): ReactNode {
+    return null;
+}
+
+function CustomComponent6(
+    props: {
+        foo: string;
+        onClick: ((event: OnRequestOpenChangeEvent) => void) | undefined;
+    }
+): ReactNode {
+    return null;
+}
+
+function CustomComponent7(
+    props: {
+        onClick: ((event: never) => void) | null | undefined;
+    }
+): ReactNode {
+    return null;
+}
+
+function CustomComponent8(
+    props: {
+        onClick?: ((event: never) => void) | null | undefined;
+    }
+): ReactNode {
+    return null;
+}
+
+function CustomComponent9(
+    props: {
+        foo: string;
+        onClick: (event: string) => void;
     }
 ): ReactNode {
     return null;
@@ -242,6 +295,46 @@ function TestDropdownToggle(): JSX.Element {
             />
 
             <DropdownToggle
+                as="button"
+                type="submit"
+                disabled
+            />
+
+            <DropdownToggle
+                as="button"
+                // @ts-expect-error -- `href` is not a valid button prop
+                href="#"
+            />
+
+            <DropdownToggle
+                as="input"
+                value="test"
+                onChange={() => console.log("Input changed")}
+            />
+
+            <DropdownToggle
+                as="input"
+                // @ts-expect-error -- `href` is not a valid input prop
+                href="#"
+            />
+
+            <DropdownToggle
+                as="textarea"
+                rows={2}
+                defaultValue="hello"
+            />
+
+            <DropdownToggle
+                as="textarea"
+                // @ts-expect-error -- `type` is not a valid textarea prop
+                type="button"
+            />
+
+            <DropdownToggle
+                as="textarea"
+            />
+
+            <DropdownToggle
                 as={CustomComponent}
                 foo="test"
                 onClick={() => console.log("Custom component toggle clicked")}
@@ -250,6 +343,11 @@ function TestDropdownToggle(): JSX.Element {
             <DropdownToggle
                 as={CustomComponent}
                 foo="test"
+            />
+
+            {/* @ts-expect-error -- Missing required custom prop `foo` */}
+            <DropdownToggle
+                as={CustomComponent}
             />
 
             <DropdownToggle
@@ -268,12 +366,72 @@ function TestDropdownToggle(): JSX.Element {
 
             <DropdownToggle
                 as={CustomComponent3}
+                bar={123}
+            />
+
+            <DropdownToggle
+                as={CustomComponent4}
+                foo="test"
+                bar={123}
+                onClick={() => console.log("Custom component toggle clicked")}
+            />
+
+            <DropdownToggle
+                as={CustomComponent4}
+                foo="test"
+                bar={123}
+            />
+
+            <DropdownToggle
+                as={CustomComponent5}
+                foo="test"
+                onClick={() => console.log("Custom component toggle clicked")}
+            />
+
+            <DropdownToggle
+                as={CustomComponent5}
+                foo="test"
+            />
+
+            <DropdownToggle
+                as={CustomComponent6}
+                foo="test"
+                onClick={() => console.log("Custom component toggle clicked")}
+            />
+
+            <DropdownToggle
+                as={CustomComponent6}
+                foo="test"
+            />
+
+            <DropdownToggle
+                as={CustomComponent7}
+                onClick={() => console.log("Custom component toggle clicked")}
+            />
+
+            <DropdownToggle
+                as={CustomComponent7}
+            />
+
+            <DropdownToggle
+                // @ts-expect-error -- Invalid `as` component with incompatible
+                // `onClick` event type
+                as={CustomComponent9}
+                foo="test"
+                onClick={() => console.log("Custom component toggle clicked")}
+            />
+
+            <DropdownToggle
+                // @ts-expect-error -- Invalid `as` component with incompatible
+                // `onClick` event type
+                as={CustomComponent9}
+                foo="test"
             />
 
 
             <DropdownToggle
                 // @ts-expect-error -- Invalid `as` component that does not
-                // accept the required `onClick` prop
+                // accept required `onClick`
                 as={InvalidCustomComponent}
                 bar="test"
             />
