@@ -39,7 +39,7 @@ import {
  */
 export type DropdownToggleAsRequiredProps = {
     onClick?: (event: RequestOpenChangeEvent) => void;
-    ref?: Ref<HTMLElement | null>;
+    ref?: (element: HTMLElement | null) => void;
 };
 
 /**
@@ -61,6 +61,13 @@ export type DropdownToggleOwnProps = PropsWithChildren & {
     onClick?: (event: RequestOpenChangeEvent) => void;
 };
 
+/**
+ * Extracts the underlying Ref instance type from a component's props. If the
+ * component does not have a ref, the type will be `never`.
+ */
+type RefInstance<Props> =
+  Props extends { ref?: Ref<infer I> } ? I : never;
+
 type DropdownToggleAsValidation<T extends ElementType> =
     // all intrinsic elements are valid `as` targets since they all accept an
     // `onClick` prop with a compatible type
@@ -77,11 +84,14 @@ type DropdownToggleAsValidation<T extends ElementType> =
                 // custom component's `onClick` prop is a subtype of
                 // `OnRequestOpenChangeEvent`.
                 ? NonNullable<DropdownToggleAsRequiredProps["onClick"]> extends Props["onClick"]
-                    ? T
+                    ? "ref" extends keyof Props
+                        ? RefInstance<Props> extends HTMLElement
+                            ? T
+                            : "DropdownToggle error: custom `as` must accept compatible ref"
+                        : "DropdownToggle error: custom `as` must declare ref"
                     : "DropdownToggle error: custom `as` must accept compatible onClick"
                 : "DropdownToggle error: custom `as` must declare onClick"
             : "DropdownToggle error: invalid `as` type";
-
 
 /**
  * Props for the {@link DropdownToggle} component.
@@ -101,7 +111,9 @@ export type DropdownToggleProps<T extends ElementType = "button"> =
     } & DropdownToggleOwnProps &
     Omit<
         ComponentPropsWithRef<T>,
-        keyof DropdownToggleOwnProps | "as"
+            | keyof DropdownToggleOwnProps
+            | keyof DropdownToggleAsRequiredProps
+            | "as"
     >;
 
 /**
@@ -174,7 +186,7 @@ export function DropdownToggle<T extends ElementType = "button">(
         dropdownToggleRef
     ]);
 
-    const Component = as ?? "button";
+    const Component = (as ?? "button") as ElementType;
 
     const isButton = Component === "button";
 
@@ -186,14 +198,16 @@ export function DropdownToggle<T extends ElementType = "button">(
     return (
         <Component
             {...defaultButtonProps}
-            ref={setRef}
             className={className}
-            onClick={handleClick}
             // attach this data attribute so that clients can style the toggle
             // based on whether the menu is open or closed using CSS attribute
             // selectors (e.g. `[data-open="true"]` or `[data-open="false"]`)
             data-open={isOpen}
             {...rest}
+            // these should overwrite any user-provided props since they are
+            // required for the toggle to function correctly
+            ref={setRef}
+            onClick={handleClick}
         >
             {children}
         </Component>
@@ -212,6 +226,7 @@ function CustomComponent(
     props: {
         foo: string;
         onClick: (event: RequestOpenChangeEvent) => void;
+        ref: Ref<HTMLElement | null>;
     }
 ): ReactNode {
     return null;
@@ -220,6 +235,7 @@ function CustomComponent(
 function CustomComponent2(
     props: {
         onClick?: (event: RequestOpenChangeEvent) => void;
+        ref?: Ref<HTMLButtonElement>;
     }
 ): ReactNode {
     return null;
@@ -228,6 +244,7 @@ function CustomComponent2(
 function CustomComponent3(
     props: {
         onClick: (event: RequestOpenChangeEvent) => void | undefined | null;
+        ref?: Ref<HTMLElement>;
         bar?: number;
     }
 ): ReactNode {
@@ -240,6 +257,7 @@ function CustomComponent4(
         foo: string;
         bar: number;
         onClick: (event: RequestOpenChangeEvent) => void;
+        ref: Ref<HTMLDivElement>;
     }
 ): ReactNode {
     return null;
@@ -249,6 +267,7 @@ function CustomComponent5(
     props: {
         foo: string;
         onClick: ((event: RequestOpenChangeEvent) => void) | null;
+        ref: (element: HTMLElement | null) => void;
     }
 ): ReactNode {
     return null;
@@ -258,6 +277,7 @@ function CustomComponent6(
     props: {
         foo: string;
         onClick: ((event: RequestOpenChangeEvent) => void) | undefined;
+        ref?: (element: HTMLElement | null) => void;
     }
 ): ReactNode {
     return null;
@@ -266,6 +286,7 @@ function CustomComponent6(
 function CustomComponent7(
     props: {
         onClick: ((event: never) => void) | null | undefined;
+        ref?: (element: HTMLButtonElement | null) => void;
     }
 ): ReactNode {
     return null;
@@ -274,6 +295,7 @@ function CustomComponent7(
 function CustomComponent8(
     props: {
         onClick?: ((event: never) => void) | null | undefined;
+        ref?: (element: never) => void;
     }
 ): ReactNode {
     return null;
@@ -283,6 +305,7 @@ function CustomComponent9(
     props: {
         foo: string;
         onClick: (event: string) => void;
+        ref: Ref<HTMLButtonElement>;
     }
 ): ReactNode {
     return null;
@@ -292,6 +315,7 @@ function CustomComponent10(
     props: {
         foo: string;
         onClick?: MouseEventHandler | undefined;
+        ref?: Ref<HTMLElement> | undefined;
     }
 ): ReactNode {
     return null;
@@ -301,6 +325,7 @@ function CustomComponent11(
     props: {
         foo?: string;
         onClick?: (event: Event) => void;
+        ref: Ref<Node>;
     }
 ): ReactNode {
     return null;
@@ -310,19 +335,63 @@ function CustomComponent12(
     props: {
         foo?: string;
         onClick?: (event: SyntheticEvent) => void;
+        ref: (element: HTMLButtonElement) => void;
     }
 ): ReactNode {
     return null;
 }
 
-function InvalidCustomComponent(
+function CustomComponent13(
+    props: {
+        foo?: string;
+        onClick?: (event: SyntheticEvent) => void;
+        // invalid ref type
+        ref: Ref<number>;
+    }
+): ReactNode {
+    return null;
+}
+
+function CustomComponent14(
+    props: {
+        foo?: string;
+        onClick?: (event: SyntheticEvent) => void;
+        // invalid ref type
+        ref: (element: Node) => void;
+    }
+): ReactNode {
+    return null;
+}
+
+function CustomComponent15(
+    props: {
+        foo?: string;
+        onClick?: (event: SyntheticEvent) => void;
+        // missing ref
+    }
+): ReactNode {
+    return null;
+}
+
+function CustomComponent16(
     props: {
         bar: string;
+        // missing required onClick prop
+        ref: Ref<HTMLElement>;
     }
 ): ReactNode {
     return null;
 }
 
+function CustomComponent17(
+    props: {
+        bar: string;
+        // missing required onClick prop
+        // missing ref
+    }
+): ReactNode {
+    return null;
+}
 
 function TestDropdownToggle(): JSX.Element {
 
@@ -412,7 +481,7 @@ function TestDropdownToggle(): JSX.Element {
                 foo="test"
             />
 
-            {/* @ts-expect-error -- Missing required custom prop `foo` */}
+            {/* @ts-expect-error -- Missing required custom props `foo` */}
             <DropdownToggle
                 as={CustomComponent}
             />
@@ -501,11 +570,19 @@ function TestDropdownToggle(): JSX.Element {
             />
 
             <DropdownToggle
+                // @ts-expect-error -- Invalid `as` component with incompatible
+                // `ref` type: `Ref<Node>` is not compatible with
+                // `Ref<HTMLElement>` because `Node` is not a subtype of
+                // `HTMLElement`
                 as={CustomComponent11}
                 foo="test"
             />
 
             <DropdownToggle
+                // @ts-expect-error -- Invalid `as` component with incompatible
+                // `ref` type: `Ref<Node>` is not compatible with
+                // `Ref<HTMLElement>` because `Node` is not a subtype of
+                // `HTMLElement`
                 as={CustomComponent11}
             />
 
@@ -516,12 +593,42 @@ function TestDropdownToggle(): JSX.Element {
 
             <DropdownToggle
                 as={CustomComponent12}
+            />
+
+             <DropdownToggle
+                // @ts-expect-error -- Invalid `as` component with incompatible
+                // `ref` type: `Ref<number>` is not compatible with
+                // `Ref<HTMLElement>` because `number` is not a subtype of
+                // `HTMLElement`
+                as={CustomComponent13}
+                foo="test"
+            />
+
+             <DropdownToggle
+                // @ts-expect-error -- Invalid `as` component with incompatible
+                // `ref` type: `Ref<number>` is not compatible with
+                // `Ref<HTMLElement>` because `Node` is not a subtype of
+                // `HTMLElement`
+                as={CustomComponent14}
+                foo="test"
+            />
+
+            <DropdownToggle
+                // @ts-expect-error -- Invalid `as` component: missing ref
+                as={CustomComponent15}
             />
 
             <DropdownToggle
                 // @ts-expect-error -- Invalid `as` component that does not
                 // accept required `onClick`
-                as={InvalidCustomComponent}
+                as={CustomComponent16}
+                bar="test"
+            />
+
+            <DropdownToggle
+                // @ts-expect-error -- Invalid `as` component: missing ref and
+                // `onClick`
+                as={CustomComponent17}
                 bar="test"
             />
         </>
