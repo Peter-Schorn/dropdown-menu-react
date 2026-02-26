@@ -1,19 +1,6 @@
 import "./index.css";
 
 export {
-    type DropdownMenuProps,
-    DropdownMenu
-} from "./components/DropdownMenu";
-
-export {
-    type DropdownToggleProps,
-    type DropdownToggleAsRequiredProps,
-    type DropdownToggleOwnProps,
-    type DropdownToggleAsValidation,
-    DropdownToggle
-} from "./components/DropdownToggle";
-
-export {
     type RequestOpenChangeEvent,
 
     type RequestOpenChangeReason,
@@ -31,6 +18,19 @@ export {
     type DropdownPropsExternallyControlled,
     Dropdown
 } from "./components/Dropdown";
+
+export {
+    type DropdownToggleProps,
+    type DropdownToggleAsRequiredProps,
+    type DropdownToggleOwnProps,
+    type _DropdownToggleAsValidation,
+    DropdownToggle
+} from "./components/DropdownToggle";
+
+export {
+    type DropdownMenuProps,
+    DropdownMenu
+} from "./components/DropdownMenu";
 
 export {
     type DropdownItemProps,
@@ -63,6 +63,16 @@ export {
     type DropdownToggleContextType,
     DropdownToggleContext
 } from "./model/context/DropdownToggleContext";
+
+export {
+    type DropdownOpenContextType,
+    DropdownOpenContext
+} from "./model/context/DropdownOpenContext";
+
+export type {
+    DropdownItemMouseEvent,
+    _DropdownItemMouseEventImpl
+} from "./model/DropdownItemMouseEvent";
 
 export {
     type DebugConfig,

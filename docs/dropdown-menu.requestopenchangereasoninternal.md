@@ -9,5 +9,5 @@ All of the reasons used internally by this library to trigger open state changes
 **Signature:**
 
 ```typescript
-export type RequestOpenChangeReasonInternal = "clickDropdown" | "clickToggle" | "clickOutside" | "escapeKey" | "openSubmenu" | "closeSubmenu";
+export type RequestOpenChangeReasonInternal = "clickToggle" | "clickOutside" | "clickLeafItem" | "escapeKey" | "openSubmenu" | "closeSubmenu";
 ```

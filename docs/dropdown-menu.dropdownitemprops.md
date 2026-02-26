@@ -10,7 +10,9 @@ Props for the [DropdownItem()](./dropdown-menu.dropdownitem.md) component.
 
 ```typescript
 export type DropdownItemProps = PropsWithChildren & {
-    onClick?: (event: MouseEvent) => void;
+    onClick?: (event: DropdownItemMouseEvent) => void;
     submenuID?: string;
 };
 ```
+**References:** [DropdownItemMouseEvent](./dropdown-menu.dropdownitemmouseevent.md)
+

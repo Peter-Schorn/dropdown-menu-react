@@ -445,7 +445,6 @@ export class MenuItemNode {
         return lines.join("\n");
     }
 
-
     toString(): string {
         return JSON.stringify(this.toPODObject(), null, 4);
     }
@@ -494,6 +493,30 @@ export class MenuItemNode {
 //     ])
 // });
 
+// const tree = new MenuItemNode({
+//     id: "root",
+//     children: new Set([
+//         new MenuItemNode({
+//             id: "File",
+//             children: new Set([
+//                 new MenuItemNode({
+//                     id: "Export",
+//                     children: new Set([
+//                         new MenuItemNode({
+//                             id: "PDF (leaf)"
+//                         }),
+//                     ])
+//                 }),
+//                 new MenuItemNode({
+//                     id: "Save (leaf)"
+//                 })
+//             ])
+//         }),
+//         new MenuItemNode({
+//             id: "Help (leaf)"
+//         })
+//     ])
+// });
 // console.log(tree.toTreeString());
 
 // console.log(`tree.toString(): ${tree.toString()}`) ;

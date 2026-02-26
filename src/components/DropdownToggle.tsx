@@ -5,7 +5,6 @@ import {
     type ComponentPropsWithRef,
     type ElementType,
     type JSXElementConstructor,
-    useContext,
     useCallback,
 } from "react";
 
@@ -15,8 +14,8 @@ import type {
 } from "../components/Dropdown";
 
 import {
-    DropdownToggleContext
-} from "../model/context/DropdownToggleContext";
+    useDropdownToggle
+} from "../hooks/useDropdownToggle";
 
 /**
  * The props that a custom component must accept in order to be used as the `as`
@@ -69,9 +68,9 @@ export type DropdownToggleOwnProps = PropsWithChildren & {
  *   and a `ref` prop that can receive the toggle's ref (i.e.
  *   `Ref<HTMLElement>`).
  *
- * @public
+ * @internal
  */
-export type DropdownToggleAsValidation<T extends ElementType> =
+export type _DropdownToggleAsValidation<T extends ElementType> =
     // all intrinsic elements are valid `as` targets since they all accept an
     // `onClick` prop with a compatible type
     T extends keyof JSX.IntrinsicElements
@@ -110,7 +109,7 @@ export type DropdownToggleProps<T extends ElementType = "button"> =
         /**
          * The element type to render as. Defaults to "button".
          */
-        as?: DropdownToggleAsValidation<T>;
+        as?: _DropdownToggleAsValidation<T>;
     } & DropdownToggleOwnProps &
     Omit<
         ComponentPropsWithRef<T>,
@@ -158,7 +157,7 @@ export function DropdownToggle<T extends ElementType = "button">(
         isOpen,
         requestOpenChange,
         dropdownToggleRef
-    } = useContext(DropdownToggleContext);
+    } = useDropdownToggle();
 
     const handleClick = useCallback((
         event: RequestOpenChangeEvent

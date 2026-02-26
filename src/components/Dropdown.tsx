@@ -28,6 +28,11 @@ import {
 } from "../model/context/DropdownContext";
 
 import {
+    type DropdownOpenContextType,
+    DropdownOpenContext
+} from "../model/context/DropdownOpenContext";
+
+import {
     type DropdownToggleContextType,
     DropdownToggleContext
 } from "../model/context/DropdownToggleContext";
@@ -110,6 +115,8 @@ export type RequestOpenChangeEvent =
  * The possible values used by this library are:
  * - `clickToggle`: The user clicked on the dropdown toggle button.
  * - `clickOutside`: The user clicked somewhere outside of the dropdown menu.
+ * - `clickLeafItem`: The user clicked on a menu item that does not contain a
+ *   submenu (i.e. a "leaf" item).
  * - `escapeKey`: The user pressed the Escape key while the dropdown menu was
  *   open.
  * - `openSubmenu`: The client request to open a submenu when the dropdown menu
@@ -138,9 +145,9 @@ export type RequestOpenChangeReason =
  * @public
  */
 export type RequestOpenChangeReasonInternal =
-    | "clickDropdown" // TODO: REMOVE THIS
     | "clickToggle"
     | "clickOutside"
+    | "clickLeafItem"
     | "escapeKey"
     | "openSubmenu"
     | "closeSubmenu";
@@ -295,34 +302,90 @@ export type DropdownPropsBase = PropsWithChildren<{
     /**
      * Whether the entire dropdown menu should close when clicking on a menu
      * item that does not contain a sub menu. default: `true`. This can be
-     * overridden on a per-menu-item basis by calling `event.stopPropagation()`
-     * in the `DropdownItem`'s `onClick` handler, which will prevent the click
-     * event from bubbling up to this `Dropdown` click handler.
+     * overridden on a per-menu-item basis by calling `event.preventDefault()`
+     * in the `DropdownItem`'s `onClick` handler.
      */
     closeOnClickLeafItem?: boolean;
+
+    /**
+     * Whether to close submenus that are not ancestors of the clicked item when
+     * clicking on a menu item that does not contain a submenu (i.e., a "leaf"
+     * item). This only applies when `closeOnClickLeafItem` is `false` (or if
+     * `closeOnClickLeafItem` is `true`).
+     *
+     *  If
+     * `closeOnClickLeafItem` is `true` (and if the request to close the
+     * dropdown menu is not blocked by the client), then the entire dropdown
+     * menu will close anyway. Default: `true`. It is very unlikely that you
+     * would want to set this to `false`.
+     *
+     * For example, consider the following menu hierarchy:
+     *
+     * ```
+     * Root
+     * ├── File
+     * │   ├── Export
+     * │   │   └── PDF (leaf)
+     * │   └── Save (leaf)
+     * └── Help (leaf)
+     * ```
+     *
+     * Before click: open path is `Root > File > Export`. User clicks `Save`, a
+     * leaf item of `Root > File`.
+     * - `true`: open path becomes `Root > File` (The `Export` submenu is closed
+     *   because it not an ancestor of the clicked leaf item, but the `File`
+     *   submenu remains open because it is an ancestor of the clicked leaf
+     *   item).
+     * - `false`: open path stays `Root > File > Export`.
+     *
+     */
+    closeNonParentSubmenusOnClickLeafItem?: boolean;
 
     /**
      * Whether to enable opening and closing of submenus via mouse hover events,
      * and scrolling menus when hovering over the scroll arrows. Defaults to
      * `true`. Even if set to `false`, hover events will still change the
      * hovered state of menu items, which can affect styling.
+     *
+     * If both this property and `toggleSubmenuOnClick` are `false`, then there
+     * is no way for the user to toggle submenus, which is probably not what you
+     * want.
      */
     mouseHoverEvents?: boolean;
+
+    /**
+     * Whether to toggle submenus open/closed when clicking on a menu item that
+     * has a submenu. Defaults to `true`.
+     *
+     * If both this property and `mouseHoverEvents` are `false`, then there is
+     * no way for the user to toggle submenus, which is probably not what you
+     * want.
+     */
+    toggleSubmenuOnClick?: boolean;
 
     /**
      * Whether to enable navigating the menu and opening/closing submenus via
      * keyboard events. Defaults to `true`. Even if set to `false`, does *not*
      * disable any browser-default keyboard interactions, such as using tab to
-     * focus dropdown items.
+     * focus dropdown items. However, you can disable  browser-default keyboard
+     * interactions as well through css styling and removing the `tabIndex` of
+     * dropdown items, if necessary.
      */
     enableKeyEvents?: boolean;
 
     /**
      * The delay in milliseconds between when the user hovers over a menu item
-     * and when the submenu opens/closes. Defaults to 200ms. This only applies
-     * if `mouseHoverEvents` is `true`.
+     * and when the submenu opens. Defaults to 200ms. This only applies if
+     * `mouseHoverEvents` is `true`.
      */
-    pointerEnterExitDelayMS?: number;
+    pointerEnterDelayMS?: number;
+
+    /**
+     * The delay in milliseconds between when the user hovers over a menu item
+     * and when the submenu closes. Defaults to 200ms. This only applies if
+     * `mouseHoverEvents` is `true`.
+     */
+    pointerExitDelayMS?: number;
 }>;
 
 /**
@@ -414,11 +477,14 @@ const _Dropdown = memo(function DropdownMemo(
         onRequestOpenChange,
         onOpenMenusChange,
         children,
-        closeOnClickLeafItem = true,
         closeOnClickOutside = true,
+        closeOnClickLeafItem = true,
+        closeNonParentSubmenusOnClickLeafItem = true,
         mouseHoverEvents = true,
+        toggleSubmenuOnClick = true,
         enableKeyEvents = true,
-        pointerEnterExitDelayMS = 200
+        pointerEnterDelayMS = 200,
+        pointerExitDelayMS = 200
     } = props;
 
     // MARK: - Open State -
@@ -547,11 +613,20 @@ const _Dropdown = memo(function DropdownMemo(
     const closeOnClickLeafItemRef = useUpdatingRef<boolean>(
         closeOnClickLeafItem
     );
+    const closeNonParentSubmenusOnClickLeafItemRef = useUpdatingRef<boolean>(
+        closeNonParentSubmenusOnClickLeafItem
+    );
     const mouseHoverEventsRef = useUpdatingRef<boolean>(
         mouseHoverEvents
     );
-    const pointerEnterExitDelayMSRef = useUpdatingRef<number>(
-        pointerEnterExitDelayMS
+    const toggleSubmenuOnClickRef = useUpdatingRef<boolean>(
+        toggleSubmenuOnClick
+    );
+    const pointerEnterDelayMSRef = useUpdatingRef<number>(
+        pointerEnterDelayMS
+    );
+    const pointerExitDelayMSRef = useUpdatingRef<number>(
+        pointerExitDelayMS
     );
 
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -2148,6 +2223,7 @@ const _Dropdown = memo(function DropdownMemo(
             }
 
             if (
+                // TODO: Should we also be checking submenusPortalContainer
                 !dropdown.contains(event.target as Node)
             ) {
                 logger.debug(
@@ -2172,7 +2248,7 @@ const _Dropdown = memo(function DropdownMemo(
         if (isOpen) {
             // use setTimeout to delay adding the event listener until after
             // the current call stack is complete, to avoid immediately
-            // triggering the listener from the click that opened the menu
+            // triggering the listener from the same click that opened the menu
             setTimeout(() => {
                 window.addEventListener("click", onClickOutside);
             }, 0);
@@ -2536,14 +2612,20 @@ const _Dropdown = memo(function DropdownMemo(
         []
     );
 
+    const dropdownOpenContextValue = useMemo(
+        (): DropdownOpenContextType => ({
+            isOpen
+        }),
+        [isOpen]
+    );
+
     const dropdownToggleContextValue = useMemo(
         (): DropdownToggleContextType => ({
-            isOpen,
             requestOpenChange: requestOpenChange as
                 (options: RequestOpenChangeOptions) => void,
             dropdownToggleRef
         }),
-        [isOpen]
+        []
     );
 
     const dropdownMenuContextValue = useMemo(
@@ -2553,19 +2635,24 @@ const _Dropdown = memo(function DropdownMemo(
             hoveredMenuItemRef,
             ignoreClicksUntilNextPointerDownRef,
             mouseHoverEventsRef,
+            toggleSubmenuOnClickRef,
             closeOnClickLeafItemRef,
-            pointerEnterExitDelayMSRef,
+            closeNonParentSubmenusOnClickLeafItemRef,
+            pointerEnterDelayMSRef,
+            pointerExitDelayMSRef,
             setHoveredMenuItem,
             scheduleDropdownMenuReposition,
             openSubmenu,
-            closeSubmenu,
-
+            closeSubmenu
         }),
         [
             mainDropdownMenuEventEmitter,
             mouseHoverEventsRef,
+            toggleSubmenuOnClickRef,
             closeOnClickLeafItemRef,
-            pointerEnterExitDelayMSRef,
+            closeNonParentSubmenusOnClickLeafItemRef,
+            pointerEnterDelayMSRef,
+            pointerExitDelayMSRef,
             setHoveredMenuItem,
             scheduleDropdownMenuReposition,
             openSubmenu,
@@ -2590,31 +2677,39 @@ const _Dropdown = memo(function DropdownMemo(
     );
 
     return (
-        <DropdownContext.Provider value={dropdownContextValue}>
-            <DropdownToggleContext.Provider
-                value={dropdownToggleContextValue}
+        <DropdownContext.Provider
+            value={dropdownContextValue}
+        >
+            <DropdownOpenContext.Provider
+                value={dropdownOpenContextValue}
             >
-                <DropdownMenuContext.Provider
-                    value={dropdownMenuContextValue}
+                <DropdownToggleContext.Provider
+                    value={dropdownToggleContextValue}
                 >
-                    <DropdownMenuStoreContext.Provider value={dropdownMenuStore}>
-                        <DropdownSubmenuContext.Provider
-                            value={dropdownSubmenuContextValue}
+                    <DropdownMenuContext.Provider
+                        value={dropdownMenuContextValue}
+                    >
+                        <DropdownMenuStoreContext.Provider
+                            value={dropdownMenuStore}
                         >
-                            <DropdownSubmenuStoreContext.Provider
-                                value={dropdownSubmenuStore}
+                            <DropdownSubmenuContext.Provider
+                                value={dropdownSubmenuContextValue}
                             >
-                                <div
-                                    className="bd-dropdown"
-                                    ref={dropdownRef}
+                                <DropdownSubmenuStoreContext.Provider
+                                    value={dropdownSubmenuStore}
                                 >
-                                    {children}
-                                </div>
-                            </DropdownSubmenuStoreContext.Provider>
-                        </DropdownSubmenuContext.Provider>
-                    </DropdownMenuStoreContext.Provider>
-                </DropdownMenuContext.Provider>
-            </DropdownToggleContext.Provider>
+                                    <div
+                                        className="bd-dropdown"
+                                        ref={dropdownRef}
+                                    >
+                                        {children}
+                                    </div>
+                                </DropdownSubmenuStoreContext.Provider>
+                            </DropdownSubmenuContext.Provider>
+                        </DropdownMenuStoreContext.Provider>
+                    </DropdownMenuContext.Provider>
+                </DropdownToggleContext.Provider>
+            </DropdownOpenContext.Provider>
         </DropdownContext.Provider>
     );
 

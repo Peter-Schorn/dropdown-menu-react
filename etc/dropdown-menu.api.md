@@ -76,9 +76,24 @@ children?: ReactNode | undefined;
 // @public
 export type DropdownItemLabelProps = PropsWithChildren;
 
+// Warning: (ae-incompatible-release-tags) The symbol "DropdownItemMouseEvent" is marked as @public, but its signature references "_DropdownItemMouseEventImpl" which is marked as @internal
+//
+// @public
+export type DropdownItemMouseEvent = Readonly<_DropdownItemMouseEventImpl>;
+
+// @internal (undocumented)
+export type _DropdownItemMouseEventImpl = MouseEvent & {
+    isPreventCloseDropdownMenu: boolean;
+    isPreventCloseNonParentSubmenusOnClickLeafItem: boolean;
+    isPreventToggleSubmenu: boolean;
+    preventCloseDropdownMenu(): void;
+    preventCloseNonParentSubmenusOnClickLeafItem(): void;
+    preventToggleSubmenu(): void;
+};
+
 // @public
 export type DropdownItemProps = PropsWithChildren & {
-    onClick?: (event: MouseEvent) => void;
+    onClick?: (event: DropdownItemMouseEvent) => void;
     submenuID?: string;
 };
 
@@ -118,6 +133,16 @@ export type DropdownMenuLoggers<T extends DropdownMenuLogger = DropdownMenuLogge
 export type DropdownMenuProps = PropsWithChildren;
 
 // @public
+export const DropdownOpenContext: Context<Readonly<{
+isOpen: boolean;
+}>>;
+
+// @public
+export type DropdownOpenContextType = Readonly<{
+    isOpen: boolean;
+}>;
+
+// @public
 export type DropdownProps = DropdownPropsInternallyControlled | DropdownPropsExternallyControlled;
 
 // @public
@@ -126,9 +151,12 @@ export type DropdownPropsBase = PropsWithChildren<{
     onOpenMenusChange?: (openMenuIDsPath: string[]) => void;
     closeOnClickOutside?: boolean;
     closeOnClickLeafItem?: boolean;
+    closeNonParentSubmenusOnClickLeafItem?: boolean;
     mouseHoverEvents?: boolean;
+    toggleSubmenuOnClick?: boolean;
     enableKeyEvents?: boolean;
-    pointerEnterExitDelayMS?: number;
+    pointerEnterDelayMS?: number;
+    pointerExitDelayMS?: number;
 }>;
 
 // @public
@@ -152,19 +180,17 @@ export type DropdownToggleAsRequiredProps = {
     ref?: (element: HTMLElement | null) => void;
 };
 
-// @public
-export type DropdownToggleAsValidation<T extends ElementType> = T extends keyof JSX.IntrinsicElements ? T : T extends JSXElementConstructor<infer Props> ? "onClick" extends keyof Props ? NonNullable<DropdownToggleAsRequiredProps["onClick"]> extends Props["onClick"] ? "ref" extends keyof Props ? NonNullable<DropdownToggleAsRequiredProps["ref"]> extends Props["ref"] ? T : "DropdownToggle error: custom `as` must accept compatible ref" : "DropdownToggle error: custom `as` must declare ref" : "DropdownToggle error: custom `as` must accept compatible onClick" : "DropdownToggle error: custom `as` must declare onClick" : "DropdownToggle error: invalid `as` type";
+// @internal
+export type _DropdownToggleAsValidation<T extends ElementType> = T extends keyof JSX.IntrinsicElements ? T : T extends JSXElementConstructor<infer Props> ? "onClick" extends keyof Props ? NonNullable<DropdownToggleAsRequiredProps["onClick"]> extends Props["onClick"] ? "ref" extends keyof Props ? NonNullable<DropdownToggleAsRequiredProps["ref"]> extends Props["ref"] ? T : "DropdownToggle error: custom `as` must accept compatible ref" : "DropdownToggle error: custom `as` must declare ref" : "DropdownToggle error: custom `as` must accept compatible onClick" : "DropdownToggle error: custom `as` must declare onClick" : "DropdownToggle error: invalid `as` type";
 
 // @public
 export const DropdownToggleContext: Context<Readonly<{
-isOpen: boolean;
 requestOpenChange: (options: RequestOpenChangeOptions) => void;
 dropdownToggleRef: RefObject<HTMLElement | null>;
 }>>;
 
 // @public
 export type DropdownToggleContextType = Readonly<{
-    isOpen: boolean;
     requestOpenChange: (options: RequestOpenChangeOptions) => void;
     dropdownToggleRef: RefObject<HTMLElement | null>;
 }>;
@@ -177,7 +203,7 @@ export type DropdownToggleOwnProps = PropsWithChildren & {
 
 // @public
 export type DropdownToggleProps<T extends ElementType = "button"> = {
-    as?: DropdownToggleAsValidation<T>;
+    as?: _DropdownToggleAsValidation<T>;
 } & DropdownToggleOwnProps & Omit<ComponentPropsWithRef<T>, keyof DropdownToggleOwnProps | keyof DropdownToggleAsRequiredProps | "as">;
 
 // @public
@@ -206,7 +232,7 @@ export type RequestOpenChangeOptionsBase = {
 export type RequestOpenChangeReason = RequestOpenChangeReasonInternal | (string & {});
 
 // @public
-export type RequestOpenChangeReasonInternal = "clickDropdown" | "clickToggle" | "clickOutside" | "escapeKey" | "openSubmenu" | "closeSubmenu";
+export type RequestOpenChangeReasonInternal = "clickToggle" | "clickOutside" | "clickLeafItem" | "escapeKey" | "openSubmenu" | "closeSubmenu";
 
 // @public
 export function setConsoleLoggers(): void;
@@ -219,6 +245,10 @@ export type SetLoggers<T extends DropdownMenuLogger = DropdownMenuLogger> = Part
 
 // @public
 export function setLoggers<T extends DropdownMenuLogger = DropdownMenuLogger>(loggers: SetLoggers<T>): void;
+
+// Warnings were encountered during analysis:
+//
+// src/components/DropdownToggle.tsx:112:9 - (ae-incompatible-release-tags) The symbol "as" is marked as @public, but its signature references "_DropdownToggleAsValidation" which is marked as @internal
 
 // (No @packageDocumentation comment for this package)
 

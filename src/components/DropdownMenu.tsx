@@ -18,8 +18,8 @@ import {
 } from "../model/context/DropdownContext";
 
 import {
-    DropdownToggleContext
-} from "../model/context/DropdownToggleContext";
+    DropdownOpenContext
+} from "../model/context/DropdownOpenContext";
 
 import {
     useDropdownSubmenuStoreContext
@@ -38,11 +38,11 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
     }: DropdownMenuProps
 ): JSX.Element {
 
-    const dropdownToggleContext = useContext(DropdownToggleContext);
+    const dropdownOpenContext = useContext(DropdownOpenContext);
 
     const {
         isOpen
-    } = dropdownToggleContext;
+    } = dropdownOpenContext;
 
     const dropdownSubmenuStoreContext = useDropdownSubmenuStoreContext();
 

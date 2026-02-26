@@ -12,8 +12,8 @@ Requires the chosen `as` target supports an `onClick` prop compatible with `OnRe
 
 ```typescript
 export type DropdownToggleProps<T extends ElementType = "button"> = {
-    as?: DropdownToggleAsValidation<T>;
+    as?: _DropdownToggleAsValidation<T>;
 } & DropdownToggleOwnProps & Omit<ComponentPropsWithRef<T>, keyof DropdownToggleOwnProps | keyof DropdownToggleAsRequiredProps | "as">;
 ```
-**References:** [DropdownToggleAsValidation](./dropdown-menu.dropdowntoggleasvalidation.md)<!-- -->, [DropdownToggleOwnProps](./dropdown-menu.dropdowntoggleownprops.md)<!-- -->, [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md)
+**References:** [DropdownToggleOwnProps](./dropdown-menu.dropdowntoggleownprops.md)<!-- -->, [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md)
 

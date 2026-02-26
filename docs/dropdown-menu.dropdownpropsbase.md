@@ -14,9 +14,12 @@ export type DropdownPropsBase = PropsWithChildren<{
     onOpenMenusChange?: (openMenuIDsPath: string[]) => void;
     closeOnClickOutside?: boolean;
     closeOnClickLeafItem?: boolean;
+    closeNonParentSubmenusOnClickLeafItem?: boolean;
     mouseHoverEvents?: boolean;
+    toggleSubmenuOnClick?: boolean;
     enableKeyEvents?: boolean;
-    pointerEnterExitDelayMS?: number;
+    pointerEnterDelayMS?: number;
+    pointerExitDelayMS?: number;
 }>;
 ```
 **References:** [DropdownHandle](./dropdown-menu.dropdownhandle.md)

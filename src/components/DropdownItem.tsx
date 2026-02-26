@@ -17,6 +17,10 @@ import {
 } from "zustand";
 
 import {
+    DropdownToggleContext
+} from "../model/context/DropdownToggleContext";
+
+import {
     DropdownMenuContext
     // dropdownMenuContextDefaultValue
 } from "../model/context/DropdownMenuContext";
@@ -60,6 +64,11 @@ import {
     // CustomScrollbar
 } from "./CustomScrollbar";
 
+import {
+    type DropdownItemMouseEvent,
+    createDropdownItemMouseEvent
+} from "../model/DropdownItemMouseEvent";
+
 import { useEffectEvent } from "../hooks/useEffectEvent";
 
 // import {
@@ -88,6 +97,18 @@ import {
 
 import { dropdownItemLogger as logger } from "../utils/loggers";
 
+/* eslint-disable
+    @typescript-eslint/no-unused-vars
+*/
+// these are used in doc comments
+import type { DropdownProps } from "./Dropdown";
+import type { DropdownPropsBase } from "./Dropdown";
+import type {
+    _DropdownItemMouseEventImpl,
+} from "../model/DropdownItemMouseEvent";
+
+/* eslint-enable */
+
 /**
  * Props for the {@link DropdownItem} component.
  *
@@ -96,8 +117,58 @@ import { dropdownItemLogger as logger } from "../utils/loggers";
 export type DropdownItemProps = PropsWithChildren & {
     /**
      * A click handler for the dropdown item.
+     *
+     * The event object passed to this handler is a
+     * {@link DropdownItemMouseEvent}, which extends the native `MouseEvent`
+     * with additional methods for preventing the default behavior described
+     * below.
+     *
+     * `event.preventDefault()` can be called within this handler to prevent the
+     * the default behavior that occurs when a dropdown item is clicked. The
+     * default behavior is as follows:
+     * - If this item has a submenu, then:
+     *   - If {@link DropdownPropsBase.toggleSubmenuOnClick} is `true`, then the
+     *     submenu will toggle open/closed. If `false`, then clicking on a menu
+     *     item with a submenu will not toggle the submenu open/closed.
+     * - If this item does not have a submenu (i.e. it is a leaf item), then:
+     *   - If {@link DropdownPropsBase.closeOnClickLeafItem} is `true`, the
+     *     entire dropdown menu will be requested to close. If `false`, then the
+     *     dropdown menu will not be requested to close.
+     *   - If {@link DropdownPropsBase.closeNonParentSubmenusOnClickLeafItem} is
+     *     `true`, then the all non-parent submenus of this item will be closed.
+     *     If `false`, then non-parent submenus will not be requested to close.
+     *
+     * {@link _DropdownItemMouseEventImpl.preventCloseDropdownMenu | event.preventCloseDropdownMenu()}
+     * can be called within this handler to prevent the default behavior of
+     * closing the entire dropdown menu when this item is clicked if this is a
+     * leaf item and {@link DropdownPropsBase.closeOnClickLeafItem} is `true`.
+     * This method has no effect if called in the onClick handler of a non-leaf
+     * item, or if {@link DropdownPropsBase.closeOnClickLeafItem} is `false`, in
+     * which case the dropdown menu will not be requested to close when a leaf
+     * item is clicked regardless of whether or not this method is called.
+     *
+     * {@link _DropdownItemMouseEventImpl.preventCloseNonParentSubmenusOnClickLeafItem | event.preventCloseNonParentSubmenusOnClickLeafItem()}
+     * can be called within this handler to prevent the default behavior of
+     * closing all non-parent submenus when this item is clicked if this is a
+     * leaf item and
+     * {@link DropdownPropsBase.closeNonParentSubmenusOnClickLeafItem} is
+     * `true`. This method has no effect if called in the onClick handler of a
+     * non-leaf item, or if
+     * {@link DropdownPropsBase.closeNonParentSubmenusOnClickLeafItem} is
+     * `false`, in which case non-parent submenus will not be requested to close
+     * when a leaf item is clicked regardless of whether or not this method is
+     * called.
+     *
+     * {@link _DropdownItemMouseEventImpl.preventToggleSubmenu | event.preventToggleSubmenu()}
+     * can be called within this handler to prevent the default behavior of
+     * toggling the submenu of this item when it is clicked if this item has a
+     * submenu and {@link DropdownPropsBase.toggleSubmenuOnClick} is `true`.
+     * This method has no effect if called in the onClick handler of a leaf
+     * item, or if {@link DropdownPropsBase.toggleSubmenuOnClick} is `false`, in
+     * which case clicking on a menu item with a submenu will not toggle the
+     * submenu open/closed regardless of whether or not this method is called.
      */
-    onClick?: (event: MouseEvent) => void;
+    onClick?: (event: DropdownItemMouseEvent) => void;
 
     /**
      * The ID of the submenu of this dropdown item. If not provided, a unique ID
@@ -121,6 +192,10 @@ const _DropdownItem = memo(function DropdownItemMemo(
         children
     } = props;
 
+    const {
+        requestOpenChange
+    } = useContext(DropdownToggleContext);
+
     const dropdownMenuContext = useContext(DropdownMenuContext);
     // const dropdownMenuContext = dropdownMenuContextDefaultValue;
 
@@ -132,8 +207,11 @@ const _DropdownItem = memo(function DropdownItemMemo(
         hoveredMenuItemRef,
         ignoreClicksUntilNextPointerDownRef,
         mouseHoverEventsRef,
+        toggleSubmenuOnClickRef,
         closeOnClickLeafItemRef,
-        pointerEnterExitDelayMSRef,
+        closeNonParentSubmenusOnClickLeafItemRef,
+        pointerEnterDelayMSRef,
+        pointerExitDelayMSRef,
         scheduleDropdownMenuReposition,
         openSubmenu: contextOpenSubmenu,
         closeSubmenu: contextCloseSubmenu,
@@ -1706,8 +1784,9 @@ const _DropdownItem = memo(function DropdownItemMemo(
             `${ignoreClicksUntilNextPointerDownRef.current}`
         );
 
-        event.preventDefault();
-
+        // if this click is simply a result of the user clicking on the scroll
+        // arrow and then releasing the mouse after scroll arrow has
+        // disappeared, ignore the click event
         if (ignoreClicksUntilNextPointerDownRef.current) {
             ignoreClicksUntilNextPointerDownRef.current = false;
             logger.debug(
@@ -1715,23 +1794,41 @@ const _DropdownItem = memo(function DropdownItemMemo(
                 "ignoreClicksUntilNextPointerDownRef.current " +
                 "is true; not handling click and stopping propagation"
             );
+            event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
             return;
         }
 
-        if (dropdownSubmenuStore.getState().isSubmenu) {
-            // prevent the click from bubbling up to the main dropdown menu
-            // click handler and closing all menus; instead, the click should
-            // only toggle the visibility of this submenu
-            event.stopPropagation();
-            event.stopImmediatePropagation();
+        const dropdownItemMouseEvent = createDropdownItemMouseEvent(event);
+
+        // the client could call `event.preventDefault()` in their onClick
+        // handler to prevent the default click behavior of toggling the submenu
+        // or closing the menu, so we must check if the event was
+        // defaultPrevented after calling the onClick prop
+        // onClick?.(event);
+        onClick?.(dropdownItemMouseEvent);
+
+        if (event.defaultPrevented) {
             logger.debug(
-                "handleDropdownItemClick: submenu: stopping propagation for " +
-                `dropdown item with submenu ID ${submenuID}`
+                "handleDropdownItemClick: event.defaultPrevented is true " +
+                "after calling onClick prop; not handling click"
             );
-            // toggle the submenu visibility
-            toggleSubmenu();
+            return;
+        }
+
+        if (dropdownSubmenuStore.getState().isSubmenu) {
+            logger.debug(
+                "handleDropdownItemClick: toggling submenu for dropdown item " +
+                `with submenu ID ${submenuID}`
+            );
+            if (
+                toggleSubmenuOnClickRef.current &&
+                !dropdownItemMouseEvent.isPreventToggleSubmenu
+            ) {
+                // toggle the submenu visibility
+                toggleSubmenu();
+            }
 
         } else {
             // the user clicked on a dropdown item without a submenu
@@ -1740,48 +1837,66 @@ const _DropdownItem = memo(function DropdownItemMemo(
                 `submenu ID ${submenuID}`
             );
 
-            const menuItemTree =
-                dropdownMenuStoreContext.getState().menuItemTree;
-
-            // if the client has blocked closing the entire dropdown menu,
-            // at least close any non-parent open submenus of this menu item
-
-            // get the id of the parent (sub)menu of this menu item
-            const parentMenuItemID = menuItemTree.parentOf(
-                submenuID
-            )?.id;
-
-            if (parentMenuItemID) {
-                // tell the context to open the parent (sub)menu of this menu
-                // item (which must already be open if this item was just
-                // clicked), which has the effect of closing any submenus that
-                // are not ancestors of this menu item
-                contextOpenSubmenu(parentMenuItemID);
-            }
-            else /* if (!parentMenuItemID) */ {
+            // if the client requested that clicking on a leaf item should close
+            // the entire dropdown menu, then request the main dropdown menu to
+            // close
+            if (
+                closeOnClickLeafItemRef.current &&
+                !dropdownItemMouseEvent.isPreventCloseDropdownMenu
+            ) {
                 logger.debug(
-                    "handleDropdownItemClick: no parent menu item ID for " +
-                    `dropdown item with submenu ID ${submenuID}; not closing ` +
-                    "any submenus"
+                    "handleDropdownItemClick: " +
+                    "closeOnClickLeafItem is true; requesting " +
+                    "dropdown menu to close"
                 );
+                requestOpenChange({
+                    open: false,
+                    reason: "clickLeafItem",
+                    event
+                });
+                // the client could still block the request to close the entire
+                // menu if it is externally controlled
             }
 
-            if (!closeOnClickLeafItemRef.current) {
-                // if the client has specified that clicking on a leaf item
-                // should not close the entire dropdown menu, then stop
-                // propagation to prevent the main dropdown menu's click handler
-                // from closing the menu
+            if (
+                closeNonParentSubmenusOnClickLeafItemRef.current &&
+                !dropdownItemMouseEvent.isPreventCloseNonParentSubmenusOnClickLeafItem
+            ) {
+                logger.debug(
+                    "handleDropdownItemClick: " +
+                    "closeNonParentSubmenusOnClickLeafItem is true; " +
+                    "requesting non-parent submenus to close"
+                );
 
-                event.stopPropagation();
-                event.stopImmediatePropagation();
+                // close non-parent submenus of the this leaf dropdown item
+
+                const menuItemTree =
+                    dropdownMenuStoreContext.getState().menuItemTree;
+
+                // if the client has blocked closing the entire dropdown menu,
+                // at least close any non-parent open submenus of this menu item
+
+                // get the id of the parent (sub)menu of this menu item
+                const parentMenuItemID = menuItemTree.parentOf(
+                    submenuID
+                )?.id;
+
+                if (parentMenuItemID) {
+                    // tell the context to open the parent (sub)menu of this
+                    // menu item (which must already be open if this item was
+                    // just clicked), which has the effect of closing any
+                    // submenus that are not ancestors of this menu item
+                    contextOpenSubmenu(parentMenuItemID);
+                }
+                else /* if (!parentMenuItemID) */ {
+                    logger.debug(
+                        "handleDropdownItemClick: no parent menu item ID for " +
+                        `dropdown item with submenu ID ${submenuID}; not ` +
+                        "closing any submenus"
+                    );
+                }
             }
-            // else, if closeOnClickLeafItem is true, then we can allow the
-            // click to propagate to the main dropdown menu's click handler,
-            // which will close the entire menu, including all submenus, so we
-            // do not need to do anything here
         }
-
-        onClick?.(event);
     });
 
     /**
@@ -1910,7 +2025,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
                     `submenu for dropdown item with submenu ID ${submenuID}`
                 );
             }
-        }, pointerEnterExitDelayMSRef.current);
+        }, pointerEnterDelayMSRef.current);
 
     }, [
         dropdownSubmenuStore,
@@ -1918,7 +2033,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
         contextOpenSubmenu,
         submenuID,
         mouseHoverEventsRef,
-        pointerEnterExitDelayMSRef
+        pointerEnterDelayMSRef
     ]);
 
     /**
@@ -2021,7 +2136,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
                 );
                 contextCloseSubmenu(submenuID);
             }
-        }, pointerEnterExitDelayMSRef.current);
+        }, pointerExitDelayMSRef.current);
 
     }, [
         contextCloseSubmenu,
@@ -2031,7 +2146,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
         submenuID,
         parentScrollbarHitbox,
         mouseHoverEventsRef,
-        pointerEnterExitDelayMSRef
+        pointerExitDelayMSRef
     ]);
 
     /**

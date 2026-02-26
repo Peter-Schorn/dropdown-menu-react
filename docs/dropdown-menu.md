@@ -222,14 +222,29 @@ A dropdown item submenu component that is used to set the submenu of a dropdown 
 </td></tr>
 <tr><td>
 
+[DropdownOpenContext](./dropdown-menu.dropdownopencontext.md)
+
+
+</td><td>
+
+The context for the open/closed state of the dropdown menu. It provides a boolean `isOpen` that indicates whether the dropdown menu is currently open or closed.
+
+If you are using the default [Dropdown()](./dropdown-menu.dropdown.md) component, you do not need to interact with this context directly. However, if you are creating a custom dropdown component, you can use this context to determine the open/closed state of the dropdown menu.
+
+
+</td></tr>
+<tr><td>
+
 [DropdownToggleContext](./dropdown-menu.dropdowntogglecontext.md)
 
 
 </td><td>
 
-The context for the dropdown toggle component, which provides information about the open/closed state of the dropdown menu and a function to request changes to that state. It also provides a ref that should be attached to the underlying DOM element rendered by the dropdown toggle, which allows the dropdown menu to position itself correctly relative to the toggle.
+The context for the dropdown toggle component, which provides a function to request changes to that state. It also provides a ref that should be attached to the underlying DOM element rendered by the dropdown toggle, which allows the dropdown menu to position itself correctly relative to the toggle.
 
 If you are using the default [DropdownToggle()](./dropdown-menu.dropdowntoggle.md) component, you do not need to interact with this context directly. However, if you are creating a custom dropdown toggle component, you can use this context coordinate with the dropdown menu.
+
+The value received from this context has a stable identity and will never change between renders.
 
 
 </td></tr>
@@ -316,6 +331,17 @@ Props for the `DropdownItemLabel` component.
 </td></tr>
 <tr><td>
 
+[DropdownItemMouseEvent](./dropdown-menu.dropdownitemmouseevent.md)
+
+
+</td><td>
+
+The event object passed to the `onClick` handler of a `DropdownItem`<!-- -->. It extends the native `MouseEvent` with additional methods for preventing the default click behavior of closing the dropdown menu or closing non-parent submenus when a leaf item is clicked.
+
+
+</td></tr>
+<tr><td>
+
 [DropdownItemProps](./dropdown-menu.dropdownitemprops.md)
 
 
@@ -366,6 +392,19 @@ An object containing all loggers used in this library. This can be used to set a
 </td><td>
 
 The props for the `DropdownMenu` component.
+
+
+</td></tr>
+<tr><td>
+
+[DropdownOpenContextType](./dropdown-menu.dropdownopencontexttype.md)
+
+
+</td><td>
+
+The context for the open/closed state of the dropdown menu. It provides a boolean `isOpen` that indicates whether the dropdown menu is currently open or closed.
+
+If you are using the default [Dropdown()](./dropdown-menu.dropdown.md) component, you do not need to interact with this context directly. However, if you are creating a custom dropdown component, you can use this context to determine the open/closed state of the dropdown menu.
 
 
 </td></tr>
@@ -430,23 +469,12 @@ The custom component must accept the following props: - `onClick`<!-- -->: A fun
 </td></tr>
 <tr><td>
 
-[DropdownToggleAsValidation](./dropdown-menu.dropdowntoggleasvalidation.md)
-
-
-</td><td>
-
-A type-level validation to ensure that the `as` prop provided to `DropdownToggle` is a valid element type that can be used as the toggle. The `as` prop is valid if it is either: - An intrinsic element (e.g. "button", "a", "div", etc.), since all intrinsic elements accept `onClick` and `ref` props with compatible types. - A custom component that accepts an `onClick` prop that can receive the toggle's click handler (i.e. `(event: OnRequestOpenChangeEvent) => void`<!-- -->) and a `ref` prop that can receive the toggle's ref (i.e. `Ref<HTMLElement>`<!-- -->).
-
-
-</td></tr>
-<tr><td>
-
 [DropdownToggleContextType](./dropdown-menu.dropdowntogglecontexttype.md)
 
 
 </td><td>
 
-The context type for the dropdown toggle component, which provides information about the open/closed state of the dropdown menu and a function to request changes to that state. It also provides a ref that should be attached to the underlying DOM element rendered by the dropdown toggle, which allows the dropdown menu to position itself correctly relative to the toggle.
+The context type for the dropdown toggle component, which provides a function to request changes to that state. It also provides a ref that should be attached to the underlying DOM element rendered by the dropdown toggle, which allows the dropdown menu to position itself correctly relative to the toggle.
 
 If you are using the default [DropdownToggle()](./dropdown-menu.dropdowntoggle.md) component, you do not need to interact with this context directly. However, if you are creating a custom dropdown toggle component, you can use this context coordinate with the dropdown menu.
 
@@ -533,7 +561,7 @@ The base options for a request to change the open state of the dropdown menu. Ex
 
 A more specific reason for a request to change the open state of the dropdown menu, which can be used by clients to determine how to respond to the request.
 
-The possible values used by this library are: - `clickToggle`<!-- -->: The user clicked on the dropdown toggle button. - `clickOutside`<!-- -->: The user clicked somewhere outside of the dropdown menu. - `escapeKey`<!-- -->: The user pressed the Escape key while the dropdown menu was open. - `openSubmenu`<!-- -->: The client request to open a submenu when the dropdown menu is not currently open, so the dropdown menu is requesting to open first before opening the requested submenu. - `closeSubmenu`<!-- -->: The client called the `closeSubmenu` method of `DropdownHandle` and passed in the ID of the root menu, so the dropdown menu is requesting to close the entire menu.
+The possible values used by this library are: - `clickToggle`<!-- -->: The user clicked on the dropdown toggle button. - `clickOutside`<!-- -->: The user clicked somewhere outside of the dropdown menu. - `clickLeafItem`<!-- -->: The user clicked on a menu item that does not contain a submenu (i.e. a "leaf" item). - `escapeKey`<!-- -->: The user pressed the Escape key while the dropdown menu was open. - `openSubmenu`<!-- -->: The client request to open a submenu when the dropdown menu is not currently open, so the dropdown menu is requesting to open first before opening the requested submenu. - `closeSubmenu`<!-- -->: The client called the `closeSubmenu` method of `DropdownHandle` and passed in the ID of the root menu, so the dropdown menu is requesting to close the entire menu.
 
 A client can also define their own custom reasons by using any string value that is not one of the above values. For example, when creating your own custom dropdown toggle component, you can call `requestOpenChange` from [DropdownToggleContext](./dropdown-menu.dropdowntogglecontext.md) to request to change the open state of the dropdown menu and pass in your own custom reason.
 

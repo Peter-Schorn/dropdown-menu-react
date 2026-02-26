@@ -8,8 +8,7 @@ import type {
 } from "../../components/Dropdown";
 
 /**
- * The context type for the dropdown toggle component, which provides
- * information about the open/closed state of the dropdown menu and a function
+ * The context type for the dropdown toggle component, which provides a function
  * to request changes to that state. It also provides a ref that should be
  * attached to the underlying DOM element rendered by the dropdown toggle, which
  * allows the dropdown menu to position itself correctly relative to the toggle.
@@ -22,11 +21,6 @@ import type {
  * @public
  */
 export type DropdownToggleContextType = Readonly<{
-    /**
-     * Whether the dropdown menu is currently open or closed.
-     */
-    isOpen: boolean;
-
     /**
      * Requests a change to the open state of the dropdown menu.
      *
@@ -54,15 +48,6 @@ export type DropdownToggleContextType = Readonly<{
 }>;
 
 export const dropdownToggleContextDefaultValue: DropdownToggleContextType = {
-    get isOpen(): boolean {
-        // eslint-disable-next-line no-console
-        console.warn(
-            "DropdownToggleContext.isOpen was accessed, but no provider " +
-            "is set up. This component must be used as a child of a " +
-            "<Dropdown> component."
-        );
-        return false;
-    },
     requestOpenChange: () => {
         // eslint-disable-next-line no-console
         console.warn(
@@ -83,16 +68,18 @@ export const dropdownToggleContextDefaultValue: DropdownToggleContextType = {
 };
 
 /**
- * The context for the dropdown toggle component, which provides information
- * about the open/closed state of the dropdown menu and a function to request
- * changes to that state. It also provides a ref that should be attached to the
- * underlying DOM element rendered by the dropdown toggle, which allows the
- * dropdown menu to position itself correctly relative to the toggle.
+ * The context for the dropdown toggle component, which provides a function to
+ * request changes to that state. It also provides a ref that should be attached
+ * to the underlying DOM element rendered by the dropdown toggle, which allows
+ * the dropdown menu to position itself correctly relative to the toggle.
  *
  * If you are using the default {@link DropdownToggle} component, you do not
  * need to interact with this context directly. However, if you are creating a
  * custom dropdown toggle component, you can use this context coordinate with
  * the dropdown menu.
+ *
+ * The value received from this context has a stable identity and will never
+ * change between renders.
  *
  * @public
  */
