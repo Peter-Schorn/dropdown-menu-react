@@ -259,3 +259,33 @@ export function getNextState<T>(
         return update;
     }
 }
+
+/**
+ * Determines whether a value implements the ECMAScript iterable protocol.
+ *
+ * This checks for the presence of the `Symbol.iterator` method, which is the
+ * runtime indicator that a value can be used in constructs such as `for...of`,
+ * spread syntax, and `Array.from`.
+ *
+ * The generic parameter `T` represents the element type yielded by the
+ * iterable. This cannot be verified at runtime and is only used to help
+ * TypeScript narrow the type when the function returns `true`.
+ *
+ * Does not verify that the iterator symbol actually implements the correct call
+ * signature for an iterable.
+ *
+ * @typeParam T - The expected element type produced by the iterable.
+ * @param value - The value to test.
+ * @returns `true` if the value appears to implement `Iterable<T>`.
+ */
+export function isIterable<T>(value: unknown): value is Iterable<T> {
+    if (value === null || value === undefined) {
+        return false;
+    }
+
+    if (typeof value !== "object" && typeof value !== "function") {
+        return false;
+    }
+
+    return Symbol.iterator in value;
+}

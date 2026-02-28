@@ -10,6 +10,7 @@ The base props for the [Dropdown()](./dropdown-menu.dropdown.md) component, whic
 
 ```typescript
 export type DropdownPropsBase = PropsWithChildren<{
+    menuID?: string;
     handle?: ReactRef<DropdownHandle>;
     onOpenMenusChange?: (openMenuIDsPath: string[]) => void;
     closeOnClickOutside?: boolean;

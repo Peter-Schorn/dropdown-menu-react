@@ -279,6 +279,13 @@ export type DropdownHandle = {
  * @public
  */
 export type DropdownPropsBase = PropsWithChildren<{
+
+    /**
+     * An optional ID for the root menu. If not provided, a random UUID will be
+     * generated and used.
+     */
+    menuID?: string;
+
     /**
      * Optional ref to access {@link DropdownHandle} methods.
      */
@@ -472,6 +479,7 @@ const _Dropdown = memo(function DropdownMemo(
     // const debugConfig = defaultDebugConfig;
 
     const {
+        menuID: externalMenuID,
         handle,
         isOpen: externalIsOpen,
         onRequestOpenChange,
@@ -575,9 +583,16 @@ const _Dropdown = memo(function DropdownMemo(
         []
     );
 
-    const menuID = useMemo(
+    const defaultMenuID = useMemo(
         () => crypto.randomUUID(),
         []
+    );
+
+    const menuID = useMemo(
+        () => {
+            return externalMenuID ?? defaultMenuID;
+        },
+        [defaultMenuID, externalMenuID]
     );
 
     /**
@@ -640,9 +655,7 @@ const _Dropdown = memo(function DropdownMemo(
     const ignoreClicksUntilNextPointerDownRef = useRef<boolean>(false);
 
     const menuItemsAlignmentRef = useRef<Map<string, HorizontalEdge>>(
-        new Map<string, HorizontalEdge>([
-            [menuID, "right"]
-        ])
+        new Map<string, HorizontalEdge>()
     );
 
     const repositionMenusRafIdRef = useRef<number | null>(null);
@@ -708,12 +721,8 @@ const _Dropdown = memo(function DropdownMemo(
     ]);
 
     const getSubmenuItemTree = useCallback((
-        submenuID: string
+        node: MenuItemNode
     ): MenuItemNode => {
-
-        const node = new MenuItemNode({
-            id: submenuID
-        });
 
         const submenusPortalContainer =
             dropdownMenuStore.getState().submenusPortalContainer;
@@ -725,9 +734,8 @@ const _Dropdown = memo(function DropdownMemo(
             return node;
         }
 
-        const submenu = submenusPortalContainer.querySelector(
-            `.bd-dropdown-submenu[data-submenu-id="${submenuID}"]`
-        );
+        const submenu = node.subMenuMeasuringContainer;
+
         if (!submenu) {
             return node;
         }
@@ -745,9 +753,23 @@ const _Dropdown = memo(function DropdownMemo(
                 // no submenu;
                 continue;
             }
+
+            const submenuElement = submenusPortalContainer.querySelector(
+                `.bd-dropdown-menu-measuring-container[data-submenu-id="${submenuID}"]`
+            );
+            const submenu = submenuElement instanceof HTMLElement
+                ? submenuElement
+                : null;
+
+            const submenuNode = new MenuItemNode({
+                id: submenuID,
+                dropdownItemContainer: menuItem,
+                subMenuMeasuringContainer: submenu
+            });
+
             // recursion
             // eslint-disable-next-line react-hooks/immutability
-            const submenuTree = getSubmenuItemTree(submenuID);
+            const submenuTree = getSubmenuItemTree(submenuNode);
             node.addChild(submenuTree);
         }
 
@@ -767,8 +789,20 @@ const _Dropdown = memo(function DropdownMemo(
             return;
         }
 
+        const submenusPortalContainer =
+            dropdownMenuStore.getState().submenusPortalContainer;
+
+        if (!submenusPortalContainer) {
+            logger.warn(
+                "buildMenuItemTree: submenusPortalContainer is null"
+            );
+            return;
+        }
+
+        // the root of the menu item tree
         const menuItemTree = new MenuItemNode({
-            id: menuID
+            id: menuID,
+            subMenuMeasuringContainer: dropdownMenuMeasuringContainerRef.current
         });
 
         const topLevelMenuItems = dropdownMenu.querySelectorAll(
@@ -784,9 +818,22 @@ const _Dropdown = memo(function DropdownMemo(
                 continue;
             }
 
-            const submenuNode = getSubmenuItemTree(submenuID);
+            const submenuElement = submenusPortalContainer.querySelector(
+                `.bd-dropdown-menu-measuring-container[data-submenu-id="${submenuID}"]`
+            );
+            const submenu = submenuElement instanceof HTMLElement
+                ? submenuElement
+                : null;
 
-            menuItemTree.addChild(submenuNode);
+            const submenuNode = new MenuItemNode({
+                id: submenuID,
+                dropdownItemContainer: menuItem,
+                subMenuMeasuringContainer: submenu
+            });
+
+            const submenuTree = getSubmenuItemTree(submenuNode);
+
+            menuItemTree.addChild(submenuTree);
 
         }
 
@@ -1632,24 +1679,22 @@ const _Dropdown = memo(function DropdownMemo(
             focusedElement instanceof HTMLElement &&
             focusedElement.dataset.submenuId
         ) {
-            // then a dropdown item is currently focused, so all menu items in
-            // its containing menu
+            // then a dropdown item is currently focused, so get all menu items
+            // in its containing menu
+
             const submenuId = focusedElement.dataset.submenuId;
-            const parentMenu = focusedElement.closest(
-                ".bd-dropdown-menu-content"
-            );
-            if (parentMenu) {
-                return Array.from(
-                    parentMenu.querySelectorAll(
-                        ".bd-dropdown-item-container"
-                    )
-                ).filter(e => e instanceof HTMLElement);
+
+            const parentNode =
+                dropdownMenuStore.getState().menuItemTree.parentOf(submenuId);
+
+            if (parentNode) {
+                return parentNode.getDirectChildDropdownItemContainers();
             }
             else {
                 logger.warn(
-                    "getAllDropdownItems: could not find parent menu for " +
-                    "focused dropdown item with submenu ID " +
-                    `${submenuId}:`, focusedElement
+                    "getAllDropdownItems: parent node not found in menu item " +
+                    `tree for submenu ID ${submenuId}; menu item tree:\n` +
+                    `${dropdownMenuStore.getState().menuItemTree.toTreeString()}`
                 );
                 // fallback to returning all items in innermost open menu
             }
@@ -1658,29 +1703,25 @@ const _Dropdown = memo(function DropdownMemo(
 
         const openMenuIDsPath = dropdownMenuStore.getState().openMenuIDsPath;
         const openSubmenuID = openMenuIDsPath[openMenuIDsPath.length - 1];
-        if (openSubmenuID && openSubmenuID !== menuID) {
-            const submenu = submenusPortalContainer.querySelector(
-                `.bd-dropdown-submenu[data-submenu-id="${openSubmenuID}"]`
-            );
-            if (!submenu) {
-                logger.debug(
-                    `getAllDropdownItems: submenu with ID ${openSubmenuID} ` +
-                    "not found"
-                );
-                return [];
-            }
-            return Array.from(
-                submenu.querySelectorAll(".bd-dropdown-item-container")
-            ).filter(e => e instanceof HTMLElement);
-        }
-        else {
-            return Array.from(
-                dropdownMenuContent.querySelectorAll(
-                    ".bd-dropdown-item-container"
-                )
-            ).filter(e => e instanceof HTMLElement);
 
+        const id = openSubmenuID ?? menuID;
+
+        const menuNode =
+            dropdownMenuStore.getState().menuItemTree.getNodeByID(
+                id
+            );
+
+        if (!menuNode) {
+            logger.warn(
+                `getCurrentMenuDropdownItems: menu node with ID ${id} not ` +
+                "found in menu item tree:\n" +
+                `${dropdownMenuStore.getState().menuItemTree.toTreeString()}`
+            );
+            return [];
         }
+
+        return menuNode.getDirectChildDropdownItemContainers();
+
     }, [
         dropdownMenuStore,
         menuID
@@ -1713,12 +1754,19 @@ const _Dropdown = memo(function DropdownMemo(
             return false;
         }
 
-        const submenuItems = submenusPortalContainer.querySelectorAll(
-            `.bd-dropdown-submenu[data-submenu-id="${submenuID}"] ` +
-            ".bd-dropdown-item-container"
-        );
+        const submenuNode =
+            dropdownMenuStore.getState().menuItemTree.getNodeByID(submenuID);
 
-        if (submenuItems.length === 0) {
+        if (!submenuNode) {
+            logger.warn(
+                `focusFirstSubmenuItem: submenu node with ID ${submenuID} not ` +
+                "found in menu item tree:\n" +
+                `${dropdownMenuStore.getState().menuItemTree.toTreeString()}`
+            );
+            return false;
+        }
+
+        if (submenuNode.children.size === 0) {
             logger.debug(
                 `focusFirstSubmenuItem: submenu with ID ${submenuID} has no ` +
                 "items"
@@ -1726,20 +1774,18 @@ const _Dropdown = memo(function DropdownMemo(
             return false;
         }
 
-        const firstSubmenuItem = submenuItems[0]!;
-        if (!(firstSubmenuItem instanceof HTMLElement)) {
-            logger.debug(
-                "focusFirstSubmenuItem: first submenu item of submenu with " +
-                `ID ${submenuID} is not an HTMLElement:`, firstSubmenuItem
-            );
-            return false;
-        }
+        const firstSubmenuItem = submenuNode.children.values().next().value!;
 
-        const firstSubmenuItemID = firstSubmenuItem.dataset.submenuId;
-        if (!firstSubmenuItemID) {
-            logger.debug(
-                "focusFirstSubmenuItem: first submenu item of submenu with " +
-                `ID ${submenuID} does not have a submenu ID:`, firstSubmenuItem
+        /**
+         * The dropdown item container element of the first submenu item.
+         */
+        const dropdownItemContainerElement =
+            firstSubmenuItem.dropdownItemContainer;
+
+        if (!dropdownItemContainerElement) {
+            logger.warn(
+                "focusFirstSubmenuItem: dropdown item container element for " +
+                `first submenu item of submenu with ID ${submenuID} is null`
             );
             return false;
         }
@@ -1748,17 +1794,17 @@ const _Dropdown = memo(function DropdownMemo(
         // item immediately, but if it is not open, then we have to set the
         // pending focus submenu ID and wait for the submenu to open
         if (submenuIsOpen) {
-            firstSubmenuItem.focus();
+            dropdownItemContainerElement.focus();
         }
         else {
             dropdownMenuStore.getState().setPendingFocusSubmenuID(
-                firstSubmenuItemID
+                firstSubmenuItem.id
             );
 
             logger.debug(
                 "focusFirstSubmenuItem: set pending focus for first submenu item " +
                 `with ID ${submenuID}:`,
-                firstSubmenuItem
+                dropdownItemContainerElement
             );
         }
 
@@ -1775,42 +1821,37 @@ const _Dropdown = memo(function DropdownMemo(
         submenuID: string
     ): void => {
 
-        const dropdownMenu = dropdownMenuRef.current;
+        const submenuNode =
+            dropdownMenuStore.getState().menuItemTree.getNodeByID(submenuID);
 
-        const submenusPortalContainer =
-            dropdownMenuStore.getState().submenusPortalContainer;
-
-        if (!submenusPortalContainer || !dropdownMenu) {
+        if (!submenuNode) {
             logger.warn(
-                "focusSubmenuDropdownItem: submenusPortalContainer or " +
-                "dropdownMenu is null"
+                `focusSubmenuDropdownItem: submenu node with ID ${submenuID} ` +
+                "not found in menu item tree:\n" +
+                `${dropdownMenuStore.getState().menuItemTree.toTreeString()}`
             );
             return;
         }
 
-        const selector = `.bd-dropdown-item-container[data-submenu-id="${submenuID}"]`;
+        const dropdownItemContainerElement =
+            submenuNode.dropdownItemContainer;
 
-        // the submenusPortalContainer does not contain the main dropdown menu
-        // so we have to check both it and the main dropdown menu
-        const dropdownItem = dropdownMenu.querySelector(selector)
-            ?? submenusPortalContainer.querySelector(
-                selector
-            );
-
-        if (!(dropdownItem instanceof HTMLElement)) {
-            logger.debug(
-                "focusSubmenuDropdownItem: dropdown item with submenu ID " +
-                `${submenuID} not found`
+        if (!dropdownItemContainerElement) {
+            logger.warn(
+                "focusSubmenuDropdownItem: dropdown item container element " +
+                `for submenu with ID ${submenuID} is null`
             );
             return;
         }
+
+        dropdownItemContainerElement.focus();
 
         logger.debug(
             "focusSubmenuDropdownItem: focusing dropdown item with submenu ID" +
             `${submenuID}:`,
-            dropdownItem
+            dropdownItemContainerElement
         );
-        dropdownItem.focus();
+        // dropdownItem.focus();
     }, [dropdownMenuStore]);
 
     const handleKeyDownEffectEvent = useEffectEvent((
@@ -2710,6 +2751,13 @@ const _Dropdown = memo(function DropdownMemo(
                                         ref={dropdownRef}
                                     >
                                         {children}
+                                        {debugConfig.showMenuIds && (
+                                            <span
+                                                className="bd-dropdown-main-debug-id"
+                                            >
+                                                {menuID}
+                                            </span>
+                                        )}
                                     </div>
                                 </DropdownSubmenuStoreContext.Provider>
                             </DropdownSubmenuContext.Provider>

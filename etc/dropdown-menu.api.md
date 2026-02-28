@@ -151,6 +151,7 @@ export type DropdownProps = DropdownPropsInternallyControlled | DropdownPropsExt
 
 // @public
 export type DropdownPropsBase = PropsWithChildren<{
+    menuID?: string;
     handle?: Ref<DropdownHandle>;
     onOpenMenusChange?: (openMenuIDsPath: string[]) => void;
     closeOnClickOutside?: boolean;

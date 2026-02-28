@@ -1,17 +1,38 @@
+import {
+    isIterable
+} from "../utils/MiscellaneousUtilities";
+
 export type MenuItemNodeConstructor = {
     id: string;
-    parent?: MenuItemNode | string | null;
-    children?: Iterable<MenuItemNode | string> | MenuItemNode | string | null;
+    dropdownItemContainer?: HTMLElement | null;
+    subMenuMeasuringContainer?: HTMLElement | null;
+    parent?: MenuItemNode | null;
+    children?: Iterable<MenuItemNode> | MenuItemNode | null;
 };
 
 export type MenuItemNodePOD = {
     id: string;
+    dropdownItemContainer?: HTMLElement;
+    subMenuMeasuringContainer?: HTMLElement;
     children?: MenuItemNodePOD[];
 };
 
 export class MenuItemNode {
 
-    id: string;
+    readonly id: string;
+
+    /**
+     * The dropdown item container element for this menu item. Should only be
+     * `null` if this is the root of the menu tree.
+     */
+    readonly dropdownItemContainer: HTMLElement | null;
+
+    /**
+     * The submenu measuring container element for this menu item, which is the
+     * element that contains the submenu for this menu item. Should only be
+     * `null` if this menu item does not have a submenu.
+     */
+    readonly subMenuMeasuringContainer: HTMLElement | null;
 
     parent: MenuItemNode | null;
 
@@ -20,53 +41,39 @@ export class MenuItemNode {
     constructor(
         {
             id,
+            dropdownItemContainer = null,
+            subMenuMeasuringContainer = null,
             parent = null,
             children
         }: MenuItemNodeConstructor
     ) {
         this.id = id;
+        this.dropdownItemContainer = dropdownItemContainer;
+        this.subMenuMeasuringContainer = subMenuMeasuringContainer;
 
-        if (typeof parent === "string") {
-            this.parent = new MenuItemNode({ id: parent });
-        }
-        else if (parent instanceof MenuItemNode) {
-            this.parent = parent;
-        }
-        else {
-            this.parent = null;
-        }
+        this.parent = parent;
 
-        if (children instanceof Set) {
+        if (isIterable(children)) {
             this.addChildren(children);
         }
         else if (children instanceof MenuItemNode) {
             this.addChild(children);
         }
-        else if (typeof children === "string") {
-            this.addChild(new MenuItemNode({ id: children }));
-        }
 
         if (this.parent) {
-            this.parent.children.add(this);
+            this.parent.addChild(this);
         }
     }
 
-    addChildren(children: Iterable<MenuItemNode | string>): void {
+    addChildren(children: Iterable<MenuItemNode>): void {
         for (const child of children) {
             this.addChild(child);
         }
     }
 
-    addChild(child: MenuItemNode | string): void {
-        let childNode: MenuItemNode;
-        if (typeof child === "string") {
-            childNode = new MenuItemNode({ id: child });
-        }
-        else {
-            childNode = child;
-        }
-        childNode.parent = this;
-        this.children.add(childNode);
+    addChild(child: MenuItemNode): void {
+        child.parent = this;
+        this.children.add(child);
     }
 
     /**
@@ -133,6 +140,35 @@ export class MenuItemNode {
     }
 
     /**
+     * Returns an array of the dropdown item container elements for the direct
+     * children of this node.
+     */
+    getDirectChildDropdownItemContainers(): HTMLElement[] {
+        const containers: HTMLElement[] = [];
+        for (const child of this.children) {
+            if (child.dropdownItemContainer) {
+                containers.push(child.dropdownItemContainer);
+            }
+        }
+        return containers;
+
+    }
+
+    /**
+     * Returns a new `MenuItemNode` with the same ID and dropdown item container
+     * element as this node, but with no parent or children. This is useful for
+     * building a new tree based on this node, without modifying the original
+     * tree.
+     */
+    detachedCopy(): MenuItemNode {
+        const copy = new MenuItemNode({
+            id: this.id,
+            dropdownItemContainer: this.dropdownItemContainer
+        });
+        return copy;
+    }
+
+    /**
      * Builds a tree ending at the specified child node. The root of the tree is
      * the receiver of this method.
      *
@@ -146,10 +182,10 @@ export class MenuItemNode {
 
         // The root of the tree is the receiver of this method. We will build a
         // *new* tree starting from the current node. We do not want to modify
-        // the original tree, so we create a new node for the root.
-        const tree = new MenuItemNode({
-            id: this.id
-        });
+        // the original tree, so we create a new node for the root which does
+        // not have any children yet. We will add children to the new tree as we
+        // traverse the original tree.
+        const tree = this.detachedCopy();
 
         if (this.id === childID) {
             // we must return a new, detached node for the root of the
@@ -165,9 +201,7 @@ export class MenuItemNode {
                 // We only want to add the direct child node that has the
                 // specified childID, not its children, so we create a new node
                 // for the child and add it to the tree.
-                const detachedChildNode = new MenuItemNode({
-                    id: childNode.id
-                });
+                const detachedChildNode = childNode.detachedCopy();
                 tree.addChild(detachedChildNode);
                 return tree;
             }
@@ -303,6 +337,59 @@ export class MenuItemNode {
     }
 
     /**
+     * Returns an array of nodes corresponding to the given path of IDs.
+     *
+     * @param path - An array of IDs representing the path from this node to a
+     * descendant node. Each successive ID in the path should be a direct child
+     * of the previous ID in the path.
+     *
+     * @returns An array of nodes corresponding to the given path of IDs.
+     */
+    nodesFromPath(path: string[]): MenuItemNode[] {
+
+        const nodes: MenuItemNode[] = [];
+
+        if (path.length === 0) {
+            return nodes;
+        }
+
+        const node = this.getNodeByID(path[0]!);
+
+        if (!node) {
+            return nodes;
+        }
+
+        let currentNode = node;
+
+        nodes.push(currentNode);
+
+        if (path.length === 1) {
+            return nodes;
+        }
+
+        const remainingPath = path.slice(1);
+
+        for (const id of remainingPath) {
+            let found = false;
+            for (const child of currentNode.children) {
+                if (child.id === id) {
+                    nodes.push(child);
+                    currentNode = child;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                // path is invalid; return what we have so far
+                return nodes;
+            }
+        }
+
+        return nodes;
+
+    }
+
+    /**
      * Returns the root node of the tree.
      */
     getRootNode(): MenuItemNode {
@@ -316,7 +403,9 @@ export class MenuItemNode {
     toPODObject(): MenuItemNodePOD {
 
         const pod: MenuItemNodePOD = {
-            id: this.id
+            id: this.id,
+            dropdownItemContainer: this.dropdownItemContainer ?? undefined,
+            subMenuMeasuringContainer: this.subMenuMeasuringContainer ?? undefined
         };
 
         if (this.children.size > 0) {

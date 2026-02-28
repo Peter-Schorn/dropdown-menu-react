@@ -231,17 +231,6 @@ const _DropdownItem = memo(function DropdownItemMemo(
     );
 
     /**
-     * The submenu context from the parent submenu.
-     */
-    const dropdownParentSubmenuContext = useContext(DropdownSubmenuContext);
-    // const dropdownParentSubmenuContext = dropdownSubmenuContextDefaultValue;
-
-    const {
-        dropdownMenuMeasuringContainerRef: parentDropdownMenuMeasuringContainerRef,
-    } = dropdownParentSubmenuContext;
-    // const parentDropdownMenuMeasuringContainerRef = useRef<HTMLDivElement>(null);
-
-    /**
      * The submenu store from the parent submenu.
      */
     const dropdownParentSubmenuStoreContext = useDropdownSubmenuStoreContext();
@@ -431,19 +420,6 @@ const _DropdownItem = memo(function DropdownItemMemo(
             changeMessages.push(
                 "\ndropdownMenuStoreContextChanges:\n",
                 dropdownMenuStoreContextChanges
-            );
-        }
-
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const submenuContextChanges = useWhyObjectChanged(
-            "DropdownSubmenuContext",
-            dropdownParentSubmenuContext
-        );
-
-        if (submenuContextChanges.hasChanges) {
-            changeMessages.push(
-                "\nsubmenuContextChanges:\n",
-                submenuContextChanges
             );
         }
 
@@ -695,14 +671,25 @@ const _DropdownItem = memo(function DropdownItemMemo(
         }
         const openSubmenus = openMenuIDsPath.slice(currentMenuIndex);
 
-        for (const submenu of openSubmenus) {
+        const nodes =
+            dropdownMenuStoreContext.getState().menuItemTree.nodesFromPath(
+                openSubmenus
+            );
+
+        for (const node of nodes) {
+
             const submenuDropdownMenuMeasuringContainer =
-                document.querySelector(
-                    `.bd-dropdown-menu-measuring-container[data-submenu-id='${submenu}']`
+                node.subMenuMeasuringContainer;
+
+            if (!submenuDropdownMenuMeasuringContainer) {
+                logger.error(
+                    "eventWithinDropdownItemContainerComponentTreeRects: " +
+                    "could not find submenu measuring container for submenu " +
+                    `${node.id}; skipping this submenu in hit testing`
                 );
-            if (!(submenuDropdownMenuMeasuringContainer instanceof HTMLElement)) {
                 continue;
             }
+
             const submenuDropdownMenuMeasuringContainerRect =
                 submenuDropdownMenuMeasuringContainer.getBoundingClientRect();
             if (
@@ -713,7 +700,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
             ) {
                 logger.debug(
                     "eventWithinDropdownItemContainerComponentTree: " +
-                    `event is within submenu '${submenu}' of dropdown item ` +
+                    `event is within submenu '${node.id}' of dropdown item ` +
                     `with submenu ${submenuID}; returning true`
                 );
                 return true;
@@ -775,14 +762,11 @@ const _DropdownItem = memo(function DropdownItemMemo(
         for (const childNode of submenuNode.children) {
             if (childNode.id === pendingFocusSubmenuID) {
 
-                const focusTarget = submenusPortalContainer?.querySelector(
-                    `.bd-dropdown-item-container[data-submenu-id='${childNode.id}']`
-                );
+                const dropdownItemContainer =
+                    childNode.dropdownItemContainer;
 
-                if (focusTarget instanceof HTMLElement) {
-                    focusTarget.focus();
-                    dropdownMenuStoreContext.getState()
-                        .setPendingFocusSubmenuID(null);
+                if (dropdownItemContainer) {
+                    dropdownItemContainer.focus();
                 }
                 else {
                     logger.error(
@@ -792,6 +776,9 @@ const _DropdownItem = memo(function DropdownItemMemo(
                         `.bd-dropdown-item-container[data-menu-item-id='${childNode.id}']`
                     );
                 }
+                dropdownMenuStoreContext.getState().setPendingFocusSubmenuID(
+                    null
+                );
                 break;
             }
         }
@@ -899,15 +886,27 @@ const _DropdownItem = memo(function DropdownItemMemo(
             return;
         }
 
+        const menuItemTree = dropdownMenuStoreContext.getState().menuItemTree;
+
+        const submenuNode = menuItemTree.getNodeByID(submenuID);
+
+        if (!submenuNode) {
+            logger.error(
+                "positionSubmenu: could not find menu item tree node for " +
+                `submenu ID ${submenuID}; menuItemTree:\n` +
+                `${menuItemTree.toTreeString()}`
+            );
+            return;
+        }
+
         /**
          * The first dropdown item container element inside the submenu; used to
          * align the parent menu item with this submenu item.
          */
-        const firstSubmenuDropdownItem = dropdownMenuContent.querySelector(
-            ".bd-dropdown-item-container"
-        );
+        const firstSubmenuDropdownItem =
+            submenuNode.children.values().next().value?.dropdownItemContainer;
 
-        if (!(firstSubmenuDropdownItem instanceof HTMLElement)) {
+        if (!firstSubmenuDropdownItem) {
             logger.warn(
                 "positionSubmenu: firstSubmenuDropdownItemContainer is null"
             );
@@ -937,10 +936,9 @@ const _DropdownItem = memo(function DropdownItemMemo(
             return;
         }
 
-
         /** The parent dropdown menu measuring container. */
         const parentMenuMeasuringContainer =
-            parentDropdownMenuMeasuringContainerRef.current;
+            submenuNode.parent?.subMenuMeasuringContainer;
 
         if (!parentMenuMeasuringContainer) {
             logger.error(
