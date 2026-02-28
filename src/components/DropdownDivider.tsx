@@ -1,17 +1,39 @@
 import {
-    type JSX
+    type JSX,
+    type ComponentPropsWithRef
 } from "react";
 
 /**
- * A simple divider component that renders a horizontal rule (`<hr>`) with the
- * class `bd-dropdown-divider`. This can be used to visually separate groups of
- * items within the dropdown menu.
+ * Props for the {@link DropdownDivider} component.
+ *
+ * Accepts all props for an `hr` element, including `ref`.
  *
  * @public
  */
-export function DropdownDivider(): JSX.Element {
+export type DropdownDividerProps = ComponentPropsWithRef<"hr">;
+
+/**
+ * A simple divider component that renders a horizontal rule (`<hr>`). This can
+ * be used to visually separate groups of items within the dropdown menu.
+ *
+ * If `className` is not provided, it defaults to `bd-dropdown-divider`.
+ *
+ * Accepts all props for an `hr` element, including `ref`, so you can customize
+ * it as needed.
+ *
+ * @public
+ */
+export function DropdownDivider(
+    {
+        className = "bd-dropdown-divider",
+        ...rest
+    }: DropdownDividerProps
+): JSX.Element {
     return (
-        <hr className="bd-dropdown-divider" />
+        <hr
+            className={className}
+            {...rest}
+        />
     );
 }
 

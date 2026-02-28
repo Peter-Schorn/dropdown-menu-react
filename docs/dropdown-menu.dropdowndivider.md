@@ -4,13 +4,66 @@
 
 ## DropdownDivider() function
 
-A simple divider component that renders a horizontal rule (`<hr>`<!-- -->) with the class `bd-dropdown-divider`<!-- -->. This can be used to visually separate groups of items within the dropdown menu.
+A simple divider component that renders a horizontal rule (`<hr>`<!-- -->). This can be used to visually separate groups of items within the dropdown menu.
+
+If `className` is not provided, it defaults to `bd-dropdown-divider`<!-- -->.
+
+Accepts all props for an `hr` element, including `ref`<!-- -->, so you can customize it as needed.
 
 **Signature:**
 
 ```typescript
-export declare function DropdownDivider(): JSX.Element;
+export declare function DropdownDivider(input: DropdownDividerProps): JSX.Element;
 ```
+
+## Parameters
+
+<table><thead><tr><th>
+
+Parameter
+
+
+</th><th>
+
+Type
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+{ className, ...rest }
+
+
+</td><td>
+
+(not declared)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+input
+
+
+</td><td>
+
+[DropdownDividerProps](./dropdown-menu.dropdowndividerprops.md)
+
+
+</td><td>
+
+
+</td></tr>
+</tbody></table>
+
 **Returns:**
 
 JSX.Element

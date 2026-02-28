@@ -56,7 +56,10 @@ export type DisclosureIndicatorProps<T extends ElementType = "span"> = {
 export const Dropdown: (props: DropdownProps) => ReactNode;
 
 // @public
-export function DropdownDivider(): JSX.Element;
+export function DropdownDivider(input: DropdownDividerProps): JSX.Element;
+
+// @public
+export type DropdownDividerProps = ComponentPropsWithRef<"hr">;
 
 // @public
 export type DropdownHandle = {

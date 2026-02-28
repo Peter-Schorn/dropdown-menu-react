@@ -47,7 +47,10 @@ export {
     DropdownItemSubmenu
 } from "./components/DropdownItemSubmenu";
 
-export { DropdownDivider } from "./components/DropdownDivider";
+export {
+    type DropdownDividerProps,
+    DropdownDivider
+} from "./components/DropdownDivider";
 
 export {
     DisclosureIndicator,

@@ -80,12 +80,16 @@ Can contain dropdown items and arbitrarily nested submenus. The dropdown menu is
 </td></tr>
 <tr><td>
 
-[DropdownDivider()](./dropdown-menu.dropdowndivider.md)
+[DropdownDivider({ className, ...rest }, input)](./dropdown-menu.dropdowndivider.md)
 
 
 </td><td>
 
-A simple divider component that renders a horizontal rule (`<hr>`<!-- -->) with the class `bd-dropdown-divider`<!-- -->. This can be used to visually separate groups of items within the dropdown menu.
+A simple divider component that renders a horizontal rule (`<hr>`<!-- -->). This can be used to visually separate groups of items within the dropdown menu.
+
+If `className` is not provided, it defaults to `bd-dropdown-divider`<!-- -->.
+
+Accepts all props for an `hr` element, including `ref`<!-- -->, so you can customize it as needed.
 
 
 </td></tr>
@@ -319,6 +323,19 @@ Own props for the [DisclosureIndicator()](./dropdown-menu.disclosureindicator.md
 Props for the [DisclosureIndicator()](./dropdown-menu.disclosureindicator.md) component.
 
 This component is polymorphic via the `as` prop. By default, it renders a `span`<!-- -->. In addition to its own props, it accepts all props of the chosen `as` element/component.
+
+
+</td></tr>
+<tr><td>
+
+[DropdownDividerProps](./dropdown-menu.dropdowndividerprops.md)
+
+
+</td><td>
+
+Props for the [DropdownDivider()](./dropdown-menu.dropdowndivider.md) component.
+
+Accepts all props for an `hr` element, including `ref`<!-- -->.
 
 
 </td></tr>
