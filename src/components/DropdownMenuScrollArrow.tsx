@@ -11,8 +11,8 @@ import {
     useContext
 } from "react";
 
-import { SvgSolidCaretDown } from "./icons/SolidCaretDown";
-import { SvgSolidCaretUp } from "./icons/SolidCaretUp";
+import { SVGSolidCaretDown } from "./icons/SolidCaretDown";
+import { SVGSolidCaretUp } from "./icons/SolidCaretUp";
 
 import {
     DropdownMenuContext
@@ -72,8 +72,8 @@ export function DropdownMenuScrollArrow(
 
     const arrowIcon = useMemo((): JSX.Element => {
         return edge === "bottom"
-            ? <SvgSolidCaretDown />
-            : <SvgSolidCaretUp />;
+            ? <SVGSolidCaretDown />
+            : <SVGSolidCaretUp />;
     }, [edge]);
 
     /**

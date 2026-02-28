@@ -7,7 +7,7 @@ import {
 } from "react";
 
 import {
-    SvgSolidCaretRight
+    SVGSolidCaretRight
 } from "./icons/SolidCaretRight";
 
 import {
@@ -132,7 +132,7 @@ export function DisclosureIndicator<T extends ElementType = "span">(
         >
             {
                 children === undefined || children === null
-                    ? <SvgSolidCaretRight />
+                    ? <SVGSolidCaretRight />
                     : children
             }
         </Component>

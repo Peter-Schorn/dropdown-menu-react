@@ -1,5 +1,5 @@
 import type { SVGProps, JSX } from "react";
-export function SvgSolidCaretDown(props: SVGProps<SVGSVGElement>): JSX.Element {
+export function SVGSolidCaretDown(props: SVGProps<SVGSVGElement>): JSX.Element {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"

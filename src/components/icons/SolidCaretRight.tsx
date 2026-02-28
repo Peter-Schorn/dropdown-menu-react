@@ -1,5 +1,5 @@
 import type { SVGProps, JSX } from "react";
-export function SvgSolidCaretRight(
+export function SVGSolidCaretRight(
     props: SVGProps<SVGSVGElement>
 ): JSX.Element {
     return (

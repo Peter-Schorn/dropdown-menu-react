@@ -5,7 +5,7 @@ import type {
  } from "@babel/types";
 
 type TemplateVariables = {
-    componentName: t.Identifier;
+    componentName: string;
     jsx: JSXElement;
 };
 
@@ -42,13 +42,15 @@ export default function template(
         )
     );
 
+    const name = componentName.replace(/^Svg/, "SVG");
+
     return tpl`
 import type {
     SVGProps,
     JSX
 } from "react";
 
-export function ${componentName}(
+export function ${name}(
     props: SVGProps<SVGSVGElement>
 ): JSX.Element {
     return (
