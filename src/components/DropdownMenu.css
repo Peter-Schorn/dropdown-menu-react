@@ -219,8 +219,14 @@
 }
 
 .bd-disclosure-indicator {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
     padding-left: 5px;
     margin-left: auto;
+
+    /* border: 2px solid green; */
 }
 
 .bd-disclosure-indicator[data-submenu-open="true"] {

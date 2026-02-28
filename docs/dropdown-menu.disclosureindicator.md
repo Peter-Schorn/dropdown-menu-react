@@ -8,6 +8,8 @@ A disclosure indicator component that shows a right-pointing caret icon.
 
 The icon's color changes based on the open/closed state of the submenu, which is determined by the `DisclosureIndicatorContext`<!-- -->. When the submenu is open, the icon is black; when closed, it is gray.
 
+This component is polymorphic via the `as` prop. By default, it renders a `span` and applies a default class name of `bd-disclosure-indicator` unless a different `className` is provided.
+
 If the options below are not sufficient for your use case, you can create your own custom disclosure indicator component and use the `DisclosureIndicatorContext` to access the submenu open/closed state. For example:
 
 ```tsx
@@ -33,7 +35,7 @@ function MyCustomDisclosureIndicator() {
 **Signature:**
 
 ```typescript
-export declare function DisclosureIndicator(input: DisclosureIndicatorProps): JSX.Element;
+export declare function DisclosureIndicator<T extends ElementType = "span">(input: DisclosureIndicatorProps<T>): ReactNode;
 ```
 
 ## Parameters
@@ -56,26 +58,12 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-{ className, style, children }
-
-
-</td><td>
-
-(not declared)
-
-
-</td><td>
-
-
-</td></tr>
-<tr><td>
-
 input
 
 
 </td><td>
 
-[DisclosureIndicatorProps](./dropdown-menu.disclosureindicatorprops.md)
+[DisclosureIndicatorProps](./dropdown-menu.disclosureindicatorprops.md)<!-- -->&lt;T&gt;
 
 
 </td><td>
@@ -86,5 +74,5 @@ input
 
 **Returns:**
 
-JSX.Element
+ReactNode
 

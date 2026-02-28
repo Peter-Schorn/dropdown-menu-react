@@ -30,7 +30,7 @@ A convenience function that disables all logging by setting all loggers to the n
 </td></tr>
 <tr><td>
 
-[DisclosureIndicator({ className, style, children }, input)](./dropdown-menu.disclosureindicator.md)
+[DisclosureIndicator(input)](./dropdown-menu.disclosureindicator.md)
 
 
 </td><td>
@@ -38,6 +38,8 @@ A convenience function that disables all logging by setting all loggers to the n
 A disclosure indicator component that shows a right-pointing caret icon.
 
 The icon's color changes based on the open/closed state of the submenu, which is determined by the `DisclosureIndicatorContext`<!-- -->. When the submenu is open, the icon is black; when closed, it is gray.
+
+This component is polymorphic via the `as` prop. By default, it renders a `span` and applies a default class name of `bd-disclosure-indicator` unless a different `className` is provided.
 
 If the options below are not sufficient for your use case, you can create your own custom disclosure indicator component and use the `DisclosureIndicatorContext` to access the submenu open/closed state. For example:
 
@@ -298,12 +300,25 @@ The context type for the disclosure indicator of a dropdown item, which provides
 </td></tr>
 <tr><td>
 
+[DisclosureIndicatorOwnProps](./dropdown-menu.disclosureindicatorownprops.md)
+
+
+</td><td>
+
+Own props for the [DisclosureIndicator()](./dropdown-menu.disclosureindicator.md) component.
+
+
+</td></tr>
+<tr><td>
+
 [DisclosureIndicatorProps](./dropdown-menu.disclosureindicatorprops.md)
 
 
 </td><td>
 
-Props for the `DisclosureIndicator` component.
+Props for the [DisclosureIndicator()](./dropdown-menu.disclosureindicator.md) component.
+
+This component is polymorphic via the `as` prop. By default, it renders a `span`<!-- -->. In addition to its own props, it accepts all props of the chosen `as` element/component.
 
 
 </td></tr>

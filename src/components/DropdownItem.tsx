@@ -1802,11 +1802,8 @@ const _DropdownItem = memo(function DropdownItemMemo(
 
         const dropdownItemMouseEvent = createDropdownItemMouseEvent(event);
 
-        // the client could call `event.preventDefault()` in their onClick
-        // handler to prevent the default click behavior of toggling the submenu
-        // or closing the menu, so we must check if the event was
-        // defaultPrevented after calling the onClick prop
-        // onClick?.(event);
+        // call the client `onClick` prop; then check if they called a method
+        // to prevent some default behavior
         onClick?.(dropdownItemMouseEvent);
 
         if (event.defaultPrevented) {
@@ -1855,7 +1852,9 @@ const _DropdownItem = memo(function DropdownItemMemo(
                     event
                 });
                 // the client could still block the request to close the entire
-                // menu if it is externally controlled
+                // menu if it is externally controlled, so even if we reach this
+                // code path, we still have to check below if we should close
+                // non-parent submenus
             }
 
             if (

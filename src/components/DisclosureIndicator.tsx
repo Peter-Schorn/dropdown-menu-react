@@ -1,9 +1,14 @@
 import {
-    type JSX,
-    type CSSProperties,
+    type ReactNode,
+    type ComponentPropsWithRef,
+    type ElementType,
     type PropsWithChildren,
     useContext
 } from "react";
+
+import {
+    SvgSolidCaretRight
+} from "./icons/SolidCaretRight";
 
 import {
     DisclosureIndicatorContext
@@ -12,22 +17,33 @@ import {
 import { disclosureIndicatorLogger as logger } from "../utils/loggers";
 
 /**
- * Props for the `DisclosureIndicator` component.
+ * Own props for the {@link DisclosureIndicator} component.
  *
  * @public
  */
-export type DisclosureIndicatorProps = PropsWithChildren & {
-    /**
-     * Class name(s) to apply to the `DisclosureIndicator` component. If
-     * provided, these will be used instead of the default class.
-     */
-    className?: string;
+export type DisclosureIndicatorOwnProps = PropsWithChildren;
 
-    /**
-     * Optional inline styles to apply to the `DisclosureIndicator` component.
-     */
-    style?: CSSProperties;
-};
+/**
+ * Props for the {@link DisclosureIndicator} component.
+ *
+ * This component is polymorphic via the `as` prop. By default, it renders a
+ * `span`. In addition to its own props, it accepts all props of the chosen `as`
+ * element/component.
+ *
+ * @public
+ */
+export type DisclosureIndicatorProps<T extends ElementType = "span"> =
+    {
+        /**
+         * The element type to render as. Defaults to "span".
+         */
+        as?: T;
+    } & DisclosureIndicatorOwnProps &
+    Omit<
+        ComponentPropsWithRef<T>,
+            | keyof DisclosureIndicatorOwnProps
+            | "as"
+    >;
 
 /**
  * A disclosure indicator component that shows a right-pointing caret icon.
@@ -35,6 +51,10 @@ export type DisclosureIndicatorProps = PropsWithChildren & {
  * The icon's color changes based on the open/closed state of the submenu, which
  * is determined by the `DisclosureIndicatorContext`. When the submenu is open,
  * the icon is black; when closed, it is gray.
+ *
+ * This component is polymorphic via the `as` prop. By default, it renders a
+ * `span` and applies a default class name of `bd-disclosure-indicator` unless a
+ * different `className` is provided.
  *
  * If the options below are not sufficient for your use case, you can create
  * your own custom disclosure indicator component and use the
@@ -63,10 +83,11 @@ export type DisclosureIndicatorProps = PropsWithChildren & {
  * @public
  *
  * @param props - An object containing:
- * - `className`: Class name(s) to apply to this component. If provided, these
- *   will be used instead of the default class. The DOM node that this class is
- *   applied to will have a `data-submenu-open` attribute that reflects the
- *   open/closed state of the submenu, which can be used in CSS to style the
+ * - `as`: The element/component to render as. Defaults to `"span"`.
+ * - Any additional props supported by the chosen `as` element/component.
+ * - `className`: If not provided, defaults to `bd-disclosure-indicator`. The
+ *   rendered element will have a `data-submenu-open` attribute that reflects
+ *   the open/closed state of the submenu, which can be used in CSS to style the
  *   indicator based on that state. For example:
  * ```css
  * .my-indicator[data-submenu-open="true"] {
@@ -76,43 +97,45 @@ export type DisclosureIndicatorProps = PropsWithChildren & {
  *     color: gray;
  * }
  * ```
- * - `style`: Optional inline styles to apply to this component.
  * - `children` - Optional custom content to render instead of the default
  *   disclosure icon. If not provided, a default right-pointing caret icon will
  *   be rendered.
  */
-export function DisclosureIndicator(
-    {
-        className,
+export function DisclosureIndicator<T extends ElementType = "span">(
+    input: DisclosureIndicatorProps<T>
+): ReactNode {
+
+    const {
+        as,
+        className = "bd-disclosure-indicator",
         style,
-        children
-    }: DisclosureIndicatorProps
-): JSX.Element {
+        children,
+        ...rest
+    } = input;
 
     const {
         submenuIsOpen
     } = useContext(DisclosureIndicatorContext);
 
-    const defaultClassName = "bd-disclosure-indicator";
-
-    const resolvedClassName = className ? className : defaultClassName;
+    const Component = as ?? "span";
 
     logger.debug(
         `DisclosureIndicator: render; submenuIsOpen: ${submenuIsOpen}`
     );
 
     return (
-        <span
-            className={resolvedClassName}
+        <Component
+            className={className}
             style={style}
             data-submenu-open={submenuIsOpen}
+            {...rest}
         >
             {
                 children === undefined || children === null
-                    ? <i className="fa-solid fa-caret-right" />
+                    ? <SvgSolidCaretRight />
                     : children
             }
-        </span>
+        </Component>
     );
 
 }

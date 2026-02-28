@@ -2222,9 +2222,15 @@ const _Dropdown = memo(function DropdownMemo(
                 return;
             }
 
+            const submenusPortalContainer =
+                dropdownMenuStore.getState().submenusPortalContainer;
+
             if (
-                // TODO: Should we also be checking submenusPortalContainer
-                !dropdown.contains(event.target as Node)
+                !(event.target instanceof Node) ||
+                (
+                    !dropdown.contains(event.target) &&
+                    !(submenusPortalContainer.contains(event.target))
+                )
             ) {
                 logger.debug(
                     "onClickOutside: hiding dropdown menu; target:",
@@ -2260,7 +2266,8 @@ const _Dropdown = memo(function DropdownMemo(
 
     }, [
         isOpen,
-        closeOnClickOutside
+        closeOnClickOutside,
+        dropdownMenuStore
     ]);
 
     // MARK: useEffect: keydown

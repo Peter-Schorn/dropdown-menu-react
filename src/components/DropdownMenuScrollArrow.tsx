@@ -11,8 +11,15 @@ import {
     useContext
 } from "react";
 
-import { DropdownMenuContext } from "../model/context/DropdownMenuContext";
-import type { DropdownMenuBeginContinuousScrolling } from "./DropdownMenuCore";
+import { SvgSolidCaretDown } from "./icons/SolidCaretDown";
+import { SvgSolidCaretUp } from "./icons/SolidCaretUp";
+
+import {
+    DropdownMenuContext
+} from "../model/context/DropdownMenuContext";
+import type {
+    DropdownMenuBeginContinuousScrolling
+} from "./DropdownMenuCore";
 
 import type {
     VerticalEdge
@@ -63,10 +70,10 @@ export function DropdownMenuScrollArrow(
     // after it has left, even if the component has just appeared.
     const pointerHasLeftAtLeastOnceSinceAppearRef = useRef<boolean>(false);
 
-    const arrowIconName = useMemo((): string => {
+    const arrowIcon = useMemo((): JSX.Element => {
         return edge === "bottom"
-            ? "fa-solid fa-caret-down"
-            : "fa-solid fa-caret-up";
+            ? <SvgSolidCaretDown />
+            : <SvgSolidCaretUp />;
     }, [edge]);
 
     /**
@@ -384,7 +391,7 @@ export function DropdownMenuScrollArrow(
                     onPointerCancel={handleScrollArrowPointerLeave}
                     onPointerMove={handlePointerMove}
                 >
-                    <i className={arrowIconName}></i>
+                    {arrowIcon}
                 </button>
             </div>
         </div>

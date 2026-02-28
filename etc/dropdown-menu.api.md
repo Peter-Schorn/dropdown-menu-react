@@ -6,7 +6,6 @@
 
 import { ComponentPropsWithRef } from 'react';
 import { Context } from 'react';
-import { CSSProperties } from 'react';
 import { ElementType } from 'react';
 import { JSX } from 'react';
 import { JSXElementConstructor } from 'react';
@@ -33,7 +32,7 @@ export const defaultDebugConfig: Readonly<DebugConfig>;
 export function disableLoggers(): void;
 
 // @public
-export function DisclosureIndicator(input: DisclosureIndicatorProps): JSX.Element;
+export function DisclosureIndicator<T extends ElementType = "span">(input: DisclosureIndicatorProps<T>): ReactNode;
 
 // @public
 export const DisclosureIndicatorContext: Context<Readonly<{
@@ -46,10 +45,12 @@ export type DisclosureIndicatorContextType = Readonly<{
 }>;
 
 // @public
-export type DisclosureIndicatorProps = PropsWithChildren & {
-    className?: string;
-    style?: CSSProperties;
-};
+export type DisclosureIndicatorOwnProps = PropsWithChildren;
+
+// @public
+export type DisclosureIndicatorProps<T extends ElementType = "span"> = {
+    as?: T;
+} & DisclosureIndicatorOwnProps & Omit<ComponentPropsWithRef<T>, keyof DisclosureIndicatorOwnProps | "as">;
 
 // @public
 export const Dropdown: (props: DropdownProps) => ReactNode;

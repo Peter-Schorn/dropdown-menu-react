@@ -51,6 +51,7 @@ export { DropdownDivider } from "./components/DropdownDivider";
 
 export {
     DisclosureIndicator,
+    type DisclosureIndicatorOwnProps,
     type DisclosureIndicatorProps
 } from "./components/DisclosureIndicator";
 
