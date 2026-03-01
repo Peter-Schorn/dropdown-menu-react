@@ -1106,7 +1106,8 @@ export const CustomScrollbar = memo(function CustomScrollbarMemo(
             </div>
             {isVisible && expandedScrollbarHitboxEnabled && createPortal((
                 <div
-                    data-scrollbar-hitbox // marker attribute
+                    // marker attribute
+                    data-bd-scrollbar-hitbox
                     className={styles.scrollbarHitbox}
                     ref={setScrollbarHitbox}
                     style={{

@@ -144,6 +144,8 @@ export const DropdownItemSubmenu = memo(function DropdownItemSubmenuMemo(
             // the scroll bar can be measured
             <div
                 className="bd-dropdown-menu-measuring-container"
+                // marker attribute
+                data-bd-dropdown-menu-measuring-container
                 ref={dropdownMenuMeasuringContainerRef}
                 role="menu"
                 data-submenu-id={submenuID}
@@ -153,6 +155,8 @@ export const DropdownItemSubmenu = memo(function DropdownItemSubmenuMemo(
             >
                 <div
                     className="bd-dropdown-menu bd-dropdown-submenu"
+                    // marker attribute
+                    data-bd-dropdown-menu
                     ref={dropdownMenuRef}
                     data-submenu-id={submenuID}
                 >

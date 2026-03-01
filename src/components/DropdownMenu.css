@@ -142,9 +142,14 @@
     layer above siblings */
     position: relative;
 
-    display: block;
+    display: flex;
+
+    overflow: clip;
+    overflow-wrap: anywhere;
 
     min-width: 0;
+
+    padding: var(--dropdown-item-padding);
 
     border-radius: var(--border-radius);
 
@@ -186,20 +191,6 @@
 }
 
 /* --- end ordered selectors --- */
-
-.bd-dropdown-item-label {
-    display: flex;
-
-    overflow: clip;
-    overflow-wrap: anywhere;
-
-    padding: var(--dropdown-item-padding);
-
-    /* ensures that the label can shrink when the dropdown menu's width is
-    constrained by the viewport, and that it will wrap instead of overflowing
-    the container */
-    min-width: 0;
-}
 
 .bd-dropdown-main-debug-id {
     display: inline-block;

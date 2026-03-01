@@ -741,7 +741,7 @@ const _Dropdown = memo(function DropdownMemo(
         }
 
         const submenuItems = submenu.querySelectorAll(
-            ".bd-dropdown-item-container"
+            "[data-bd-dropdown-item-container]"
         );
 
         for (const menuItem of submenuItems) {
@@ -755,7 +755,7 @@ const _Dropdown = memo(function DropdownMemo(
             }
 
             const submenuElement = submenusPortalContainer.querySelector(
-                `.bd-dropdown-menu-measuring-container[data-submenu-id="${submenuID}"]`
+                `[data-bd-dropdown-menu-measuring-container][data-submenu-id="${submenuID}"]`
             );
             const submenu = submenuElement instanceof HTMLElement
                 ? submenuElement
@@ -806,7 +806,7 @@ const _Dropdown = memo(function DropdownMemo(
         });
 
         const topLevelMenuItems = dropdownMenu.querySelectorAll(
-            ".bd-dropdown-item-container"
+            "[data-bd-dropdown-item-container]"
         );
 
         for (const menuItem of topLevelMenuItems) {
@@ -819,7 +819,7 @@ const _Dropdown = memo(function DropdownMemo(
             }
 
             const submenuElement = submenusPortalContainer.querySelector(
-                `.bd-dropdown-menu-measuring-container[data-submenu-id="${submenuID}"]`
+                `[data-bd-dropdown-menu-measuring-container][data-submenu-id="${submenuID}"]`
             );
             const submenu = submenuElement instanceof HTMLElement
                 ? submenuElement
@@ -850,7 +850,9 @@ const _Dropdown = memo(function DropdownMemo(
                 logger.error(
                     "buildMenuItemTree: found duplicate menu item IDs in " +
                     "menu item tree:\n",
-                    duplicateIDs
+                    duplicateIDs,
+                    "\nfull menu item tree:\n",
+                    menuItemTree.toTreeString()
                 );
             }
         }

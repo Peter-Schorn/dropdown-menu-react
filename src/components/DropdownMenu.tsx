@@ -71,10 +71,14 @@ const _DropdownMenu = memo(function DropdownMenuMemo(
         // bar can be measured
         <div
             className="bd-dropdown-menu-measuring-container"
+            // marker attribute
+            data-bd-dropdown-menu-measuring-container
             ref={dropdownMenuMeasuringContainerRef}
         >
             <div
                 className="bd-dropdown-menu"
+                // marker attribute
+                data-bd-dropdown-menu
                 ref={dropdownMenuRef}
             >
                 <DropdownMenuCore

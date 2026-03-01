@@ -83,7 +83,6 @@ export const DropdownItemLabel = memo(function DropdownItemLabelMemo(
         }
     );
 
-    const dropdownItemLabelRef = useRef<HTMLDivElement>(null);
     const internalID = useRef(crypto.randomUUID());
 
     logger.debug(
@@ -128,19 +127,17 @@ export const DropdownItemLabel = memo(function DropdownItemLabelMemo(
             isSubmenu: boolean
         ): void {
             const dropdownItem = dropdownItemRef.current;
-            const dropdownItemLabel = dropdownItemLabelRef.current;
 
-            if (!dropdownItem || !dropdownItemLabel) {
+            if (!dropdownItem) {
                 logger.warn(
-                    "DropdownItemLabel or DropdownItem ref is null; cannot " +
-                    "set data-has-submenu attribute"
+                    "dropdownItemRef is null; cannot set data-has-submenu " +
+                    "attribute"
                 );
                 return;
             }
 
             const isSubmenuString = String(isSubmenu);
             dropdownItem.dataset.hasSubmenu = isSubmenuString;
-            dropdownItemLabel.dataset.hasSubmenu = isSubmenuString;
         }
 
         const unsubscribe = dropdownSubmenuStoreContext.subscribe(
@@ -159,40 +156,30 @@ export const DropdownItemLabel = memo(function DropdownItemLabelMemo(
     ]);
 
     return (
-        <div
-            className="bd-dropdown-item"
-            ref={dropdownItemRef}
-            data-submenu-id={submenuID}
-        //  `data-hover` and `data-secondary-focus` will be
-        //  programmatically set
-        >
-            <DisclosureIndicatorContext.Provider
-                value={disclosureIndicatorContextValue}
+        <>
+            <div
+                className="bd-dropdown-item"
+                ref={dropdownItemRef}
+                data-submenu-id={submenuID}
+            //  `data-hover` and `data-secondary-focus` will be
+            //  programmatically set
             >
-
-                {/* TODO: hover and secondary focus are not set here
-                    because we will remove this bd-dropdown-item-label
-                    class */}
-                <div
-                    className="bd-dropdown-item-label"
-                    ref={dropdownItemLabelRef}
-                    // provided so that the client can customize styles
-                    // based on these states
-                    data-submenu-id={submenuID}
+                <DisclosureIndicatorContext.Provider
+                    value={disclosureIndicatorContextValue}
                 >
                     {/* MARK: Label Content */}
                     {children}
-                </div>
-                {
-                    debugConfig.showMenuIds &&
-                    (
-                        <div className="bd-dropdown-debug-id">
-                            {submenuID}
-                        </div>
-                    )
-                }
-            </DisclosureIndicatorContext.Provider>
-        </div>
+                </DisclosureIndicatorContext.Provider>
+            </div>
+            {
+                debugConfig.showMenuIds &&
+                (
+                    <div className="bd-dropdown-debug-id">
+                        {submenuID}
+                    </div>
+                )
+            }
+        </>
     );
 
 });

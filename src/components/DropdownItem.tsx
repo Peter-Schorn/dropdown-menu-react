@@ -642,14 +642,14 @@ const _DropdownItem = memo(function DropdownItemMemo(
                     // relatedTarget is the element the pointer has moved into
                     // after leaving the current element. Check if it is a
                     // scrollbar hitbox.
-                    event.relatedTarget.hasAttribute("data-scrollbar-hitbox")
+                    event.relatedTarget.hasAttribute("data-bd-scrollbar-hitbox")
                 ) ||
                 (
                     // check if the pointer has moved in/entered the scrollbar
                     // hitbox but is still within the bounds of the dropdown
                     // item container
                     event.target instanceof HTMLElement &&
-                    event.target.hasAttribute("data-scrollbar-hitbox")
+                    event.target.hasAttribute("data-bd-scrollbar-hitbox")
                 )
             ) &&
             // check if the event is within the dropdown item container rect
@@ -771,9 +771,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
                 else {
                     logger.error(
                         "positionSubmenu: could not find focus target " +
-                        `for pendingFocusSubmenuID ${pendingFocusSubmenuID}; ` +
-                        "expected to find element with selector " +
-                        `.bd-dropdown-item-container[data-menu-item-id='${childNode.id}']`
+                        `for pendingFocusSubmenuID ${pendingFocusSubmenuID}`
                     );
                 }
                 dropdownMenuStoreContext.getState().setPendingFocusSubmenuID(
@@ -950,7 +948,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
 
         /** The parent dropdown menu. */
         const parentMenu = parentMenuMeasuringContainer.querySelector(
-            ".bd-dropdown-menu"
+            "[data-bd-dropdown-menu]"
         );
         if (!(parentMenu instanceof HTMLElement)) {
             logger.error(
@@ -1685,7 +1683,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
 
         /** The parent dropdown menu measuring container. */
         const parentMenuMeasuringContainer = dropdownItem.closest(
-            ".bd-dropdown-menu-measuring-container"
+            "[data-bd-dropdown-menu-measuring-container]"
         );
 
         if (!(parentMenuMeasuringContainer instanceof HTMLElement)) {
@@ -1698,7 +1696,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
 
         /** The parent dropdown menu. */
         const parentMenu = parentMenuMeasuringContainer.querySelector(
-            ".bd-dropdown-menu"
+            "[data-bd-dropdown-menu]"
         );
         if (!(parentMenu instanceof HTMLElement)) {
             logger.error(
@@ -1937,7 +1935,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
         // the pointer is logically outside the dropdown item container DOM
         if (
             event?.relatedTarget instanceof HTMLElement &&
-            event.relatedTarget.hasAttribute("data-scrollbar-hitbox") &&
+            event.relatedTarget.hasAttribute("data-bd-scrollbar-hitbox") &&
             eventWithinDropdownItemContainerRect(event)
         ) {
             // the pointer moved to the scroll bar hitbox, but is still within
@@ -2086,7 +2084,7 @@ const _DropdownItem = memo(function DropdownItemMemo(
             event.relatedTarget instanceof HTMLElement &&
             // if the pointer did not move to a scroll bar hitbox, then the
             // pointer has logically left the dropdown item container
-            event.relatedTarget.hasAttribute("data-scrollbar-hitbox")
+            event.relatedTarget.hasAttribute("data-bd-scrollbar-hitbox")
         ) {
 
             if (eventWithinDropdownItemContainerComponentTreeRects(event)) {
@@ -2752,6 +2750,8 @@ const _DropdownItem = memo(function DropdownItemMemo(
     return (
         <button
             className="bd-dropdown-item-container"
+            // marker attribute
+            data-bd-dropdown-item-container
             data-submenu-id={submenuID}
             ref={dropdownItemContainerRef}
             onPointerEnter={handleDropdownItemContainerPointerEnter}
