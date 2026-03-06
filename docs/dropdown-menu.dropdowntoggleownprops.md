@@ -9,9 +9,9 @@ Own props for the [DropdownToggle()](./dropdown-menu.dropdowntoggle.md) componen
 **Signature:**
 
 ```typescript
-export type DropdownToggleOwnProps = PropsWithChildren & {
-    className?: string;
+export type DropdownToggleOwnProps<T extends ElementType = "button"> = {
     onClick?: (event: RequestOpenChangeEvent) => void;
+    as?: _DropdownToggleAsValidation<T>;
 };
 ```
 **References:** [RequestOpenChangeEvent](./dropdown-menu.requestopenchangeevent.md)

@@ -1,7 +1,6 @@
 import {
     type JSX,
     type ReactNode,
-    type PropsWithChildren,
     type ComponentPropsWithRef,
     type ElementType,
     type JSXElementConstructor,
@@ -43,18 +42,20 @@ export type DropdownToggleAsRequiredProps = {
  *
  * @public
  */
-export type DropdownToggleOwnProps = PropsWithChildren & {
+export type DropdownToggleOwnProps<T extends ElementType = "button"> = {
     /**
-     * The class name to apply to the dropdown toggle element. Defaults to
-     * `bd-dropdown-toggle`.
-     */
-    className?: string;
-
-    /**
-     * Optional click handler. Can call `event.preventDefault()` to prevent the
-     * default toggle behavior of opening/closing the dropdown menu.
+     * Optional click handler. {@link DropdownToggle} attaches its own internal
+     * click handler to handle toggling the dropdown menu when the toggle is
+     * clicked, but, if provided, this `onClick` handler will be called first.
+     * You can call `event.preventDefault()` in this click handler to prevent
+     * the default toggle behavior of opening/closing the dropdown menu.
      */
     onClick?: (event: RequestOpenChangeEvent) => void;
+
+    /**
+     * The element type to render as. Defaults to "button".
+     */
+    as?: _DropdownToggleAsValidation<T>;
 };
 
 /**
@@ -66,7 +67,8 @@ export type DropdownToggleOwnProps = PropsWithChildren & {
  * - A custom component that accepts an `onClick` prop that can receive the
  *   toggle's click handler (i.e. `(event: OnRequestOpenChangeEvent) => void`)
  *   and a `ref` prop that can receive the toggle's ref (i.e.
- *   `Ref<HTMLElement>`).
+ *   `Ref<HTMLElement>`). {@link DropdownToggleAsRequiredProps} defines the
+ *   required props for a custom component to be used as the `as` prop.
  *
  * @internal
  */
@@ -98,35 +100,6 @@ export type _DropdownToggleAsValidation<T extends ElementType> =
 /**
  * Props for the {@link DropdownToggle} component.
  *
- * Requires the chosen `as` target supports an `onClick` prop compatible with
- * `OnRequestOpenChangeEvent`. See also {@link DropdownToggleAsRequiredProps}
- * for the required props for a custom `as` component.
- *
- * @public
- */
-export type DropdownToggleProps<T extends ElementType = "button"> =
-    {
-        /**
-         * The element type to render as. Defaults to "button".
-         */
-        as?: _DropdownToggleAsValidation<T>;
-    } & DropdownToggleOwnProps &
-    Omit<
-        ComponentPropsWithRef<T>,
-            | keyof DropdownToggleOwnProps
-            | keyof DropdownToggleAsRequiredProps
-            | "as"
-    >;
-
-/**
- * A dropdown toggle component that serves as the trigger for opening and
- * closing the dropdown menu. It should be used as a child of the `Dropdown`
- * component.
- *
- * Calling `event.preventDefault()` in the `onClick` handler of the toggle will
- * prevent the default toggle behavior, which is to toggle the open state of the
- * dropdown menu.
- *
  * The `as` prop can be used to render a different element type instead of the
  * default "button". If a custom component is used with the `as` prop, it must
  * accept the following props:
@@ -139,6 +112,40 @@ export type DropdownToggleProps<T extends ElementType = "button"> =
  *    position itself correctly relative to the toggle. It must be an
  *    `HTMLElement` or a subtype thereof.
  *
+ * @public
+ */
+export type DropdownToggleProps<T extends ElementType = "button"> =
+    DropdownToggleOwnProps<T> &
+    Omit<
+        ComponentPropsWithRef<T>,
+            | keyof DropdownToggleOwnProps<T>
+            | keyof DropdownToggleAsRequiredProps
+    >;
+
+/**
+ * A dropdown toggle component that serves as the trigger for opening and
+ * closing the dropdown menu. It should be used as a child of the `Dropdown`
+ * component.
+ *
+ * **props**
+ *
+ * - `onClick`: An optional click handler. {@link DropdownToggle} attaches its
+ *   own internal click handler to handle toggling the dropdown menu when the
+ *   toggle is clicked, but, if provided, this `onClick` handler will be called
+ *   first. You can call `event.preventDefault()` in this click handler to
+ *   prevent the default toggle behavior of opening/closing the dropdown menu.
+ * - `as`: The element type to render as. Defaults to `"button"`. If a custom
+ *   component is used with the `as` prop, it must accept the following props:
+ *     - `onClick`: A function that should be called when the toggle is clicked.
+ *       The signature `(event: OnRequestOpenChangeEvent) => void` must be
+ *       assignable to this prop. When this function is called, it will trigger
+ *       the default toggle behavior of toggling the open state of the dropdown
+ *       menu.
+ *     - `ref`: A ref that should be attached to the underlying DOM element that
+ *       is rendered by the custom component. This allows the dropdown menu to
+ *       position itself correctly relative to the toggle. It must be an
+ *       `HTMLElement` or a subtype thereof.
+ *
  * See {@link DropdownToggleAsRequiredProps}.
  *
  * @public
@@ -148,7 +155,6 @@ export function DropdownToggle<T extends ElementType = "button">(
         as,
         className = "bd-dropdown-toggle",
         onClick,
-        children,
         ...rest
     }: DropdownToggleProps<T>
 ): ReactNode {
@@ -196,7 +202,6 @@ export function DropdownToggle<T extends ElementType = "button">(
         dropdownToggleRef
     ]);
 
-    // const Component = (as ?? "button") as ElementType;
     const Component = as ?? "button";
 
     const isButton = Component === "button";
@@ -219,9 +224,7 @@ export function DropdownToggle<T extends ElementType = "button">(
             // required for the toggle to function correctly
             ref={setRef}
             onClick={handleClick}
-        >
-            {children}
-        </Component>
+        />
     );
 }
 

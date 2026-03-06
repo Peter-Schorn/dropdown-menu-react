@@ -9,7 +9,5 @@ A dropdown item label component that is used to set the label of a dropdown item
 **Signature:**
 
 ```typescript
-DropdownItemLabel: import("react").NamedExoticComponent<{
-    children?: ReactNode | undefined;
-}>
+DropdownItemLabel: import("react").NamedExoticComponent<DropdownItemLabelProps>
 ```

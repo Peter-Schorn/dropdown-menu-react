@@ -6,14 +6,12 @@
 
 Props for the [DropdownToggle()](./dropdown-menu.dropdowntoggle.md) component.
 
-Requires the chosen `as` target supports an `onClick` prop compatible with `OnRequestOpenChangeEvent`<!-- -->. See also [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md) for the required props for a custom `as` component.
+The `as` prop can be used to render a different element type instead of the default "button". If a custom component is used with the `as` prop, it must accept the following props: - `onClick`<!-- -->: A function that should be called when the toggle is clicked. The signature `(event: OnRequestOpenChangeEvent) => void` must be assignable to this prop. When this function is called, it will trigger the default toggle behavior of toggling the open state of the dropdown menu. - `ref`<!-- -->: A ref that should be attached to the underlying DOM element that is rendered by the custom component. This allows the dropdown menu to position itself correctly relative to the toggle. It must be an `HTMLElement` or a subtype thereof.
 
 **Signature:**
 
 ```typescript
-export type DropdownToggleProps<T extends ElementType = "button"> = {
-    as?: _DropdownToggleAsValidation<T>;
-} & DropdownToggleOwnProps & Omit<ComponentPropsWithRef<T>, keyof DropdownToggleOwnProps | keyof DropdownToggleAsRequiredProps | "as">;
+export type DropdownToggleProps<T extends ElementType = "button"> = DropdownToggleOwnProps<T> & Omit<ComponentPropsWithRef<T>, keyof DropdownToggleOwnProps<T> | keyof DropdownToggleAsRequiredProps>;
 ```
 **References:** [DropdownToggleOwnProps](./dropdown-menu.dropdowntoggleownprops.md)<!-- -->, [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md)
 

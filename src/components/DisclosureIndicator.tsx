@@ -2,7 +2,6 @@ import {
     type ReactNode,
     type ComponentPropsWithRef,
     type ElementType,
-    type PropsWithChildren,
     useContext
 } from "react";
 
@@ -21,29 +20,33 @@ import { disclosureIndicatorLogger as logger } from "../utils/loggers";
  *
  * @public
  */
-export type DisclosureIndicatorOwnProps = PropsWithChildren;
+export type DisclosureIndicatorOwnProps<T extends ElementType = "span"> = {
+    /**
+     * If not `false` and if `children` is not provided, the
+     * {@link DisclosureIndicator} will render a default right-pointing caret
+     * icon. If `children` is provided, the `DisclosureIndicator` will render
+     * the provided children instead of the default icon, regardless of the
+     * value of this prop. Default is `true`.
+     */
+    useDefaultChildren?: boolean;
+
+    /**
+     * The element type to render as. Defaults to "span".
+     */
+    as?: T;
+};
 
 /**
  * Props for the {@link DisclosureIndicator} component.
  *
  * This component is polymorphic via the `as` prop. By default, it renders a
- * `span`. In addition to its own props, it accepts all props of the chosen `as`
- * element/component.
+ * `span`. It accepts all props of the chosen `as` element/component.
  *
  * @public
  */
 export type DisclosureIndicatorProps<T extends ElementType = "span"> =
-    {
-        /**
-         * The element type to render as. Defaults to "span".
-         */
-        as?: T;
-    } & DisclosureIndicatorOwnProps &
-    Omit<
-        ComponentPropsWithRef<T>,
-            | keyof DisclosureIndicatorOwnProps
-            | "as"
-    >;
+    DisclosureIndicatorOwnProps<T> &
+    Omit<ComponentPropsWithRef<T>, keyof DisclosureIndicatorOwnProps<T>>;
 
 /**
  * A disclosure indicator component that shows a right-pointing caret icon.
@@ -83,6 +86,11 @@ export type DisclosureIndicatorProps<T extends ElementType = "span"> =
  * @public
  *
  * @param props - An object containing:
+ * - `useDefaultChildren`: If not `false` and if `children` is not provided,
+ *    will render a default right-pointing caret icon. If `children` is
+ *    provided, the `DisclosureIndicator` will render the provided children
+ *    instead of the default icon, regardless of the value of this prop. Default
+ *    is `true`.
  * - `as`: The element/component to render as. Defaults to `"span"`.
  * - Any additional props supported by the chosen `as` element/component.
  * - `className`: If not provided, defaults to `bd-disclosure-indicator`. The
@@ -97,21 +105,18 @@ export type DisclosureIndicatorProps<T extends ElementType = "span"> =
  *     color: gray;
  * }
  * ```
- * - `children` - Optional custom content to render instead of the default
- *   disclosure icon. If not provided, a default right-pointing caret icon will
- *   be rendered.
  */
 export function DisclosureIndicator<T extends ElementType = "span">(
-    input: DisclosureIndicatorProps<T>
+    props: DisclosureIndicatorProps<T>
 ): ReactNode {
 
     const {
         as,
+        useDefaultChildren = true,
         className = "bd-disclosure-indicator",
-        style,
         children,
         ...rest
-    } = input;
+    } = props;
 
     const {
         submenuIsOpen
@@ -123,18 +128,19 @@ export function DisclosureIndicator<T extends ElementType = "span">(
         `DisclosureIndicator: render; submenuIsOpen: ${submenuIsOpen}`
     );
 
+    const resolvedChildren = children !== undefined && children !== null
+        ? children
+        : useDefaultChildren
+            ? <SVGSolidCaretRight />
+            : undefined;
+
     return (
         <Component
             className={className}
-            style={style}
             data-submenu-open={submenuIsOpen}
             {...rest}
         >
-            {
-                children === undefined || children === null
-                    ? <SVGSolidCaretRight />
-                    : children
-            }
+            {resolvedChildren}
         </Component>
     );
 

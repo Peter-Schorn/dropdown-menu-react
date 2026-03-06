@@ -9,5 +9,8 @@ Own props for the [DisclosureIndicator()](./dropdown-menu.disclosureindicator.md
 **Signature:**
 
 ```typescript
-export type DisclosureIndicatorOwnProps = PropsWithChildren;
+export type DisclosureIndicatorOwnProps<T extends ElementType = "span"> = {
+    useDefaultChildren?: boolean;
+    as?: T;
+};
 ```

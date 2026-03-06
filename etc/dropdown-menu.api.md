@@ -32,7 +32,7 @@ export const defaultDebugConfig: Readonly<DebugConfig>;
 export function disableLoggers(): void;
 
 // @public
-export function DisclosureIndicator<T extends ElementType = "span">(input: DisclosureIndicatorProps<T>): ReactNode;
+export function DisclosureIndicator<T extends ElementType = "span">(props: DisclosureIndicatorProps<T>): ReactNode;
 
 // @public
 export const DisclosureIndicatorContext: Context<Readonly<{
@@ -45,12 +45,13 @@ export type DisclosureIndicatorContextType = Readonly<{
 }>;
 
 // @public
-export type DisclosureIndicatorOwnProps = PropsWithChildren;
+export type DisclosureIndicatorOwnProps<T extends ElementType = "span"> = {
+    useDefaultChildren?: boolean;
+    as?: T;
+};
 
 // @public
-export type DisclosureIndicatorProps<T extends ElementType = "span"> = {
-    as?: T;
-} & DisclosureIndicatorOwnProps & Omit<ComponentPropsWithRef<T>, keyof DisclosureIndicatorOwnProps | "as">;
+export type DisclosureIndicatorProps<T extends ElementType = "span"> = DisclosureIndicatorOwnProps<T> & Omit<ComponentPropsWithRef<T>, keyof DisclosureIndicatorOwnProps<T>>;
 
 // @public
 export const Dropdown: (props: DropdownProps) => ReactNode;
@@ -73,12 +74,12 @@ export type DropdownHandle = {
 export const DropdownItem: (props: DropdownItemProps) => ReactNode;
 
 // @public
-export const DropdownItemLabel: NamedExoticComponent<    {
-children?: ReactNode | undefined;
-}>;
+export const DropdownItemLabel: NamedExoticComponent<DropdownItemLabelProps>;
 
 // @public
-export type DropdownItemLabelProps = PropsWithChildren;
+export type DropdownItemLabelProps = PropsWithChildren & {
+    textValue?: string;
+};
 
 // Warning: (ae-incompatible-release-tags) The symbol "DropdownItemMouseEvent" is marked as @public, but its signature references "_DropdownItemMouseEventImpl" which is marked as @internal
 //
@@ -201,15 +202,13 @@ export type DropdownToggleContextType = Readonly<{
 }>;
 
 // @public
-export type DropdownToggleOwnProps = PropsWithChildren & {
-    className?: string;
+export type DropdownToggleOwnProps<T extends ElementType = "button"> = {
     onClick?: (event: RequestOpenChangeEvent) => void;
+    as?: _DropdownToggleAsValidation<T>;
 };
 
 // @public
-export type DropdownToggleProps<T extends ElementType = "button"> = {
-    as?: _DropdownToggleAsValidation<T>;
-} & DropdownToggleOwnProps & Omit<ComponentPropsWithRef<T>, keyof DropdownToggleOwnProps | keyof DropdownToggleAsRequiredProps | "as">;
+export type DropdownToggleProps<T extends ElementType = "button"> = DropdownToggleOwnProps<T> & Omit<ComponentPropsWithRef<T>, keyof DropdownToggleOwnProps<T> | keyof DropdownToggleAsRequiredProps>;
 
 // @public
 export const noopLogger: DropdownMenuLogger;
@@ -251,9 +250,19 @@ export type SetLoggers<T extends DropdownMenuLogger = DropdownMenuLogger> = Part
 // @public
 export function setLoggers<T extends DropdownMenuLogger = DropdownMenuLogger>(loggers: SetLoggers<T>): void;
 
+// @public
+export function useDropdownToggle(): UseDropdownToggleResult;
+
+// @public
+export type UseDropdownToggleResult = {
+    isOpen: DropdownOpenContextType["isOpen"];
+    requestOpenChange: DropdownToggleContextType["requestOpenChange"];
+    dropdownToggleRef: DropdownToggleContextType["dropdownToggleRef"];
+};
+
 // Warnings were encountered during analysis:
 //
-// src/components/DropdownToggle.tsx:112:9 - (ae-incompatible-release-tags) The symbol "as" is marked as @public, but its signature references "_DropdownToggleAsValidation" which is marked as @internal
+// src/components/DropdownToggle.tsx:58:5 - (ae-incompatible-release-tags) The symbol "as" is marked as @public, but its signature references "_DropdownToggleAsValidation" which is marked as @internal
 
 // (No @packageDocumentation comment for this package)
 

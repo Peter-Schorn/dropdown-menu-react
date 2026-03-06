@@ -530,9 +530,16 @@ const _DropdownItem = memo(function DropdownItemMemo(
         isSecondaryFocused: boolean
     ): void => {
 
+        const isSecondaryFocusedString = String(isSecondaryFocused);
+
         const dropdownItem = dropdownItemRef.current;
         if (dropdownItem) {
-            dropdownItem.dataset.secondaryFocus = String(isSecondaryFocused);
+            dropdownItem.dataset.secondaryFocus = isSecondaryFocusedString;
+        }
+        const dropdownItemContainer = dropdownItemContainerRef.current;
+        if (dropdownItemContainer) {
+            dropdownItemContainer.dataset.secondaryFocus =
+                isSecondaryFocusedString;
         }
 
     }, []);
@@ -541,9 +548,15 @@ const _DropdownItem = memo(function DropdownItemMemo(
         isHovered: boolean
     ): void => {
 
+        const isHoveredString = String(isHovered);
+
         const dropdownItem = dropdownItemRef.current;
         if (dropdownItem) {
-            dropdownItem.dataset.hover = String(isHovered);
+            dropdownItem.dataset.hover = isHoveredString;
+        }
+        const dropdownItemContainer = dropdownItemContainerRef.current;
+        if (dropdownItemContainer) {
+            dropdownItemContainer.dataset.hover = isHoveredString;
         }
 
     });

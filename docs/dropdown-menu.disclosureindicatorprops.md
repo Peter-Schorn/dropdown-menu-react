@@ -6,14 +6,12 @@
 
 Props for the [DisclosureIndicator()](./dropdown-menu.disclosureindicator.md) component.
 
-This component is polymorphic via the `as` prop. By default, it renders a `span`<!-- -->. In addition to its own props, it accepts all props of the chosen `as` element/component.
+This component is polymorphic via the `as` prop. By default, it renders a `span`<!-- -->. It accepts all props of the chosen `as` element/component.
 
 **Signature:**
 
 ```typescript
-export type DisclosureIndicatorProps<T extends ElementType = "span"> = {
-    as?: T;
-} & DisclosureIndicatorOwnProps & Omit<ComponentPropsWithRef<T>, keyof DisclosureIndicatorOwnProps | "as">;
+export type DisclosureIndicatorProps<T extends ElementType = "span"> = DisclosureIndicatorOwnProps<T> & Omit<ComponentPropsWithRef<T>, keyof DisclosureIndicatorOwnProps<T>>;
 ```
 **References:** [DisclosureIndicatorOwnProps](./dropdown-menu.disclosureindicatorownprops.md)
 

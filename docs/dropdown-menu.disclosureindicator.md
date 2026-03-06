@@ -35,7 +35,7 @@ function MyCustomDisclosureIndicator() {
 **Signature:**
 
 ```typescript
-export declare function DisclosureIndicator<T extends ElementType = "span">(input: DisclosureIndicatorProps<T>): ReactNode;
+export declare function DisclosureIndicator<T extends ElementType = "span">(props: DisclosureIndicatorProps<T>): ReactNode;
 ```
 
 ## Parameters
@@ -58,7 +58,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-input
+props
 
 
 </td><td>
@@ -67,6 +67,17 @@ input
 
 
 </td><td>
+
+An object containing: - `useDefaultChildren`<!-- -->: If not `false` and if `children` is not provided, will render a default right-pointing caret icon. If `children` is provided, the `DisclosureIndicator` will render the provided children instead of the default icon, regardless of the value of this prop. Default is `true`<!-- -->. - `as`<!-- -->: The element/component to render as. Defaults to `"span"`<!-- -->. - Any additional props supported by the chosen `as` element/component. - `className`<!-- -->: If not provided, defaults to `bd-disclosure-indicator`<!-- -->. The rendered element will have a `data-submenu-open` attribute that reflects the open/closed state of the submenu, which can be used in CSS to style the indicator based on that state. For example:
+
+```css
+.my-indicator[data-submenu-open="true"] {
+    color: black;
+}
+.my-indicator[data-submenu-open="false"] {
+    color: gray;
+}
+```
 
 
 </td></tr>

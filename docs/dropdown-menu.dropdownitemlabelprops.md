@@ -9,5 +9,7 @@ Props for the `DropdownItemLabel` component.
 **Signature:**
 
 ```typescript
-export type DropdownItemLabelProps = PropsWithChildren;
+export type DropdownItemLabelProps = PropsWithChildren & {
+    textValue?: string;
+};
 ```

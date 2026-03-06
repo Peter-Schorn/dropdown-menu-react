@@ -30,7 +30,7 @@ A convenience function that disables all logging by setting all loggers to the n
 </td></tr>
 <tr><td>
 
-[DisclosureIndicator(input)](./dropdown-menu.disclosureindicator.md)
+[DisclosureIndicator(props)](./dropdown-menu.disclosureindicator.md)
 
 
 </td><td>
@@ -117,16 +117,16 @@ The dropdown menu component that should be used as a child of `Dropdown`<!-- -->
 </td></tr>
 <tr><td>
 
-[DropdownToggle({ as, className, onClick, children, ...rest }, input)](./dropdown-menu.dropdowntoggle.md)
+[DropdownToggle({ as, className, onClick, ...rest }, input)](./dropdown-menu.dropdowntoggle.md)
 
 
 </td><td>
 
 A dropdown toggle component that serves as the trigger for opening and closing the dropdown menu. It should be used as a child of the `Dropdown` component.
 
-Calling `event.preventDefault()` in the `onClick` handler of the toggle will prevent the default toggle behavior, which is to toggle the open state of the dropdown menu.
+\*\*props\*\*
 
-The `as` prop can be used to render a different element type instead of the default "button". If a custom component is used with the `as` prop, it must accept the following props: - `onClick`<!-- -->: A function that should be called when the toggle is clicked. The signature `(event: OnRequestOpenChangeEvent) => void` must be assignable to this prop. When this function is called, it will trigger the default toggle behavior of toggling the open state of the dropdown menu. - `ref`<!-- -->: A ref that should be attached to the underlying DOM element that is rendered by the custom component. This allows the dropdown menu to position itself correctly relative to the toggle. It must be an `HTMLElement` or a subtype thereof.
+- `onClick`<!-- -->: An optional click handler. [DropdownToggle()](./dropdown-menu.dropdowntoggle.md) attaches its own internal click handler to handle toggling the dropdown menu when the toggle is clicked, but, if provided, this `onClick` handler will be called first. You can call `event.preventDefault()` in this click handler to prevent the default toggle behavior of opening/closing the dropdown menu. - `as`<!-- -->: The element type to render as. Defaults to `"button"`<!-- -->. If a custom component is used with the `as` prop, it must accept the following props: - `onClick`<!-- -->: A function that should be called when the toggle is clicked. The signature `(event: OnRequestOpenChangeEvent) => void` must be assignable to this prop. When this function is called, it will trigger the default toggle behavior of toggling the open state of the dropdown menu. - `ref`<!-- -->: A ref that should be attached to the underlying DOM element that is rendered by the custom component. This allows the dropdown menu to position itself correctly relative to the toggle. It must be an `HTMLElement` or a subtype thereof.
 
 See [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md)<!-- -->.
 
@@ -164,6 +164,25 @@ Sets debug configuration options for the dropdown menu.
 </td><td>
 
 Sets the loggers for this library.
+
+
+</td></tr>
+<tr><td>
+
+[useDropdownToggle()](./dropdown-menu.usedropdowntoggle.md)
+
+
+</td><td>
+
+A hook that provides the necessary state and functions for a custom dropdown toggle component to function correctly within the dropdown menu system. It provides the current open state of the dropdown menu, a function to request changes to that state, and a ref that should be attached to the underlying DOM element rendered by the dropdown toggle.
+
+If you are using the default [DropdownToggle()](./dropdown-menu.dropdowntoggle.md) component, you do not need to use this hook directly. However, if you are creating a custom dropdown toggle component, you can use this hook to coordinate with the dropdown menu. It must be used within a component that is a descendant of a [Dropdown()](./dropdown-menu.dropdown.md) component, which provides the necessary context providers for this hook to function.
+
+Internally, it depends on the [DropdownOpenContext](./dropdown-menu.dropdownopencontext.md) and [DropdownToggleContext](./dropdown-menu.dropdowntogglecontext.md) to get the necessary state and functions. Therefore, it must be used within a component that is a descendant of a [Dropdown()](./dropdown-menu.dropdown.md) component, which provides these contexts.
+
+[DropdownOpenContext](./dropdown-menu.dropdownopencontext.md) provides a single reactive `isOpen` value that indicates whether the dropdown menu is currently open or closed. This value will update whenever the open state of the dropdown menu changes, allowing your custom toggle component to react to these changes and render accordingly.
+
+[DropdownToggleContext](./dropdown-menu.dropdowntogglecontext.md) provides a `requestOpenChange` function that can be called to request changes to the open state of the dropdown menu, and a `dropdownToggleRef` that should be attached to the underlying DOM element rendered by the dropdown toggle. The value provided by this context has a stable identity and will never change between renders. Therefore, if you only need access to these props, you can use the `useContext` hook directly with `DropdownToggleContext` instead of using this hook. This prevents your component from re-rendering when the `isOpen` value changes if you do not need to react to those changes.
 
 
 </td></tr>
@@ -322,7 +341,7 @@ Own props for the [DisclosureIndicator()](./dropdown-menu.disclosureindicator.md
 
 Props for the [DisclosureIndicator()](./dropdown-menu.disclosureindicator.md) component.
 
-This component is polymorphic via the `as` prop. By default, it renders a `span`<!-- -->. In addition to its own props, it accepts all props of the chosen `as` element/component.
+This component is polymorphic via the `as` prop. By default, it renders a `span`<!-- -->. It accepts all props of the chosen `as` element/component.
 
 
 </td></tr>
@@ -532,7 +551,7 @@ Own props for the [DropdownToggle()](./dropdown-menu.dropdowntoggle.md) componen
 
 Props for the [DropdownToggle()](./dropdown-menu.dropdowntoggle.md) component.
 
-Requires the chosen `as` target supports an `onClick` prop compatible with `OnRequestOpenChangeEvent`<!-- -->. See also [DropdownToggleAsRequiredProps](./dropdown-menu.dropdowntoggleasrequiredprops.md) for the required props for a custom `as` component.
+The `as` prop can be used to render a different element type instead of the default "button". If a custom component is used with the `as` prop, it must accept the following props: - `onClick`<!-- -->: A function that should be called when the toggle is clicked. The signature `(event: OnRequestOpenChangeEvent) => void` must be assignable to this prop. When this function is called, it will trigger the default toggle behavior of toggling the open state of the dropdown menu. - `ref`<!-- -->: A ref that should be attached to the underlying DOM element that is rendered by the custom component. This allows the dropdown menu to position itself correctly relative to the toggle. It must be an `HTMLElement` or a subtype thereof.
 
 
 </td></tr>
@@ -618,6 +637,17 @@ All of the reasons used internally by this library to trigger open state changes
 </td><td>
 
 The type for the `setLoggers` function, which can be used to set the loggers for this library. This can be either an object containing the loggers to set, or a function that takes the current loggers and returns such an object or void to indicate no reassignments to the loggers. The latter form allows for in-place mutation of the loggers.
+
+
+</td></tr>
+<tr><td>
+
+[UseDropdownToggleResult](./dropdown-menu.usedropdowntoggleresult.md)
+
+
+</td><td>
+
+The result type of the [useDropdownToggle()](./dropdown-menu.usedropdowntoggle.md) hook, which provides the necessary state and functions for a custom dropdown toggle component to function correctly within the dropdown menu system.
 
 
 </td></tr>

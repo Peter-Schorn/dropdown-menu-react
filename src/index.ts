@@ -79,6 +79,11 @@ export type {
 } from "./model/DropdownItemMouseEvent";
 
 export {
+    type UseDropdownToggleResult,
+    useDropdownToggle
+} from "./hooks/useDropdownToggle";
+
+export {
     type DebugConfig,
     setDebugConfig,
     defaultDebugConfig

@@ -91,6 +91,16 @@ function CustomComponent8(
     return null;
 }
 
+function CustomComponentWithRenderPropChildren(
+    props: {
+        onClick?: (event: RequestOpenChangeEvent) => void;
+        ref?: Ref<HTMLElement>;
+        children: (args: { isOpen: boolean }) => ReactNode;
+    }
+): ReactNode {
+    return null;
+}
+
 function CustomComponent9(
     props: {
         foo: string;
@@ -228,6 +238,7 @@ export function TestDropdownToggle(): JSX.Element {
 
             <DropdownToggle
                 as="a"
+                className={""}
                 href="#"
                 data-xyz="test"
             />
@@ -294,6 +305,14 @@ export function TestDropdownToggle(): JSX.Element {
                 as={CustomComponent}
             />
 
+            {/* @ts-expect-error -- CustomComponent does not accept children */}
+            <DropdownToggle
+                as={CustomComponent}
+                foo="test"
+            >
+                child
+            </DropdownToggle>
+
             <DropdownToggle
                 as={CustomComponent2}
                 onClick={() => console.log("Custom component toggle clicked")}
@@ -356,6 +375,20 @@ export function TestDropdownToggle(): JSX.Element {
             <DropdownToggle
                 as={CustomComponent7}
             />
+
+            <DropdownToggle
+                as={CustomComponentWithRenderPropChildren}
+            >
+                {({ isOpen }) => isOpen ? "open" : "closed"}
+            </DropdownToggle>
+
+            <DropdownToggle
+                as={CustomComponentWithRenderPropChildren}
+            // @ts-expect-error -- `children` must be a function for this
+            // custom component
+            >
+                invalid children
+            </DropdownToggle>
 
             <DropdownToggle
                 // @ts-expect-error -- Invalid `as` component with incompatible
